@@ -1,0 +1,80 @@
+{
+  "name": "pdf-presenter",
+  "version": "1.0.0",
+  "description": "Professional Dual-Screen Presentation Software for Keynotes, Conferences & AV Teams with Bitfocus Companion API",
+  "main": "main.js",
+  "author": {
+    "name": "Joseph Sharun",
+    "url": "https://www.linkedin.com/in/joseph-sharun/"
+  },
+  "homepage": "https://github.com/SHARUNJOSEPH",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SHARUNJOSEPH/pdf-presenter"
+  },
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "web": "node server.js",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:portable": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.josephsharun.pdfpresenter",
+    "productName": "PDF Presenter Suite",
+    "copyright": "Copyright © 2026 Joseph Sharun",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "views/**/*",
+      "css/**/*",
+      "js/**/*",
+      "vendor/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PDF Presenter Suite"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png"
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.1.0",
+    "electron-builder": "^26.15.3"
+  }
+}

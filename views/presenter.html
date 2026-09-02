@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Presenter - Presenter Cockpit</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/presenter.css">
+  <!-- Local Mozilla PDF.js -->
+  <script src="../vendor/pdfjs/pdf.min.js"></script>
+</head>
+<body>
+  <div class="presenter-app">
+    <!-- ====================================================================
+         1. TOP STATUS & NAVIGATION BAR
+         ==================================================================== -->
+    <header class="top-bar">
+      <!-- Left: Brand & Document Info -->
+      <div class="top-bar-left">
+        <div class="brand">
+          <div class="brand-icon">📽️</div>
+          <span>Presenter Cockpit</span>
+        </div>
+
+        <div class="doc-info" id="docTitle" title="Presentation Title">
+          Interactive Presentation Showcase.pdf
+        </div>
+      </div>
+
+      <!-- Center: Presentation Timer & Real-Time Clock -->
+      <div class="top-bar-center">
+        <div class="timer-widget">
+          <span style="font-size: 14px;">⏱️</span>
+          <div class="timer-display" id="timerDisplay">00:00</div>
+          <div class="timer-controls">
+            <button class="timer-btn" id="btnTimerToggle" title="Start/Pause Timer">▶️</button>
+            <button class="timer-btn" id="btnTimerReset" title="Reset Timer">🔄</button>
+          </div>
+          <div class="clock-display" id="clockDisplay">12:00:00</div>
+        </div>
+      </div>
+
+      <!-- Right: Controls, Companion Modal & Exit Button -->
+      <div class="top-bar-right">
+        <div class="badge badge-connected" id="audienceStatusBadge">
+          <span class="status-dot"></span> Audience Screen Active
+        </div>
+
+        <button class="btn" id="btnCompanion" title="Bitfocus Companion & Stream Deck API Settings">
+          🎛️ Companion API
+        </button>
+
+        <button class="btn btn-icon" id="btnShortcuts" title="Keyboard Shortcuts (?)">
+          ⌨️
+        </button>
+
+        <button class="btn btn-icon" id="btnPresenterAbout" title="About & Creator">
+          ℹ️
+        </button>
+
+        <!-- Exit Presentation Button -->
+        <button class="btn btn-danger" id="btnEndPresentation" title="End presentation, close audience projector, and return to launcher">
+          🛑 End Presentation
+        </button>
+      </div>
+    </header>
+
+    <!-- ====================================================================
+         2. MAIN WORKSPACE (SPLIT PRESENTER VIEW)
+         ==================================================================== -->
+    <main class="main-workspace">
+      <!-- Left: Active Current Slide Viewport -->
+      <section class="active-slide-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>🖥️ Active Slide (Audience View)</span>
+          </div>
+          <div class="slide-counter-badge" id="slideCounter">
+            Slide 1 of 6
+          </div>
+        </div>
+
+        <div class="active-slide-viewport" id="activeSlideViewport">
+          <!-- Slide Canvas & Laser/Ink Layer (Double-buffered for smooth 0.4s transitions) -->
+          <div class="slide-canvas-wrapper">
+            <canvas id="presenterSlideCanvasA" class="presenter-slide-canvas active"></canvas>
+            <canvas id="presenterSlideCanvasB" class="presenter-slide-canvas"></canvas>
+            <canvas id="presenterDrawCanvas"></canvas>
+          </div>
+
+          <!-- Click Navigation Overlay Zones -->
+          <div class="nav-zone nav-zone-prev" id="navZonePrev" title="Previous Slide (Left Arrow / PageUp)">‹</div>
+          <div class="nav-zone nav-zone-next" id="navZoneNext" title="Next Slide (Right Arrow / Space / PageDown)">›</div>
+
+          <!-- Floating Presentation Controls -->
+          <div class="floating-toolbar">
+            <button class="btn btn-icon" id="btnPrev" title="Previous Slide (← / PageUp)">◀</button>
+            <button class="btn btn-icon" id="btnNext" title="Next Slide (→ / PageDown)">▶</button>
+            
+            <div class="tool-separator"></div>
+
+            <button class="btn" id="btnLaser" title="Toggle Real-Time Laser Pointer (L)">
+              🔴 Laser
+            </button>
+            <button class="btn" id="btnPen" title="Toggle Digital Pen Annotation (P)">
+              ✏️ Pen
+            </button>
+            <button class="btn btn-icon" id="btnClearDraw" title="Clear Annotations">
+              🧹
+            </button>
+
+            <div class="tool-separator"></div>
+
+            <button class="btn" id="btnBlackout" title="Toggle Black Screen (B)">
+              ⬛ Black
+            </button>
+            <button class="btn" id="btnWhiteout" title="Toggle White Screen (W)">
+              ⬜ White
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Next Slide Preview & Speaker Notes -->
+      <aside class="sidebar-panel">
+        <!-- Next Slide Card -->
+        <div class="next-slide-card">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>⏭️ Next Slide Preview</span>
+            </div>
+          </div>
+          <div class="next-slide-viewport">
+            <canvas id="nextSlideCanvas"></canvas>
+            <div class="no-next-slide" id="noNextSlideMsg" style="display: none;">
+              End of presentation
+            </div>
+          </div>
+        </div>
+
+        <!-- Speaker Notes Card -->
+        <div class="notes-card">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>📝 Speaker Notes</span>
+            </div>
+          </div>
+          <div class="notes-body">
+            <textarea 
+              class="notes-textarea" 
+              id="notesTextarea" 
+              placeholder="Type speaker notes for this slide here... (Auto-saved)"
+            ></textarea>
+            <div class="notes-status">
+              <span id="notesSaveStatus">All changes auto-saved</span>
+              <span>Markdown supported</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- ====================================================================
+         3. BOTTOM SLIDE THUMBNAILS CAROUSEL
+         ==================================================================== -->
+    <footer class="bottom-strip">
+      <div class="strip-controls">
+        <button class="btn" id="btnGrid" title="Open Slide Grid (G)">
+          🗂️ Grid View
+        </button>
+      </div>
+
+      <div class="thumbnails-scroll-container" id="thumbnailStrip">
+        <!-- Dynamic Thumbnails Rendered Here -->
+      </div>
+    </footer>
+  </div>
+
+  <!-- ====================================================================
+       4. BITFOCUS COMPANION & STREAM DECK MODAL
+       ==================================================================== -->
+  <div class="modal-backdrop" id="companionModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🎛️ Bitfocus Companion & Stream Deck API</h3>
+        <button class="btn btn-icon modal-close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="companion-guide-box">
+          <h4>📡 Native Background API Gateway</h4>
+          <p>
+            You can control this presentation from <strong>Bitfocus Companion</strong>, an <strong>Elgato Stream Deck</strong>, or any network device using standard HTTP requests.
+          </p>
+          <div style="margin-top: 8px;">
+            <strong style="color: #cbd5e1; font-size: 12px;">Local Base URLs:</strong>
+            <div id="companionIpList" style="margin-top: 4px; font-family: monospace; font-size: 13px; color: var(--accent-cyan);">
+              <code>http://localhost:3000/api/</code>
+            </div>
+          </div>
+        </div>
+
+        <table class="api-endpoints-table">
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>HTTP Endpoint</th>
+              <th>Companion Action</th>
+              <th>Test</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Next Slide</strong></td>
+              <td><span class="api-code">POST /api/next</span></td>
+              <td>Generic HTTP Request: <code>/api/next</code></td>
+              <td><button class="btn api-action-btn api-test-btn" data-endpoint="/api/next">Test</button></td>
+            </tr>
+            <tr>
+              <td><strong>Previous Slide</strong></td>
+              <td><span class="api-code">POST /api/prev</span></td>
+              <td>Generic HTTP Request: <code>/api/prev</code></td>
+              <td><button class="btn api-action-btn api-test-btn" data-endpoint="/api/prev">Test</button></td>
+            </tr>
+            <tr>
+              <td><strong>First Slide</strong></td>
+              <td><span class="api-code">POST /api/first</span></td>
+              <td>Generic HTTP Request: <code>/api/first</code></td>
+              <td><button class="btn api-action-btn api-test-btn" data-endpoint="/api/first">Test</button></td>
+            </tr>
+            <tr>
+              <td><strong>Last Slide</strong></td>
+              <td><span class="api-code">POST /api/last</span></td>
+              <td>Generic HTTP Request: <code>/api/last</code></td>
+              <td><button class="btn api-action-btn api-test-btn" data-endpoint="/api/last">Test</button></td>
+            </tr>
+            <tr>
+              <td><strong>Toggle Blackout</strong></td>
+              <td><span class="api-code">POST /api/blackout</span></td>
+              <td>Generic HTTP Request: <code>/api/blackout</code></td>
+              <td><button class="btn api-action-btn api-test-btn" data-endpoint="/api/blackout">Test</button></td>
+            </tr>
+            <tr>
+              <td><strong>Toggle Whiteout</strong></td>
+              <td><span class="api-code">POST /api/whiteout</span></td>
+              <td>Generic HTTP Request: <code>/api/whiteout</code></td>
+              <td><button class="btn api-action-btn api-test-btn" data-endpoint="/api/whiteout">Test</button></td>
+            </tr>
+            <tr>
+              <td><strong>Start Timer</strong></td>
+              <td><span class="api-code">POST /api/timer/start</span></td>
+              <td>Generic HTTP Request: <code>/api/timer/start</code></td>
+              <td><button class="btn api-action-btn api-test-btn" data-endpoint="/api/timer/start">Test</button></td>
+            </tr>
+            <tr>
+              <td><strong>Pause Timer</strong></td>
+              <td><span class="api-code">POST /api/timer/pause</span></td>
+              <td>Generic HTTP Request: <code>/api/timer/pause</code></td>
+              <td><button class="btn api-action-btn api-test-btn" data-endpoint="/api/timer/pause">Test</button></td>
+            </tr>
+            <tr>
+              <td><strong>Live Telemetry</strong></td>
+              <td><span class="api-code">GET /api/status</span></td>
+              <td>Returns JSON for Stream Deck LCD labels</td>
+              <td><button class="btn api-action-btn api-test-btn" data-endpoint="/api/status">Test</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       5. SLIDE GRID MODAL (G KEY)
+       ==================================================================== -->
+  <div class="modal-backdrop" id="gridModal">
+    <div class="modal-card" style="max-width: 960px;">
+      <div class="modal-header">
+        <h3>🗂️ Presentation Slide Overview</h3>
+        <button class="btn btn-icon modal-close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="grid-view-container" id="gridContainer">
+          <!-- Dynamic Grid Slides -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn modal-close-btn">Close (Esc)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       6. KEYBOARD SHORTCUTS MODAL (?)
+       ==================================================================== -->
+  <div class="modal-backdrop" id="shortcutsModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>⌨️ Keyboard & Clicker Shortcuts</h3>
+        <button class="btn btn-icon modal-close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="shortcut-list">
+          <div class="shortcut-item">
+            <span>Next Slide</span>
+            <div><span class="kbd-badge">→</span> <span class="kbd-badge">Space</span> <span class="kbd-badge">PgDn</span></div>
+          </div>
+          <div class="shortcut-item">
+            <span>Previous Slide</span>
+            <div><span class="kbd-badge">←</span> <span class="kbd-badge">PgUp</span> <span class="kbd-badge">Backspace</span></div>
+          </div>
+          <div class="shortcut-item">
+            <span>First / Last Slide</span>
+            <div><span class="kbd-badge">Home</span> / <span class="kbd-badge">End</span></div>
+          </div>
+          <div class="shortcut-item">
+            <span>Toggle Laser Pointer</span>
+            <span class="kbd-badge">L</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Toggle Digital Pen</span>
+            <span class="kbd-badge">P</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Blackout Screen</span>
+            <span class="kbd-badge">B</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Whiteout Screen</span>
+            <span class="kbd-badge">W</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Open Slide Grid</span>
+            <span class="kbd-badge">G</span>
+          </div>
+          <div class="shortcut-item">
+            <span>End Presentation</span>
+            <span class="kbd-badge" style="background:#ef4444; color:#fff;">🛑 End</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Close Modals / Reset Tool</span>
+            <span class="kbd-badge">Esc</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn modal-close-btn">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- About & Creator Modal -->
+  <div class="modal-backdrop" id="aboutModal">
+    <div class="modal-card about-card" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3>
+          <span>📽️</span> About PDF Presenter Suite
+        </h3>
+        <button class="modal-close" id="btnClosePresenterAboutModal">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-size: 40px; margin-bottom: 8px;">📽️</div>
+          <h2 style="font-size: 22px; font-weight: 800; color: #f8fafc; margin-bottom: 6px;">PDF Presenter Suite</h2>
+          <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
+            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.0.0 Production</span>
+            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">Open Source</span>
+            <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">MIT License</span>
+          </div>
+          <p style="font-size: 13.5px; color: #94a3b8; line-height: 1.6; max-width: 460px; margin: 0 auto;">
+            A high-performance desktop presentation environment engineered for keynote speakers and AV technicians, featuring dual-screen presentation, PowerPoint-style presenter cockpit, 1.0s smooth dissolve transitions, and Bitfocus Companion / Stream Deck REST control.
+          </p>
+        </div>
+
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #64748b; margin-bottom: 10px;">
+            Created & Maintained By
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #06b6d4); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: #ffffff; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+                JS
+              </div>
+              <div>
+                <div style="font-size: 16px; font-weight: 700; color: #f1f5f9;">Joseph Sharun</div>
+                <div style="font-size: 12px; color: #94a3b8;">Software Engineer & AV Tech Creator</div>
+              </div>
+            </div>
+
+            <!-- Profile Action Links -->
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-external-link" data-url="https://www.linkedin.com/in/joseph-sharun/" style="display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: rgba(10, 102, 194, 0.15); border: 1px solid rgba(10, 102, 194, 0.4); border-radius: 6px; color: #38bdf8; font-size: 12.5px; font-weight: 600; cursor: pointer;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.63 1.63 0 1 0 0 3.26 1.63 1.63 0 0 0 0-3.26Z"/></svg>
+                LinkedIn
+              </button>
+              <button type="button" class="btn-external-link" data-url="https://github.com/SHARUNJOSEPH" style="display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 6px; color: #f8fafc; font-size: 12.5px; font-weight: 600; cursor: pointer;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2Z"/></svg>
+                GitHub
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size: 12px; color: #64748b; line-height: 1.5; text-align: center;">
+          💡 <strong>Open Source Initiative</strong>: Built to be open-sourced for the community. Feedback, feature requests, and contributions are warmly welcomed!
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11.5px; color: #64748b;">© 2026 Joseph Sharun • MIT License</span>
+        <button class="btn btn-secondary modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/sync-channel.js"></script>
+  <script src="../js/demo-deck.js"></script>
+  <script src="../js/pdf-loader.js"></script>
+  <script src="../js/presenter.js"></script>
+</body>
+</html>

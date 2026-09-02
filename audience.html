@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Presenter - Audience Display</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/audience.css">
+  <!-- Mozilla PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body class="audience-view">
+  <!-- Presentation Stage -->
+  <main class="audience-stage" id="audienceStage">
+    <!-- Slide Canvas & Overlay Layers -->
+    <div class="canvas-container" id="canvasContainer">
+      <canvas id="audienceSlideCanvas"></canvas>
+      <canvas id="audienceDrawCanvas"></canvas>
+      <div class="laser-dot" id="laserDot"></div>
+    </div>
+
+    <!-- Screen Curtain (Blackout / Whiteout) -->
+    <div class="screen-curtain" id="screenCurtain"></div>
+
+    <!-- Floating HUD (Auto-hides during presentation) -->
+    <div class="audience-hud" id="audienceHud">
+      <button class="hud-btn" id="btnFullscreen" title="Toggle Fullscreen Projection (F)">
+        ⛶ Fullscreen (F)
+      </button>
+    </div>
+
+    <!-- Initial Loading Placeholder -->
+    <div class="audience-placeholder" id="placeholder">
+      <div class="placeholder-spinner"></div>
+      <h2 style="font-size: 20px; font-weight: 700; color: #f8fafc;">Connecting to Presenter Console...</h2>
+      <p style="font-size: 14px; color: #94a3b8;">Waiting for slide stream</p>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/sync-channel.js"></script>
+  <script src="js/demo-deck.js"></script>
+  <script src="js/pdf-loader.js"></script>
+  <script src="js/audience.js"></script>
+</body>
+</html>

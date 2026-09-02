@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+package-lock.json.bak
+
+# Build and Distribution outputs (Publish via GitHub Releases, max 2GB)
+dist/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+.eslintcache
+
+# Local Environment
+.env
+.env.local
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
