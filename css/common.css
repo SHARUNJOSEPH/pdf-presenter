@@ -50,6 +50,42 @@ body {
   user-select: none;
 }
 
+/* Selectable & Copyable Elements */
+code, pre, input, textarea, .selectable, .api-path, .api-endpoint, .ip-list, .copyable, [data-copyable], .modal-body, .notes-body {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  cursor: text;
+}
+
+/* Quick Copy Button */
+.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none !important;
+}
+
+.btn-copy:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-copy.copied {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

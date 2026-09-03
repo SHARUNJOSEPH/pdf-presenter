@@ -451,10 +451,10 @@ function startPresentationWindows(config) {
 
   // 2. Create Presenter Cockpit Window
   presenterWindow = new BrowserWindow({
-    x: presenterDisplay.bounds.x + 20,
-    y: presenterDisplay.bounds.y + 20,
-    width: isSingleDisplay ? Math.min(1120, presenterDisplay.workArea.width - 40) : presenterDisplay.workArea.width,
-    height: isSingleDisplay ? Math.min(740, presenterDisplay.workArea.height - 40) : presenterDisplay.workArea.height,
+    x: presenterDisplay.bounds.x,
+    y: presenterDisplay.bounds.y,
+    width: presenterDisplay.workArea.width,
+    height: presenterDisplay.workArea.height,
     show: true,
     backgroundColor: '#0a0e1a',
     title: 'PDF Presenter - Presenter Cockpit',
@@ -470,6 +470,9 @@ function startPresentationWindows(config) {
   presenterWindow.webContents.on('console-message', (event, level, message) => {
     console.log(`[Presenter Console] ${message}`);
   });
+
+  // Automatically maximize Presenter Window so it cleanly covers 100% of the screen
+  presenterWindow.maximize();
   presenterWindow.focus();
 
   if (launcherWindow && !launcherWindow.isDestroyed()) {
@@ -625,6 +628,15 @@ ipcMain.handle('open-external', (event, targetUrl) => {
     shell.openExternal(targetUrl);
   }
   return { success: true };
+});
+
+ipcMain.handle('toggle-presenter-fullscreen', () => {
+  if (presenterWindow && !presenterWindow.isDestroyed()) {
+    const isFS = presenterWindow.isFullScreen();
+    presenterWindow.setFullScreen(!isFS);
+    return { isFullScreen: !isFS };
+  }
+  return { isFullScreen: false };
 });
 
 ipcMain.on('sync-event', (event, data) => {

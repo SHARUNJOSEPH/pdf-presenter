@@ -58,8 +58,13 @@
           ℹ️
         </button>
 
+        <!-- Fullscreen Presenter Cockpit Toggle -->
+        <button class="btn btn-icon" id="btnTogglePresenterFullscreen" title="Toggle Fullscreen (F11)">
+          ⛶
+        </button>
+
         <!-- Exit Presentation Button -->
-        <button class="btn btn-danger" id="btnEndPresentation" title="End presentation, close audience projector, and return to launcher">
+        <button class="btn btn-danger" id="btnEndPresentation" title="End presentation, close audience projector, and return to launcher (Esc)">
           🛑 End Presentation
         </button>
       </div>
@@ -68,9 +73,9 @@
     <!-- ====================================================================
          2. MAIN WORKSPACE (SPLIT PRESENTER VIEW)
          ==================================================================== -->
-    <main class="main-workspace">
+    <main class="main-workspace" id="mainWorkspace">
       <!-- Left: Active Current Slide Viewport -->
-      <section class="active-slide-panel">
+      <section class="active-slide-panel" id="activeSlidePanel">
         <div class="panel-header">
           <div class="panel-title">
             <span>🖥️ Active Slide (Audience View)</span>
@@ -82,7 +87,7 @@
 
         <div class="active-slide-viewport" id="activeSlideViewport">
           <!-- Slide Canvas & Laser/Ink Layer (Double-buffered for smooth 0.4s transitions) -->
-          <div class="slide-canvas-wrapper">
+          <div class="slide-canvas-wrapper" id="slideCanvasWrapper">
             <canvas id="presenterSlideCanvasA" class="presenter-slide-canvas active"></canvas>
             <canvas id="presenterSlideCanvasB" class="presenter-slide-canvas"></canvas>
             <canvas id="presenterDrawCanvas"></canvas>
@@ -121,10 +126,15 @@
         </div>
       </section>
 
+      <!-- Horizontal Divider / Resizer (Left-Right) -->
+      <div class="splitter-gutter splitter-gutter-horizontal" id="horizontalSplitter" title="Drag to resize panels (Double-click to reset)">
+        <div class="splitter-handle"></div>
+      </div>
+
       <!-- Right: Next Slide Preview & Speaker Notes -->
-      <aside class="sidebar-panel">
+      <aside class="sidebar-panel" id="sidebarPanel">
         <!-- Next Slide Card -->
-        <div class="next-slide-card">
+        <div class="next-slide-card" id="nextSlideCard">
           <div class="panel-header">
             <div class="panel-title">
               <span>⏭️ Next Slide Preview</span>
@@ -138,8 +148,13 @@
           </div>
         </div>
 
+        <!-- Vertical Divider / Resizer (Up-Down inside Sidebar) -->
+        <div class="splitter-gutter splitter-gutter-vertical" id="verticalSplitter" title="Drag to resize notes and next slide (Double-click to reset)">
+          <div class="splitter-handle"></div>
+        </div>
+
         <!-- Speaker Notes Card -->
-        <div class="notes-card">
+        <div class="notes-card" id="notesCard">
           <div class="panel-header">
             <div class="panel-title">
               <span>📝 Speaker Notes</span>
@@ -147,7 +162,7 @@
           </div>
           <div class="notes-body">
             <textarea 
-              class="notes-textarea" 
+              class="notes-textarea selectable" 
               id="notesTextarea" 
               placeholder="Type speaker notes for this slide here... (Auto-saved)"
             ></textarea>
@@ -192,8 +207,11 @@
             You can control this presentation from <strong>Bitfocus Companion</strong>, an <strong>Elgato Stream Deck</strong>, or any network device using standard HTTP requests.
           </p>
           <div style="margin-top: 8px;">
-            <strong style="color: #cbd5e1; font-size: 12px;">Local Base URLs:</strong>
-            <div id="companionIpList" style="margin-top: 4px; font-family: monospace; font-size: 13px; color: var(--accent-cyan);">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <strong style="color: #cbd5e1; font-size: 12px;">Local Base URLs:</strong>
+              <button type="button" class="btn-copy" id="btnCopyCompanionBase" data-clipboard="http://localhost:3000/api/" title="Copy Primary API Base URL">📋 Copy Base URL</button>
+            </div>
+            <div id="companionIpList" class="selectable" style="margin-top: 6px; font-family: monospace; font-size: 13px; color: var(--accent-cyan);">
               <code>http://localhost:3000/api/</code>
             </div>
           </div>
@@ -336,12 +354,12 @@
             <span class="kbd-badge">G</span>
           </div>
           <div class="shortcut-item">
-            <span>End Presentation</span>
-            <span class="kbd-badge" style="background:#ef4444; color:#fff;">🛑 End</span>
+            <span>Toggle Fullscreen</span>
+            <span class="kbd-badge">F11</span>
           </div>
           <div class="shortcut-item">
-            <span>Close Modals / Reset Tool</span>
-            <span class="kbd-badge">Esc</span>
+            <span>Exit Presentation / Close Modal</span>
+            <span class="kbd-badge" style="background:#ef4444; color:#fff;">Esc</span>
           </div>
         </div>
       </div>
@@ -365,7 +383,7 @@
           <div style="font-size: 40px; margin-bottom: 8px;">📽️</div>
           <h2 style="font-size: 22px; font-weight: 800; color: #f8fafc; margin-bottom: 6px;">PDF Presenter Suite</h2>
           <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
-            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.0.0 Production</span>
+            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.1.2 Production</span>
             <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">Open Source</span>
             <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">MIT License</span>
           </div>

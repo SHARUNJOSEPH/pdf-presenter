@@ -58,6 +58,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnGrid = document.getElementById('btnGrid');
   const btnShortcuts = document.getElementById('btnShortcuts');
   const btnEndPresentation = document.getElementById('btnEndPresentation');
+  const btnTogglePresenterFullscreen = document.getElementById('btnTogglePresenterFullscreen');
+
+  // Resizable Layout Elements
+  const horizontalSplitter = document.getElementById('horizontalSplitter');
+  const verticalSplitter = document.getElementById('verticalSplitter');
+  const sidebarPanel = document.getElementById('sidebarPanel');
+  const nextSlideCard = document.getElementById('nextSlideCard');
 
   // Modals
   const companionModal = document.getElementById('companionModal');
@@ -71,6 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function init() {
     setupEventListeners();
     setupDrawingLayer();
+    setupResizableLayout();
     startClock();
     setupIpcListeners();
 
@@ -574,7 +582,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const info = await window.electronAPI.getCompanionInfo();
       const ipContainer = document.getElementById('companionIpList');
       if (ipContainer && info.localIPs) {
-        ipContainer.innerHTML = info.localIPs.map(ip => `<code>http://${ip}:${info.port}/api/</code>`).join(' &nbsp;|&nbsp; ');
+        ipContainer.innerHTML = info.localIPs.map(ip => `
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; background: rgba(0,0,0,0.25); padding: 4px 8px; border-radius: 4px;">
+            <code>http://${ip}:${info.port}/api/</code>
+            <button type="button" class="btn-copy" data-clipboard="http://${ip}:${info.port}/api/">📋 Copy</button>
+          </div>
+        `).join('');
+        wireCopyButtons();
       }
     }
   }
@@ -708,9 +722,182 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (e.key === '?') {
         shortcutsModal.classList.toggle('open');
       } else if (e.key === 'Escape') {
-        document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('open'));
-        if (activeTool !== 'select') setTool('select');
+        const openModal = document.querySelector('.modal-backdrop.open');
+        if (openModal) {
+          openModal.classList.remove('open');
+          return;
+        }
+        if (activeTool !== 'select') {
+          setTool('select');
+          return;
+        }
+        handleEndPresentation();
+      } else if (e.key === 'F11') {
+        e.preventDefault();
+        toggleFullscreen();
       }
+    });
+
+    if (btnTogglePresenterFullscreen) {
+      btnTogglePresenterFullscreen.addEventListener('click', toggleFullscreen);
+    }
+
+    wireCopyButtons();
+  }
+
+  // =========================================================================
+  // 12. FULLSCREEN & RESIZABLE LAYOUT
+  // =========================================================================
+  async function toggleFullscreen() {
+    if (window.electronAPI && window.electronAPI.togglePresenterFullscreen) {
+      const res = await window.electronAPI.togglePresenterFullscreen();
+      if (btnTogglePresenterFullscreen) {
+        btnTogglePresenterFullscreen.title = res.isFullScreen ? 'Exit Fullscreen (F11)' : 'Toggle Fullscreen (F11)';
+        btnTogglePresenterFullscreen.textContent = res.isFullScreen ? '🗗' : '⛶';
+      }
+    } else {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  }
+
+  function setupResizableLayout() {
+    // 1. Restore persistent user layout preferences
+    const savedSidebarWidth = localStorage.getItem('presenter_sidebar_width');
+    if (savedSidebarWidth && sidebarPanel) {
+      sidebarPanel.style.setProperty('--sidebar-width', `${savedSidebarWidth}px`);
+      sidebarPanel.style.width = `${savedSidebarWidth}px`;
+    }
+
+    const savedNextHeight = localStorage.getItem('presenter_next_slide_height');
+    if (savedNextHeight && nextSlideCard) {
+      nextSlideCard.style.setProperty('--next-slide-height', `${savedNextHeight}px`);
+      nextSlideCard.style.height = `${savedNextHeight}px`;
+    }
+
+    // 2. Horizontal Splitter (Slide vs Sidebar)
+    if (horizontalSplitter && sidebarPanel) {
+      let isDragging = false;
+      let startX = 0;
+      let startWidth = 0;
+
+      horizontalSplitter.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startWidth = sidebarPanel.getBoundingClientRect().width;
+        document.body.classList.add('resizing-horizontal');
+        horizontalSplitter.classList.add('dragging');
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const delta = startX - e.clientX;
+        const minW = 280;
+        const maxW = Math.round(window.innerWidth * 0.7);
+        const newWidth = Math.max(minW, Math.min(maxW, Math.round(startWidth + delta)));
+        sidebarPanel.style.setProperty('--sidebar-width', `${newWidth}px`);
+        sidebarPanel.style.width = `${newWidth}px`;
+        resizeDrawingCanvas();
+      });
+
+      const stopHorizontalDrag = () => {
+        if (isDragging) {
+          isDragging = false;
+          document.body.classList.remove('resizing-horizontal');
+          horizontalSplitter.classList.remove('dragging');
+          localStorage.setItem('presenter_sidebar_width', Math.round(sidebarPanel.getBoundingClientRect().width));
+          renderCurrentSlide();
+          renderNextSlidePreview();
+        }
+      };
+
+      window.addEventListener('mouseup', stopHorizontalDrag);
+
+      // Double-click resets to default 420px
+      horizontalSplitter.addEventListener('dblclick', () => {
+        sidebarPanel.style.setProperty('--sidebar-width', '420px');
+        sidebarPanel.style.width = '420px';
+        localStorage.removeItem('presenter_sidebar_width');
+        renderCurrentSlide();
+        renderNextSlidePreview();
+      });
+    }
+
+    // 3. Vertical Splitter (Next Slide vs Speaker Notes)
+    if (verticalSplitter && nextSlideCard) {
+      let isDragging = false;
+      let startY = 0;
+      let startHeight = 0;
+
+      verticalSplitter.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startY = e.clientY;
+        startHeight = nextSlideCard.getBoundingClientRect().height;
+        document.body.classList.add('resizing-vertical');
+        verticalSplitter.classList.add('dragging');
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const delta = e.clientY - startY;
+        const minH = 120;
+        const maxH = Math.round(window.innerHeight * 0.65);
+        const newHeight = Math.max(minH, Math.min(maxH, Math.round(startHeight + delta)));
+        nextSlideCard.style.setProperty('--next-slide-height', `${newHeight}px`);
+        nextSlideCard.style.height = `${newHeight}px`;
+      });
+
+      const stopVerticalDrag = () => {
+        if (isDragging) {
+          isDragging = false;
+          document.body.classList.remove('resizing-vertical');
+          verticalSplitter.classList.remove('dragging');
+          localStorage.setItem('presenter_next_slide_height', Math.round(nextSlideCard.getBoundingClientRect().height));
+          renderNextSlidePreview();
+        }
+      };
+
+      window.addEventListener('mouseup', stopVerticalDrag);
+
+      // Double-click resets to default 240px
+      verticalSplitter.addEventListener('dblclick', () => {
+        nextSlideCard.style.setProperty('--next-slide-height', '240px');
+        nextSlideCard.style.height = '240px';
+        localStorage.removeItem('presenter_next_slide_height');
+        renderNextSlidePreview();
+      });
+    }
+  }
+
+  // =========================================================================
+  // 13. CLIPBOARD COPY HELPER
+  // =========================================================================
+  function wireCopyButtons() {
+    document.querySelectorAll('.btn-copy').forEach(btn => {
+      if (btn.dataset.wired) return;
+      btn.dataset.wired = 'true';
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const textToCopy = btn.dataset.clipboard || (btn.previousElementSibling ? btn.previousElementSibling.textContent.trim() : '');
+        if (textToCopy) {
+          try {
+            await navigator.clipboard.writeText(textToCopy);
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = '✓ Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+              btn.innerHTML = origHtml;
+              btn.classList.remove('copied');
+            }, 1800);
+          } catch (err) {
+            console.warn('Clipboard write failed:', err);
+          }
+        }
+      });
     });
   }
 

@@ -1,4 +1,4 @@
-# 📽️ PDF Presenter Suite (v1.0.0)
+# 📽️ PDF Presenter Suite (v1.1.2)
 
 > A modern, high-performance desktop application for dual-screen PDF presentations with a PowerPoint/Keynote-style presenter cockpit, 1.0s silky-smooth dissolve transitions, and integrated Bitfocus Companion / Stream Deck REST control.
 
@@ -13,22 +13,28 @@
 - **Multi-Screen Intelligent Routing**:
   - Automatically identifies all connected displays (primary screen, external monitors, HDMI projectors).
   - Clean fullscreen feed for the audience (no browser tabs, toolbars, or mouse pointers).
-  - Dedicated **Presenter Cockpit** on your primary display.
-- **PowerPoint-Style Presenter Cockpit**:
-  - **Large Live Preview** of the current slide.
+  - Dedicated **Presenter Cockpit** auto-maximized on your primary display.
+- **PowerPoint-Style Adjustable Presenter Cockpit**:
+  - **Draggable Vertical Splitter**: Adjust width between Current Slide and Sidebar on the fly.
+  - **Draggable Horizontal Splitter**: Expand Speaker Notes into a tall teleprompter view or enlarge Next-Slide Preview.
+  - **Layout Memory**: Saves custom panel proportions in `localStorage` across sessions (double-click to reset).
+  - **Large Live Preview** of current slide with responsive aspect re-fitting.
   - **Next-Slide Glance Preview** for seamless speaking flow.
   - **Visual Slide Strip** with jump-to-slide thumbnails.
   - **Stopwatch & Real-Time Clock** with start/pause/reset controls.
-  - **Per-Slide Speaker Notes** with instant local persistence.
+  - **Per-Slide Speaker Notes** with instant local auto-saving.
 - **Silky 1.0s True Dissolve Transitions**:
   - Double-buffered canvas architecture eliminates all white flashes and flickering.
   - Smooth dissolve animation ensures a cinematic keynote experience.
-- **Interactive Tools**:
-  - 🔴 **Virtual Laser Pointer**: Centered and synced live to the audience screen.
-  - ✏️ **Digital Annotation Pen**: Draw and annotate slides in real-time.
+- **Interactive Tools & Keyboard Control**:
+  - 🔴 **Virtual Laser Pointer**: Centered and synced live to the audience screen (`L`).
+  - ✏️ **Digital Annotation Pen**: Draw and annotate slides in real-time (`P`).
   - ⬛ **Instant Blackout & Whiteout (`B` / `W`)**: Direct stage attention to the speaker.
+  - 🛑 **Quick Exit (`Esc`)**: Press Esc anytime to close modals or exit presenter view cleanly.
+  - ⛶ **Fullscreen Toggle (`F11`)**: Borderless distraction-free presenter view.
 - **Bitfocus Companion & Stream Deck Integration**:
   - Built-in lightweight HTTP REST & WebSocket API on port `3000`.
+  - 1-Click **"📋 Copy"** buttons for all API endpoints and network IP addresses.
   - Control slides, blackout, and timers directly from hardware production switchers.
 
 ---
@@ -36,7 +42,7 @@
 ## 🚀 Getting Started
 
 ### Option 1: Standalone Installers (No Node.js Required)
-1. Download the **Windows Installer** (`PDF Presenter Suite Setup 1.0.0.exe`) or the **Portable `.exe`**.
+1. Download the **Windows Installer** (`PDF Presenter Suite Setup 1.1.2.exe`) or the **Portable `.exe`**.
 2. Run the application, select your PDF presentation, and click **"Start Dual-Screen Presentation"**.
 
 ### Option 2: Running from Source
@@ -62,7 +68,8 @@ npm start
 | `P` | Toggle Digital Drawing Pen |
 | `G` | Toggle Slide Grid Modal |
 | `?` | Show Shortcuts Cheat Sheet |
-| `Esc` | Clear Drawing Tool / Close Modals |
+| `F11` | Toggle Fullscreen Cockpit |
+| `Esc` | Exit Presenter View / Close Modal |
 
 ---
 

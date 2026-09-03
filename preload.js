@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // External Link Opener (Browser)
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
 
+  // Fullscreen Management
+  togglePresenterFullscreen: () => ipcRenderer.invoke('toggle-presenter-fullscreen'),
+
   // Cross-Window IPC Synchronization
   sendSync: (payload) => ipcRenderer.send('sync-event', payload),
   onSync: (callback) => {

@@ -320,6 +320,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
     });
+
+    // Copy to Clipboard Buttons
+    document.querySelectorAll('.btn-copy').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const textToCopy = btn.dataset.clipboard || (btn.previousElementSibling ? btn.previousElementSibling.textContent.trim() : '');
+        if (textToCopy) {
+          try {
+            await navigator.clipboard.writeText(textToCopy);
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = '✓ Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+              btn.innerHTML = origHtml;
+              btn.classList.remove('copied');
+            }, 1800);
+          } catch (err) {
+            console.warn('Clipboard write failed:', err);
+          }
+        }
+      });
+    });
   }
 
   await init();
