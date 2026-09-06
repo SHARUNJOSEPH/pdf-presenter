@@ -30,10 +30,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run automated test suite
+        run: npm test
+
       - name: Build & Publish Release Assets
-        uses: electron-userland/electron-builder-action@v5
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          windows: ${{ matrix.os == 'windows-latest' }}
-          mac: ${{ matrix.os == 'macos-latest' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --publish always
