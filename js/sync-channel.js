@@ -28,6 +28,10 @@ class PresentationSyncBus {
 
   // 2. WebSocket Hub (For Companion API bridge and remote networks)
   initWebSocket() {
+    // In Electron file:// protocol, IPC is used; only connect WS if running over HTTP/HTTPS
+    if (!window.location.host || window.location.protocol === 'file:') {
+      return;
+    }
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
 

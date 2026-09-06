@@ -1,11 +1,23 @@
-// main.js - Electron Main Process for Dual-Screen Presentation & Companion Hub
-const { app, BrowserWindow, screen, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, dialog, shell, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const url = require('url');
 const os = require('os');
 const crypto = require('crypto');
+const https = require('https');
+const { generateCompanionConfig } = require('./js/companion-presets.js');
+
+// Global Process Error Boundaries (Google/Microsoft Enterprise Stability)
+process.on('uncaughtException', (err) => {
+  console.error('[CRITICAL UNCAUGHT EXCEPTION]', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[UNHANDLED PROMISE REJECTION]', reason);
+});
+
+// Remove default Chromium menu bar (File/Edit/View) across all windows
+Menu.setApplicationMenu(null);
 
 // Stability flags for Chromium Network Service & GPU on Windows
 app.commandLine.appendSwitch('disable-http-cache');
@@ -42,11 +54,51 @@ let activePdfBuffer = null;
 let activePdfPath = null;
 
 // ===========================================================================
-// 1. EMBEDDED BITFOCUS COMPANION REST API & WEBSOCKET SERVER (PORT 3000)
+// 1. EMBEDDED BITFOCUS COMPANION REST API & WEBSOCKET SERVER
 // ===========================================================================
-let COMPANION_PORT = Number(process.env.PORT) || 3000;
 const wsClients = new Set();
 let timerInterval = null;
+let companionServer = null;
+let isApiServerRunning = false;
+let apiServerError = null;
+
+function getConfigFilePath() {
+  try {
+    return path.join(app.getPath('userData'), 'api-settings.json');
+  } catch (e) {
+    return path.join(__dirname, '.api-settings.json');
+  }
+}
+
+let apiSettings = {
+  enabled: true,
+  host: '0.0.0.0',
+  port: 3000
+};
+
+function loadApiSettings() {
+  try {
+    const cfgFile = getConfigFilePath();
+    if (fs.existsSync(cfgFile)) {
+      const data = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+      if (typeof data.enabled === 'boolean') apiSettings.enabled = data.enabled;
+      if (typeof data.host === 'string' && data.host.trim()) apiSettings.host = data.host.trim();
+      if (typeof data.port === 'number' && data.port >= 1024 && data.port <= 65535) apiSettings.port = data.port;
+    }
+  } catch (e) {
+    console.warn('[API Config] Error loading api-settings.json:', e.message);
+  }
+  return apiSettings;
+}
+
+function saveApiSettings() {
+  try {
+    const cfgFile = getConfigFilePath();
+    fs.writeFileSync(cfgFile, JSON.stringify(apiSettings, null, 2), 'utf8');
+  } catch (e) {
+    console.warn('[API Config] Error saving api-settings.json:', e.message);
+  }
+}
 
 function startServerTimer() {
   if (!state.timerRunning) {
@@ -80,6 +132,28 @@ function getLocalIPs() {
     }
   }
   return addresses.length > 0 ? addresses : ['127.0.0.1'];
+}
+
+function getNetworkInterfacesInfo() {
+  const interfaces = os.networkInterfaces();
+  const list = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        list.push({
+          name: name,
+          address: iface.address
+        });
+      }
+    }
+  }
+  return list;
+}
+
+function getActiveApiUrl() {
+  if (!isApiServerRunning) return null;
+  const host = apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host;
+  return `http://${host}:${apiSettings.port}/api/`;
 }
 
 function formatTime(totalSeconds) {
@@ -138,108 +212,196 @@ function encodeWsFrame(payload) {
   return Buffer.concat([header, buf]);
 }
 
-function setupCompanionServer(initialPort = 3000) {
-  let port = Number(process.env.PORT) || initialPort;
-
-  const server = http.createServer((req, res) => {
-    const parsedUrl = url.parse(req.url, true);
-    const pathname = parsedUrl.pathname;
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Range');
-    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges');
-
-    if (req.method === 'OPTIONS') {
-      res.writeHead(204);
-      res.end();
-      return;
+function stopCompanionServer() {
+  return new Promise((resolve) => {
+    for (const client of wsClients) {
+      try { client.destroy(); } catch (e) {}
     }
+    wsClients.clear();
 
-    // --- 1. STREAM CURRENT ACTIVE PDF FILE DIRECTLY (ZERO BASE64 OVERHEAD) ---
-    if (pathname === '/api/document/current.pdf') {
-      if (activePdfBuffer) {
-        res.writeHead(200, {
-          'Content-Type': 'application/pdf',
-          'Content-Length': activePdfBuffer.length,
-          'Accept-Ranges': 'bytes'
+    if (companionServer) {
+      try {
+        if (typeof companionServer.closeAllConnections === 'function') {
+          companionServer.closeAllConnections();
+        }
+        companionServer.close(() => {
+          companionServer = null;
+          isApiServerRunning = false;
+          apiServerError = null;
+          console.log('[PDF Server] Stopped cleanly.');
+          resolve();
         });
-        res.end(activePdfBuffer);
         return;
-      } else if (activePdfPath && fs.existsSync(activePdfPath)) {
-        const stat = fs.statSync(activePdfPath);
-        res.writeHead(200, {
-          'Content-Type': 'application/pdf',
-          'Content-Length': stat.size,
-          'Accept-Ranges': 'bytes'
-        });
-        fs.createReadStream(activePdfPath).pipe(res);
-        return;
-      } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('No active PDF loaded');
+      } catch (err) {
+        companionServer = null;
+        isApiServerRunning = false;
+        resolve();
         return;
       }
     }
+    isApiServerRunning = false;
+    apiServerError = null;
+    resolve();
+  });
+}
 
-    // --- 2. COMPANION REST API ENDPOINTS ---
-    if (pathname.startsWith('/api/')) {
-      handleCompanionApi(req, res, pathname, parsedUrl.query);
+function startCompanionServer(host = apiSettings.host, port = apiSettings.port) {
+  return new Promise((resolve) => {
+    if (!apiSettings.enabled) {
+      isApiServerRunning = false;
+      apiServerError = null;
+      resolve({ success: true, running: false, error: null });
       return;
     }
 
-    // --- 3. STATIC FILES SERVING ---
-    let relativePath = pathname === '/' ? 'views/launcher.html' : pathname;
-    if (relativePath.startsWith('/')) relativePath = relativePath.substring(1);
-    const filePath = path.join(__dirname, relativePath);
+    const server = http.createServer((req, res) => {
+      const parsedUrl = new URL(req.url, 'http://localhost');
+      const pathname = parsedUrl.pathname;
 
-    fs.stat(filePath, (err, stats) => {
-      if (!err && stats.isFile()) {
-        fs.readFile(filePath, (err2, content) => {
-          if (!err2) {
-            const ext = path.extname(filePath).toLowerCase();
-            const mime = ext === '.html' ? 'text/html; charset=utf-8' :
-                         ext === '.js' ? 'application/javascript; charset=utf-8' :
-                         ext === '.css' ? 'text/css; charset=utf-8' :
-                         ext === '.pdf' ? 'application/pdf' : 'application/octet-stream';
-            res.writeHead(200, { 'Content-Type': mime });
-            res.end(content);
-            return;
-          }
-        });
-      } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Not Found');
+      // Origin validation: Protect against malicious external websites attempting CSRF/SSRF
+      const origin = req.headers['origin'];
+      const isAllowedOrigin = !origin || 
+        origin.startsWith('http://localhost') || 
+        origin.startsWith('http://127.0.0.1') || 
+        origin.startsWith('vscode-webview://') ||
+        origin.startsWith('file://');
+
+      if (origin && !isAllowedOrigin) {
+        console.warn(`[Security Alert] Blocked cross-origin request from unauthorized origin: ${origin}`);
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Cross-Origin Forbidden: External browser sites cannot control PDF Presenter Suite' }));
+        return;
       }
+
+      if (origin && isAllowedOrigin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+      } else {
+        res.setHeader('Access-Control-Allow-Origin', '*'); // For non-browser clients (Bitfocus Companion, hardware clickers)
+      }
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Range');
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges');
+
+      if (req.method === 'OPTIONS') {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+
+      // --- 1. STREAM CURRENT ACTIVE PDF FILE DIRECTLY (ZERO BASE64 OVERHEAD) ---
+      if (pathname === '/api/document/current.pdf') {
+        if (activePdfBuffer) {
+          res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Length': activePdfBuffer.length,
+            'Accept-Ranges': 'bytes'
+          });
+          res.end(activePdfBuffer);
+          return;
+        } else if (activePdfPath && fs.existsSync(activePdfPath)) {
+          const stat = fs.statSync(activePdfPath);
+          res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Length': stat.size,
+            'Accept-Ranges': 'bytes'
+          });
+          fs.createReadStream(activePdfPath).pipe(res);
+          return;
+        } else {
+          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.end('No active PDF loaded');
+          return;
+        }
+      }
+
+      // --- 2. COMPANION REST API ENDPOINTS ---
+      if (pathname.startsWith('/api/')) {
+        handleCompanionApi(req, res, pathname, parsedUrl.query);
+        return;
+      }
+
+      // --- 3. STATIC FILES SERVING ---
+      let relativePath = pathname === '/' ? 'views/launcher.html' : pathname;
+      if (relativePath.startsWith('/')) relativePath = relativePath.substring(1);
+      const filePath = path.join(__dirname, relativePath);
+
+      fs.stat(filePath, (err, stats) => {
+        if (!err && stats.isFile()) {
+          fs.readFile(filePath, (err2, content) => {
+            if (!err2) {
+              const ext = path.extname(filePath).toLowerCase();
+              const mime = ext === '.html' ? 'text/html; charset=utf-8' :
+                           ext === '.js' ? 'application/javascript; charset=utf-8' :
+                           ext === '.css' ? 'text/css; charset=utf-8' :
+                           ext === '.pdf' ? 'application/pdf' : 'application/octet-stream';
+              res.writeHead(200, { 'Content-Type': mime });
+              res.end(content);
+              return;
+            }
+          });
+        } else {
+          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.end('Not Found');
+        }
+      });
     });
-  });
 
-  server.on('upgrade', (req, socket) => {
-    const key = req.headers['sec-websocket-key'];
-    if (!key) { socket.destroy(); return; }
-    const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
-    const accept = crypto.createHash('sha1').update(key + GUID).digest('base64');
-    socket.write(['HTTP/1.1 101 Switching Protocols', 'Upgrade: websocket', 'Connection: Upgrade', `Sec-WebSocket-Accept: ${accept}`].join('\r\n') + '\r\n\r\n');
-    wsClients.add(socket);
-    socket.on('close', () => wsClients.delete(socket));
-    socket.on('error', () => wsClients.delete(socket));
-  });
+    server.on('upgrade', (req, socket) => {
+      const key = req.headers['sec-websocket-key'];
+      if (!key) { socket.destroy(); return; }
+      const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
+      const accept = crypto.createHash('sha1').update(key + GUID).digest('base64');
+      socket.write(['HTTP/1.1 101 Switching Protocols', 'Upgrade: websocket', 'Connection: Upgrade', `Sec-WebSocket-Accept: ${accept}`].join('\r\n') + '\r\n\r\n');
+      wsClients.add(socket);
+      socket.on('close', () => wsClients.delete(socket));
+      socket.on('error', () => wsClients.delete(socket));
+    });
 
-  server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.warn(`[Port Conflict] Port ${port} is in use. Trying port ${port + 1}...`);
-      port++;
-      COMPANION_PORT = port;
-      server.listen(port, '0.0.0.0');
-    } else {
-      console.error('[Server Error]', err);
+    server.on('error', (err) => {
+      console.error('[Companion Server Error]', err.message);
+      apiServerError = err.code === 'EADDRINUSE' ? `Port ${port} is already in use by another program.` : err.message;
+      isApiServerRunning = false;
+      companionServer = null;
+      resolve({ success: false, running: false, error: apiServerError, port: port, host: host });
+    });
+
+    try {
+      server.listen(port, host, () => {
+        companionServer = server;
+        isApiServerRunning = true;
+        apiServerError = null;
+        console.log(`[PDF Server & Companion Hub] Running on http://${host === '0.0.0.0' ? 'localhost' : host}:${port}/api/`);
+        resolve({ success: true, running: true, error: null, port: port, host: host });
+      });
+    } catch (err) {
+      apiServerError = err.message;
+      isApiServerRunning = false;
+      companionServer = null;
+      resolve({ success: false, running: false, error: err.message, port: port, host: host });
     }
   });
+}
 
-  server.listen(port, '0.0.0.0', () => {
-    COMPANION_PORT = port;
-    console.log(`[PDF Server & Companion Hub] Running on http://localhost:${COMPANION_PORT}/api/`);
-  });
+async function restartCompanionServer(newSettings) {
+  if (newSettings) {
+    if (typeof newSettings.enabled === 'boolean') apiSettings.enabled = newSettings.enabled;
+    if (typeof newSettings.host === 'string' && newSettings.host.trim()) apiSettings.host = newSettings.host.trim();
+    if (newSettings.port) {
+      const p = parseInt(newSettings.port, 10);
+      if (!isNaN(p) && p >= 1024 && p <= 65535) {
+        apiSettings.port = p;
+      }
+    }
+    saveApiSettings();
+  }
+
+  await stopCompanionServer();
+
+  if (apiSettings.enabled) {
+    return await startCompanionServer(apiSettings.host, apiSettings.port);
+  } else {
+    return { success: true, running: false, error: null, host: apiSettings.host, port: apiSettings.port };
+  }
 }
 
 function handleCompanionApi(req, res, pathname, query) {
@@ -323,9 +485,12 @@ function handleCompanionApi(req, res, pathname, query) {
 
     case 'info':
       return jsonResponse({
-        serverPort: COMPANION_PORT,
+        enabled: apiSettings.enabled,
+        serverRunning: isApiServerRunning,
+        serverPort: apiSettings.port,
+        serverHost: apiSettings.host,
         localIPs: getLocalIPs(),
-        companionApiUrl: `http://localhost:${COMPANION_PORT}/api/`
+        companionApiUrl: getActiveApiUrl()
       });
 
     default:
@@ -336,6 +501,23 @@ function handleCompanionApi(req, res, pathname, query) {
 // ===========================================================================
 // 2. WINDOW CREATION & LIFECYCLE MANAGEMENT
 // ===========================================================================
+
+// Secure Window Helper: Disables keyboard inspection shortcuts in production
+function secureWindow(win) {
+  if (!win) return;
+  if (app.isPackaged) {
+    win.webContents.on('before-input-event', (event, input) => {
+      if (
+        input.key === 'F12' ||
+        (input.control && input.shift && input.key.toLowerCase() === 'i') ||
+        (input.control && input.shift && input.key.toLowerCase() === 'r') ||
+        (input.control && input.key.toLowerCase() === 'r')
+      ) {
+        event.preventDefault();
+      }
+    });
+  }
+}
 
 function createLauncherWindow() {
   launcherWindow = new BrowserWindow({
@@ -349,10 +531,12 @@ function createLauncherWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      devTools: !app.isPackaged
     }
   });
 
+  secureWindow(launcherWindow);
   launcherWindow.loadFile(path.join(__dirname, 'views/launcher.html'));
 
   launcherWindow.on('closed', () => {
@@ -375,8 +559,11 @@ function startPresentationWindows(config) {
   console.log(`[Presentation Launch] Presenter Display: ${presenterDisplay.id} (${presenterDisplay.bounds.width}x${presenterDisplay.bounds.height})`);
   console.log(`[Presentation Launch] Audience Display: ${audienceDisplay.id} (${audienceDisplay.bounds.width}x${audienceDisplay.bounds.height})`);
 
-  // Ensure active PDF path is set
-  if (config.filePath && fs.existsSync(config.filePath)) {
+  // Ensure active PDF path is set or cleared for demo mode
+  if (config.isDemo) {
+    activePdfPath = null;
+    activePdfBuffer = null;
+  } else if (config.filePath && fs.existsSync(config.filePath)) {
     activePdfPath = config.filePath;
     activePdfBuffer = null; // Stream directly from file
   }
@@ -411,7 +598,8 @@ function startPresentationWindows(config) {
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true,
-        nodeIntegration: false
+        nodeIntegration: false,
+        devTools: !app.isPackaged
       }
     });
 
@@ -439,11 +627,13 @@ function startPresentationWindows(config) {
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true,
-        nodeIntegration: false
+        nodeIntegration: false,
+        devTools: !app.isPackaged
       }
     });
   }
 
+  secureWindow(audienceWindow);
   audienceWindow.loadFile(path.join(__dirname, 'views/audience.html'));
   audienceWindow.webContents.on('console-message', (event, level, message) => {
     console.log(`[Audience Console] ${message}`);
@@ -462,10 +652,12 @@ function startPresentationWindows(config) {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      devTools: !app.isPackaged
     }
   });
 
+  secureWindow(presenterWindow);
   presenterWindow.loadFile(path.join(__dirname, 'views/presenter.html'));
   presenterWindow.webContents.on('console-message', (event, level, message) => {
     console.log(`[Presenter Console] ${message}`);
@@ -568,22 +760,56 @@ ipcMain.handle('select-pdf-file', async () => {
   const filePath = result.filePaths[0];
   const fileName = path.basename(filePath);
   
-  // Cache active file path for HTTP streaming
+  // Cache active file path for HTTP streaming and direct memory buffer
   activePdfPath = filePath;
   activePdfBuffer = null;
+
+  let bufferData = null;
+  try {
+    bufferData = fs.readFileSync(filePath);
+  } catch (err) {
+    console.warn('[PDF Read Error]', err.message);
+  }
 
   return {
     canceled: false,
     filePath: filePath,
     fileName: fileName,
-    streamUrl: `http://localhost:${COMPANION_PORT}/api/document/current.pdf`
+    streamUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/api/document/current.pdf` : null,
+    pdfData: bufferData ? bufferData.buffer.slice(bufferData.byteOffset, bufferData.byteOffset + bufferData.byteLength) : null
   };
+});
+
+ipcMain.handle('load-recent-pdf', (event, filePath) => {
+  if (filePath && fs.existsSync(filePath)) {
+    activePdfPath = filePath;
+    activePdfBuffer = null;
+
+    let bufferData = null;
+    try {
+      bufferData = fs.readFileSync(filePath);
+    } catch (err) {
+      console.warn('[PDF Read Error]', err.message);
+    }
+
+    return {
+      success: true,
+      filePath: filePath,
+      fileName: path.basename(filePath),
+      streamUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/api/document/current.pdf?t=${Date.now()}` : null,
+      pdfData: bufferData ? bufferData.buffer.slice(bufferData.byteOffset, bufferData.byteOffset + bufferData.byteLength) : null
+    };
+  }
+  return { success: false, error: 'File not found on disk' };
 });
 
 ipcMain.handle('set-active-pdf-buffer', (event, { fileName, buffer }) => {
   activePdfBuffer = Buffer.from(buffer);
   activePdfPath = null;
-  return { success: true, streamUrl: `http://localhost:${COMPANION_PORT}/api/document/current.pdf` };
+  return {
+    success: true,
+    streamUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/api/document/current.pdf` : null
+  };
 });
 
 ipcMain.handle('start-presentation', (event, config) => {
@@ -597,17 +823,33 @@ ipcMain.handle('end-presentation', () => {
 });
 
 ipcMain.handle('get-presentation-data', () => {
+  let bufferData = null;
+  if (activePdfBuffer) {
+    bufferData = activePdfBuffer;
+  } else if (activePdfPath && fs.existsSync(activePdfPath)) {
+    try {
+      bufferData = fs.readFileSync(activePdfPath);
+    } catch (err) {
+      console.warn('[PDF Read Error]', err.message);
+    }
+  }
+
   return {
     config: currentPdfConfig,
-    streamUrl: `http://localhost:${COMPANION_PORT}/api/document/current.pdf`,
+    streamUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/api/document/current.pdf` : null,
+    pdfData: bufferData ? bufferData.buffer.slice(bufferData.byteOffset, bufferData.byteOffset + bufferData.byteLength) : null,
     state: getPublicState()
   };
 });
 
 ipcMain.handle('get-companion-info', () => {
   return {
-    port: COMPANION_PORT,
+    enabled: apiSettings.enabled,
+    running: isApiServerRunning,
+    port: apiSettings.port,
+    host: apiSettings.host,
     localIPs: getLocalIPs(),
+    companionApiUrl: getActiveApiUrl(),
     endpoints: [
       { path: '/api/next', desc: 'Advance slide' },
       { path: '/api/prev', desc: 'Previous slide' },
@@ -620,6 +862,34 @@ ipcMain.handle('get-companion-info', () => {
       { path: '/api/timer/pause', desc: 'Pause timer' },
       { path: '/api/status', desc: 'Get live state JSON' }
     ]
+  };
+});
+
+ipcMain.handle('get-api-config', () => {
+  return {
+    enabled: apiSettings.enabled,
+    host: apiSettings.host,
+    port: apiSettings.port,
+    isRunning: isApiServerRunning,
+    error: apiServerError,
+    localIPs: getLocalIPs(),
+    interfaces: getNetworkInterfacesInfo(),
+    activeUrl: getActiveApiUrl()
+  };
+});
+
+ipcMain.handle('update-api-config', async (event, newConfig) => {
+  const result = await restartCompanionServer(newConfig);
+  return {
+    ...result,
+    enabled: apiSettings.enabled,
+    host: apiSettings.host,
+    port: apiSettings.port,
+    isRunning: isApiServerRunning,
+    error: apiServerError,
+    localIPs: getLocalIPs(),
+    interfaces: getNetworkInterfacesInfo(),
+    activeUrl: getActiveApiUrl()
   };
 });
 
@@ -643,10 +913,157 @@ ipcMain.on('sync-event', (event, data) => {
   relaySyncEvent(data);
 });
 
+// Semantic Version Parser & Comparator
+function parseSemver(v) {
+  if (!v) return [0, 0, 0];
+  const cleaned = v.replace(/^v/, '').trim();
+  return cleaned.split('.').map(num => parseInt(num, 10) || 0);
+}
+
+function isNewerVersion(latest, current) {
+  const [lMaj, lMin, lPat] = parseSemver(latest);
+  const [cMaj, cMin, cPat] = parseSemver(current);
+  if (lMaj > cMaj) return true;
+  if (lMaj === cMaj && lMin > cMin) return true;
+  if (lMaj === cMaj && lMin === cMin && lPat > cPat) return true;
+  return false;
+}
+
+function fetchLatestGithubRelease() {
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'api.github.com',
+      path: '/repos/SHARUNJOSEPH/pdf-presenter/releases/latest',
+      headers: {
+        'User-Agent': `PDF-Presenter-Suite/${app.getVersion()}`
+      },
+      timeout: 5000
+    };
+
+    const req = https.get(options, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          if (res.statusCode === 200) {
+            const release = JSON.parse(data);
+            resolve({ success: true, release });
+          } else {
+            resolve({ success: false, status: res.statusCode });
+          }
+        } catch (e) {
+          resolve({ success: false, error: e.message });
+        }
+      });
+    });
+
+    req.on('error', (err) => resolve({ success: false, error: err.message }));
+    req.on('timeout', () => { req.destroy(); resolve({ success: false, error: 'timeout' }); });
+  });
+}
+
+// GitHub Releases Update Checker IPC Handler
+ipcMain.handle('check-for-updates', async () => {
+  const currentVersion = app.getVersion();
+  const isStore = Boolean(process.windowsStore);
+  if (isStore) {
+    return {
+      isStore: true,
+      hasUpdate: false,
+      currentVersion,
+      message: 'Updates are managed automatically by the Microsoft Store.'
+    };
+  }
+
+  const result = await fetchLatestGithubRelease();
+  if (!result.success || !result.release) {
+    return {
+      isStore: false,
+      hasUpdate: false,
+      currentVersion,
+      error: result.error || (result.status === 404 ? 'No public releases published yet' : 'Could not contact update server')
+    };
+  }
+
+  const latestVersion = (result.release.tag_name || '').replace(/^v/, '');
+  const hasUpdate = isNewerVersion(latestVersion, currentVersion);
+  return {
+    isStore: false,
+    hasUpdate,
+    currentVersion,
+    latestVersion,
+    releaseName: result.release.name || `v${latestVersion}`,
+    releaseNotes: result.release.body || '',
+    releaseUrl: result.release.html_url || 'https://github.com/SHARUNJOSEPH/pdf-presenter/releases'
+  };
+});
+
+// Bitfocus Companion & Stream Deck Presets Export Handler
+ipcMain.handle('export-companion-config', async (event, options = {}) => {
+  const host = options.host || (apiSettings.host === '0.0.0.0' ? '127.0.0.1' : apiSettings.host);
+  const port = options.port || apiSettings.port;
+  const configJson = generateCompanionConfig(host, port);
+
+  if (options.returnJsonOnly) {
+    return { success: true, json: configJson };
+  }
+
+  const focusedWin = BrowserWindow.getFocusedWindow() || launcherWindow;
+  const saveResult = await dialog.showSaveDialog(focusedWin, {
+    title: 'Export Bitfocus Companion & Stream Deck Presets',
+    defaultPath: 'pdf-presenter-streamdeck.companionconfig',
+    filters: [
+      { name: 'Companion Configuration', extensions: ['companionconfig', 'json'] }
+    ]
+  });
+
+  if (saveResult.canceled || !saveResult.filePath) {
+    return { canceled: true };
+  }
+
+  fs.writeFileSync(saveResult.filePath, configJson, 'utf8');
+  return {
+    success: true,
+    filePath: saveResult.filePath
+  };
+});
+
 // App Lifecycle
-app.whenReady().then(() => {
-  setupCompanionServer();
+app.whenReady().then(async () => {
+  loadApiSettings();
+  if (apiSettings.enabled) {
+    await startCompanionServer(apiSettings.host, apiSettings.port);
+  }
   createLauncherWindow();
+
+  // Multi-Screen & Display Hotplug Resilience (Google/Microsoft Enterprise Standard)
+  screen.on('display-removed', (event, oldDisplay) => {
+    console.warn(`[Display Alert] Display ${oldDisplay.id} was disconnected.`);
+    if (audienceWindow && !audienceWindow.isDestroyed()) {
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const currentBounds = audienceWindow.getBounds();
+      // If audience window was on the removed display, gracefully move it onto primary
+      if (currentBounds.x >= oldDisplay.bounds.x && currentBounds.x < oldDisplay.bounds.x + oldDisplay.bounds.width) {
+        console.log('[Display Recovery] Gracefully repositioning audience window to primary display.');
+        audienceWindow.setBounds({
+          x: primaryDisplay.bounds.x + 50,
+          y: primaryDisplay.bounds.y + 50,
+          width: Math.min(1280, primaryDisplay.bounds.width - 100),
+          height: Math.min(720, primaryDisplay.bounds.height - 100)
+        });
+      }
+    }
+  });
+
+  screen.on('display-metrics-changed', (event, display, changedMetrics) => {
+    console.log(`[Display Metrics Changed] Display ${display.id}: ${changedMetrics ? changedMetrics.join(', ') : 'unknown'}`);
+    if (presenterWindow && !presenterWindow.isDestroyed()) {
+      presenterWindow.webContents.send('display-metrics-changed', { displayId: display.id });
+    }
+    if (audienceWindow && !audienceWindow.isDestroyed()) {
+      audienceWindow.webContents.send('display-metrics-changed', { displayId: display.id });
+    }
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -655,7 +1072,8 @@ app.whenReady().then(() => {
   });
 });
 
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
+  await stopCompanionServer();
   if (process.platform !== 'darwin') {
     app.quit();
   }

@@ -218,6 +218,7 @@
   display: block;
   max-width: 96%;
   max-height: 96%;
+  aspect-ratio: 16 / 9;
   object-fit: contain;
   background: transparent;
   position: absolute;
@@ -416,6 +417,7 @@
 #nextSlideCanvas {
   max-width: 100%;
   max-height: 100%;
+  aspect-ratio: 16 / 9;
   object-fit: contain;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
@@ -698,3 +700,68 @@ body.resizing-vertical * {
   color: #fff;
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
 }
+
+/* ==========================================================================
+   Slide Sorter & Quick Jump Grid Modal
+   ========================================================================== */
+.modal-grid-card {
+  max-width: 90vw;
+  width: 960px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.slide-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 18px 22px;
+  overflow-y: auto;
+  max-height: calc(85vh - 120px);
+}
+
+.grid-slide-card {
+  background: var(--bg-surface);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.grid-slide-card:hover {
+  border-color: #38bdf8;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25);
+}
+
+.grid-slide-card.active {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.12);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+}
+
+.grid-slide-card canvas {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.grid-slide-card .thumb-number {
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.grid-slide-card.active .thumb-number {
+  color: #a5b4fc;
+}
+

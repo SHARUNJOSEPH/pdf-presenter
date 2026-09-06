@@ -1,8 +1,9 @@
-# 📽️ PDF Presenter Suite (v1.1.2)
+# 📽️ PDF Presenter Suite (v1.1.3)
 
 > A modern, high-performance desktop application for dual-screen PDF presentations with a PowerPoint/Keynote-style presenter cockpit, 1.0s silky-smooth dissolve transitions, and integrated Bitfocus Companion / Stream Deck REST control.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft%20Store-Available%20Now-0078D4.svg)](https://apps.microsoft.com/detail/9NS3LKFXHBXW)
 [![Platform: Windows & macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-informational.svg)](https://github.com/SHARUNJOSEPH)
 [![Creator](https://img.shields.io/badge/Creator-Joseph%20Sharun-6366f1.svg)](https://www.linkedin.com/in/joseph-sharun/)
 
@@ -14,6 +15,15 @@
   - Automatically identifies all connected displays (primary screen, external monitors, HDMI projectors).
   - Clean fullscreen feed for the audience (no browser tabs, toolbars, or mouse pointers).
   - Dedicated **Presenter Cockpit** auto-maximized on your primary display.
+- **Recent Presentations History**:
+  - Quick-launch list on the setup screen remembers your last 5 opened slide decks.
+  - 1-Click to reopen frequently used PDF presentations without searching folders.
+- **Slide Sorter & Quick Jump Grid (`G`)**:
+  - Instant visual grid modal displays high-resolution thumbnails for every slide in your deck.
+  - Jump directly to any slide (e.g., Slide 15 during audience Q&A) without scrolling through intermediate slides in front of the audience.
+- **Live Presentation Timer & Real-Time Wall Clock**:
+  - Live stopwatch timer with Start/Pause/Reset controls.
+  - Real-time digital clock displays local time-of-day so you never run over your session schedule.
 - **PowerPoint-Style Adjustable Presenter Cockpit**:
   - **Draggable Vertical Splitter**: Adjust width between Current Slide and Sidebar on the fly.
   - **Draggable Horizontal Splitter**: Expand Speaker Notes into a tall teleprompter view or enlarge Next-Slide Preview.
@@ -21,15 +31,18 @@
   - **Large Live Preview** of current slide with responsive aspect re-fitting.
   - **Next-Slide Glance Preview** for seamless speaking flow.
   - **Visual Slide Strip** with jump-to-slide thumbnails.
-  - **Stopwatch & Real-Time Clock** with start/pause/reset controls.
   - **Per-Slide Speaker Notes** with instant local auto-saving.
 - **Silky 1.0s True Dissolve Transitions**:
   - Double-buffered canvas architecture eliminates all white flashes and flickering.
   - Smooth dissolve animation ensures a cinematic keynote experience.
+- **Production Hardened & Developer Tools Lock-down**:
+  - Standard Chromium menus and development tools are cleanly stripped from production builds.
+  - Inspection shortcuts (`F12`, `Ctrl+Shift+I`) are blocked in release packages for a polished native desktop feel.
 - **Interactive Tools & Keyboard Control**:
   - 🔴 **Virtual Laser Pointer**: Centered and synced live to the audience screen (`L`).
   - ✏️ **Digital Annotation Pen**: Draw and annotate slides in real-time (`P`).
   - ⬛ **Instant Blackout & Whiteout (`B` / `W`)**: Direct stage attention to the speaker.
+  - 🗂️ **Slide Sorter Grid (`G`)**: Open bird's-eye slide grid to jump instantly to any slide.
   - 🛑 **Quick Exit (`Esc`)**: Press Esc anytime to close modals or exit presenter view cleanly.
   - ⛶ **Fullscreen Toggle (`F11`)**: Borderless distraction-free presenter view.
 - **Bitfocus Companion & Stream Deck Integration**:

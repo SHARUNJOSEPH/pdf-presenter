@@ -103,59 +103,81 @@ class DemoSlideDeck {
   // Render slide to an HTML5 Canvas with pristine High-DPI scaling
   renderSlideToCanvas(pageNumber, targetCanvas, targetWidth = 1920, targetHeight = 1080) {
     const slide = this.getSlide(pageNumber);
+    const BASE_W = 1920;
+    const BASE_H = 1080;
+
     targetCanvas.width = targetWidth;
     targetCanvas.height = targetHeight;
     const ctx = targetCanvas.getContext('2d');
 
-    // Background Gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, targetWidth, targetHeight);
+    // High quality smoothing
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // Clear canvas
+    ctx.fillStyle = '#090d19';
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+    ctx.save();
+    // Compute uniform scale and centering offsets
+    const scale = Math.min(targetWidth / BASE_W, targetHeight / BASE_H);
+    const offsetX = (targetWidth - BASE_W * scale) / 2;
+    const offsetY = (targetHeight - BASE_H * scale) / 2;
+
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(scale, scale);
+
+    // Background Gradient (1920 x 1080 coordinate space)
+    const bgGrad = ctx.createLinearGradient(0, 0, BASE_W, BASE_H);
     bgGrad.addColorStop(0, '#0c1222');
     bgGrad.addColorStop(0.5, '#111936');
     bgGrad.addColorStop(1, '#090d19');
     ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, targetWidth, targetHeight);
+    ctx.fillRect(0, 0, BASE_W, BASE_H);
 
     // Subtle decorative grid lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
     ctx.lineWidth = 1;
     const gridSize = 60;
-    for (let x = 0; x < targetWidth; x += gridSize) {
+    for (let x = 0; x < BASE_W; x += gridSize) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
-      ctx.lineTo(x, targetHeight);
+      ctx.lineTo(x, BASE_H);
       ctx.stroke();
     }
-    for (let y = 0; y < targetHeight; y += gridSize) {
+    for (let y = 0; y < BASE_H; y += gridSize) {
       ctx.beginPath();
       ctx.moveTo(0, y);
-      ctx.lineTo(targetWidth, y);
+      ctx.lineTo(BASE_W, y);
       ctx.stroke();
     }
 
     // Glow accents
-    const radialGlow = ctx.createRadialGradient(targetWidth * 0.8, targetHeight * 0.2, 50, targetWidth * 0.8, targetHeight * 0.2, 500);
+    const radialGlow = ctx.createRadialGradient(BASE_W * 0.8, BASE_H * 0.2, 50, BASE_W * 0.8, BASE_H * 0.2, 500);
     radialGlow.addColorStop(0, 'rgba(99, 102, 241, 0.25)');
     radialGlow.addColorStop(1, 'rgba(99, 102, 241, 0)');
     ctx.fillStyle = radialGlow;
-    ctx.fillRect(0, 0, targetWidth, targetHeight);
+    ctx.fillRect(0, 0, BASE_W, BASE_H);
 
-    // Render by type
+    // Render by type in 1920 x 1080 coordinate space
     if (slide.type === 'title') {
-      this.drawTitleSlide(ctx, slide, targetWidth, targetHeight);
+      this.drawTitleSlide(ctx, slide, BASE_W, BASE_H);
     } else if (slide.type === 'three_cards') {
-      this.drawThreeCardsSlide(ctx, slide, targetWidth, targetHeight);
+      this.drawThreeCardsSlide(ctx, slide, BASE_W, BASE_H);
     } else if (slide.type === 'api_showcase') {
-      this.drawApiShowcaseSlide(ctx, slide, targetWidth, targetHeight);
+      this.drawApiShowcaseSlide(ctx, slide, BASE_W, BASE_H);
     } else if (slide.type === 'feature_grid') {
-      this.drawFeatureGridSlide(ctx, slide, targetWidth, targetHeight);
+      this.drawFeatureGridSlide(ctx, slide, BASE_W, BASE_H);
     } else if (slide.type === 'metrics') {
-      this.drawMetricsSlide(ctx, slide, targetWidth, targetHeight);
+      this.drawMetricsSlide(ctx, slide, BASE_W, BASE_H);
     } else if (slide.type === 'conclusion') {
-      this.drawConclusionSlide(ctx, slide, targetWidth, targetHeight);
+      this.drawConclusionSlide(ctx, slide, BASE_W, BASE_H);
     }
 
     // Slide footer bar
-    this.drawSlideFooter(ctx, pageNumber, this.totalPages, targetWidth, targetHeight);
+    this.drawSlideFooter(ctx, pageNumber, this.totalPages, BASE_W, BASE_H);
+
+    ctx.restore();
   }
 
   drawSlideHeader(ctx, slide, width, height) {

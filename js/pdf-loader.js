@@ -94,9 +94,40 @@ class PDFDocumentEngine {
     if (pageNumber < 1 || pageNumber > this.totalPages) return;
 
     if (this.isDemo || !this.pdfDoc) {
-      const width = options.width || 1920;
-      const height = options.height || 1080;
-      this.demoDeck.renderSlideToCanvas(pageNumber, targetCanvas, width, height);
+      const BASE_W = 1920;
+      const BASE_H = 1080;
+      const dpr = window.devicePixelRatio || 1;
+
+      let cssW = BASE_W;
+      let cssH = BASE_H;
+
+      if (options.targetWidth && options.targetHeight) {
+        const fitScale = Math.min(options.targetWidth / BASE_W, options.targetHeight / BASE_H);
+        cssW = Math.round(BASE_W * fitScale);
+        cssH = Math.round(BASE_H * fitScale);
+      } else if (options.width && options.height) {
+        const fitScale = Math.min(options.width / BASE_W, options.height / BASE_H);
+        cssW = Math.round(BASE_W * fitScale);
+        cssH = Math.round(BASE_H * fitScale);
+      } else if (options.targetWidth) {
+        cssW = Math.round(options.targetWidth);
+        cssH = Math.round(options.targetWidth * (BASE_H / BASE_W));
+      } else if (options.width) {
+        cssW = Math.round(options.width);
+        cssH = Math.round(options.width * (BASE_H / BASE_W));
+      } else if (options.scale) {
+        cssW = Math.round(BASE_W * options.scale);
+        cssH = Math.round(BASE_H * options.scale);
+      }
+
+      // Render at high-DPI resolution for crisp anti-aliased text and vector graphics
+      const renderScale = Math.max(1, Math.min(dpr, 2.0));
+      const renderW = Math.round(cssW * renderScale);
+      const renderH = Math.round(cssH * renderScale);
+
+      targetCanvas.style.width = `${cssW}px`;
+      targetCanvas.style.height = `${cssH}px`;
+      this.demoDeck.renderSlideToCanvas(pageNumber, targetCanvas, renderW, renderH);
       return;
     }
 
@@ -161,6 +192,8 @@ class PDFDocumentEngine {
   async renderThumbnail(pageNumber, targetCanvas, thumbWidth = 260) {
     if (this.isDemo || !this.pdfDoc) {
       const thumbHeight = Math.round(thumbWidth * (9 / 16));
+      targetCanvas.style.width = `${thumbWidth}px`;
+      targetCanvas.style.height = `${thumbHeight}px`;
       this.demoDeck.renderSlideToCanvas(pageNumber, targetCanvas, thumbWidth * 2, thumbHeight * 2);
       return;
     }

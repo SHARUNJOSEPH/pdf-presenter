@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const data = await window.electronAPI.getPresentationData();
         if (data && data.config) {
-          await loadConfiguredDocument(data.config, data.streamUrl);
+          await loadConfiguredDocument(data.config, data.streamUrl, data.pdfData);
           return;
         }
       } catch (err) {
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadPresentationDemo();
   }
 
-  async function loadConfiguredDocument(config, streamUrl = null) {
+  async function loadConfiguredDocument(config, streamUrl = null, pdfData = null) {
     if (typeof config.transitionDuration === 'number') {
       transitionDuration = config.transitionDuration;
       document.documentElement.style.setProperty('--transition-duration', `${transitionDuration}s`);
@@ -110,8 +110,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       docTitleEl.textContent = `Loading ${config.title}...`;
-      const url = streamUrl || 'http://localhost:3000/api/document/current.pdf';
-      const docInfo = await engine.loadPDFFromUrl(url, config.title);
+      let docInfo;
+      if (pdfData) {
+        docInfo = await engine.loadPDFData(pdfData, config.title);
+      } else if (streamUrl) {
+        docInfo = await engine.loadPDFFromUrl(streamUrl, config.title);
+      } else {
+        const url = 'http://localhost:3000/api/document/current.pdf';
+        docInfo = await engine.loadPDFFromUrl(url, config.title);
+      }
       documentTitle = docInfo.title;
       totalPages = docInfo.totalPages;
       currentPage = 1;
@@ -243,7 +250,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (currentPage < totalPages) {
       nextSlideCanvas.style.display = 'block';
       noNextSlideMsg.style.display = 'none';
-      await engine.renderPageToCanvas(currentPage + 1, nextSlideCanvas, { scale: 1.0 });
+      const viewport = document.querySelector('.next-slide-viewport');
+      const w = viewport && viewport.clientWidth > 50 ? viewport.clientWidth - 16 : 400;
+      const h = viewport && viewport.clientHeight > 50 ? viewport.clientHeight - 16 : 225;
+      await engine.renderPageToCanvas(currentPage + 1, nextSlideCanvas, { width: w, height: h, scale: 2.0 });
     } else {
       nextSlideCanvas.style.display = 'none';
       noNextSlideMsg.style.display = 'block';
@@ -281,6 +291,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  function announceA11y(message) {
+    const announcer = document.getElementById('a11yLiveAnnouncer');
+    if (announcer) {
+      announcer.textContent = '';
+      setTimeout(() => { announcer.textContent = message; }, 50);
+    }
+  }
+
   // =========================================================================
   // 3. NAVIGATION (NEXT, PREV, GOTO)
   // =========================================================================
@@ -297,6 +315,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await renderCurrentSlide();
     await renderNextSlidePreview();
     loadSpeakerNotesForCurrentSlide();
+    announceA11y(`Slide ${currentPage} of ${totalPages}`);
   }
 
   function nextPage() {
@@ -352,8 +371,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   // =========================================================================
   // 5. PRESENTATION TOOLS: LASER & DIGITAL PEN
   // =========================================================================
+  let presenterResizeTimer = null;
   function setupDrawingLayer() {
-    window.addEventListener('resize', resizeDrawingCanvas);
+    window.addEventListener('resize', () => {
+      resizeDrawingCanvas();
+      clearTimeout(presenterResizeTimer);
+      presenterResizeTimer = setTimeout(() => {
+        renderCurrentSlide();
+        renderNextSlidePreview();
+      }, 150);
+    });
   }
 
   function resizeDrawingCanvas() {
@@ -485,6 +512,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnBlackout.classList.toggle('btn-active', blankMode === 'black');
     btnWhiteout.classList.toggle('btn-active', blankMode === 'white');
     emitSync({ type: 'SET_BLANK', mode: blankMode });
+    announceA11y(blankMode === 'none' ? 'Audience screen restored' : `${blankMode} screen curtain active`);
   }
 
   // =========================================================================
@@ -581,8 +609,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.electronAPI && window.electronAPI.getCompanionInfo) {
       const info = await window.electronAPI.getCompanionInfo();
       const ipContainer = document.getElementById('companionIpList');
-      if (ipContainer && info.localIPs) {
-        ipContainer.innerHTML = info.localIPs.map(ip => `
+      if (ipContainer) {
+        if (!info.enabled || !info.running) {
+          ipContainer.innerHTML = `
+            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 6px; padding: 10px 12px; color: #fca5a5; font-size: 12px; line-height: 1.5;">
+              ⚠️ <strong>Remote Control API is currently disabled.</strong><br>
+              To control slides from Bitfocus Companion, Stream Deck, or external network devices, enable the API toggle in the Launcher settings.
+            </div>
+          `;
+          return;
+        }
+
+        const baseUrls = [];
+        if (info.host && info.host !== '0.0.0.0') {
+          baseUrls.push(info.host);
+        } else if (info.localIPs && info.localIPs.length > 0) {
+          baseUrls.push(...info.localIPs);
+        } else {
+          baseUrls.push('127.0.0.1');
+        }
+
+        ipContainer.innerHTML = baseUrls.map(ip => `
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; background: rgba(0,0,0,0.25); padding: 4px 8px; border-radius: 4px;">
             <code>http://${ip}:${info.port}/api/</code>
             <button type="button" class="btn-copy" data-clipboard="http://${ip}:${info.port}/api/">📋 Copy</button>
@@ -665,6 +712,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
+    const btnExportPresetsPresenter = document.getElementById('btnExportCompanionConfigPresenter');
+    if (btnExportPresetsPresenter) {
+      btnExportPresetsPresenter.addEventListener('click', async () => {
+        if (window.electronAPI && window.electronAPI.exportCompanionConfig) {
+          const origText = btnExportPresetsPresenter.innerHTML;
+          btnExportPresetsPresenter.innerHTML = '<span>⏳</span> Exporting...';
+          try {
+            const res = await window.electronAPI.exportCompanionConfig();
+            if (res && res.success) {
+              btnExportPresetsPresenter.innerHTML = '<span>✓</span> Presets Exported!';
+              btnExportPresetsPresenter.style.background = '#10b981';
+              setTimeout(() => {
+                btnExportPresetsPresenter.innerHTML = origText;
+                btnExportPresetsPresenter.style.background = '';
+              }, 2500);
+            } else {
+              btnExportPresetsPresenter.innerHTML = origText;
+            }
+          } catch (e) {
+            btnExportPresetsPresenter.innerHTML = origText;
+          }
+        }
+      });
+    }
+
     // Handle External Links (LinkedIn & GitHub)
     document.querySelectorAll('.btn-external-link').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -684,7 +756,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.addEventListener('click', async () => {
         const endpoint = btn.dataset.endpoint;
         try {
-          await fetch(endpoint, { method: 'POST' });
+          let testUrl = endpoint;
+          if (window.electronAPI && window.electronAPI.getCompanionInfo) {
+            const info = await window.electronAPI.getCompanionInfo();
+            if (!info || !info.enabled || !info.running) {
+              alert('Remote Control API is currently disabled. Enable it in the Launcher settings to test endpoints.');
+              return;
+            }
+            testUrl = `http://localhost:${info.port}${endpoint}`;
+          }
+          await fetch(testUrl, { method: 'POST' });
           btn.textContent = '✓ Executed';
           setTimeout(() => { btn.textContent = 'Test'; }, 1000);
         } catch (e) {
@@ -694,6 +775,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     window.addEventListener('keydown', (e) => {
+      // Keyboard focus trap inside open dialogs (WCAG 2.1 AA)
+      const openModal = document.querySelector('.modal-backdrop.open');
+      if (openModal && e.key === 'Tab') {
+        const focusable = openModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (focusable.length > 0) {
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+            return;
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+            return;
+          }
+        }
+      }
+
       if (document.activeElement === notesTextarea) return;
 
       if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ' || e.key === 'Enter') {

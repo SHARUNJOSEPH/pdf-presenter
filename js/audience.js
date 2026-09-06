@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const data = await window.electronAPI.getPresentationData();
         if (data && data.config) {
-          await loadDocumentConfig(data.config, data.streamUrl);
+          await loadDocumentConfig(data.config, data.streamUrl, data.pdfData);
           return;
         }
       } catch (err) {
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  async function loadDocumentConfig(config, streamUrl = null) {
+  async function loadDocumentConfig(config, streamUrl = null, pdfData = null) {
     applyTransitionConfig(config);
 
     if (config.isDemo) {
@@ -82,8 +82,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-      const url = streamUrl || 'http://localhost:3000/api/document/current.pdf';
-      const docInfo = await engine.loadPDFFromUrl(url, config.title);
+      let docInfo;
+      if (pdfData) {
+        docInfo = await engine.loadPDFData(pdfData, config.title);
+      } else if (streamUrl) {
+        docInfo = await engine.loadPDFFromUrl(streamUrl, config.title);
+      } else {
+        const url = 'http://localhost:3000/api/document/current.pdf';
+        docInfo = await engine.loadPDFFromUrl(url, config.title);
+      }
       totalPages = docInfo.totalPages;
       currentPage = 1;
       await renderSlide();
@@ -202,6 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (isFirstRender || transitionDuration === 0 || transitionStyle === 'none') {
         await engine.renderPageToCanvas(currentPage, activeCanvas, {
           targetWidth: targetW,
+          targetHeight: targetH,
           width: targetW,
           height: targetH,
           scale: 2.0
@@ -230,6 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       await engine.renderPageToCanvas(currentPage, backCanvas, {
         targetWidth: targetW,
+        targetHeight: targetH,
         width: targetW,
         height: targetH,
         scale: 2.0

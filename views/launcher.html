@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-inline' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: file:; font-src 'self' data: file:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* file:;">
   <title>PDF Presenter Suite - Setup & Display Launcher</title>
   <link rel="stylesheet" href="../css/common.css">
   <link rel="stylesheet" href="../css/launcher.css">
@@ -27,6 +28,25 @@
         </button>
       </div>
     </header>
+
+    <!-- Software Update Notification Banner -->
+    <div id="updateNotificationBanner" style="display: none; background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(14, 165, 233, 0.95)); color: #ffffff; padding: 12px 20px; border-radius: var(--radius-md); margin: 0 auto 20px auto; max-width: 1060px; width: 100%; box-sizing: border-box; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 20px;">🚀</span>
+        <div>
+          <div id="updateBannerTitle" style="font-size: 13.5px; font-weight: 700;">A New Version of PDF Presenter is Available!</div>
+          <div id="updateBannerSubtitle" style="font-size: 11.5px; opacity: 0.9;">Includes performance enhancements, security updates, and new features.</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button type="button" class="btn" id="btnDownloadUpdate" style="background: #ffffff; color: #1e1b4b; font-weight: 700; font-size: 12px; padding: 6px 14px; border: none; border-radius: var(--radius-sm); cursor: pointer;">
+          Download Update
+        </button>
+        <button type="button" class="btn" id="btnDismissUpdate" style="background: transparent; color: #ffffff; border: 1px solid rgba(255,255,255,0.4); font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); cursor: pointer;">
+          Dismiss
+        </button>
+      </div>
+    </div>
 
     <!-- Main 2-Column Setup Grid -->
     <main class="setup-grid">
@@ -59,6 +79,19 @@
           <div class="doc-meta">
             <div class="doc-meta-title" id="docMetaTitle">Interactive Presentation Showcase.pdf</div>
             <div class="doc-meta-pages" id="docMetaPages">6 Slides • 16:9 Landscape</div>
+          </div>
+        </div>
+
+        <!-- Recent Presentations Section -->
+        <div class="recent-presentations-section" id="recentPresentationsSection" style="display: none;">
+          <div class="recent-header">
+            <span class="recent-header-title">
+              <span>🕒</span> Recent Presentations
+            </span>
+            <button type="button" class="btn-clear-recent" id="btnClearRecent" title="Clear all recent presentations">Clear All</button>
+          </div>
+          <div class="recent-list" id="recentList">
+            <!-- Dynamically populated from localStorage -->
           </div>
         </div>
       </section>
@@ -132,30 +165,123 @@
             <input type="checkbox" id="chkAlwaysOnTop">
             <span>Keep Audience Screen Always on Top</span>
           </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="chkCompanion" checked>
-            <span>Enable Bitfocus Companion & Stream Deck REST API (Port 3000)</span>
-          </label>
         </div>
       </section>
     </main>
 
     <!-- Bottom Launch Action Bar -->
     <footer class="launcher-action-bar">
-      <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 14px;">
         <span class="badge badge-connected">
           <span class="status-dot"></span> Ready to Present
         </span>
-        <span style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
-          Companion API: <code class="selectable" id="lblCompanionApiUrl" style="color: var(--accent-cyan);">http://localhost:3000/api/</code>
-          <button type="button" class="btn-copy" id="btnCopyLauncherApi" data-clipboard="http://localhost:3000/api/" title="Copy API Base URL">📋 Copy</button>
-        </span>
+
+        <!-- Bottom Left API Settings Trigger Button -->
+        <button type="button" class="btn-api-pill" id="btnOpenApiModal" title="Configure Bitfocus Companion & Remote Control API">
+          <span class="status-indicator-dot online" id="footerApiStatusDot"></span>
+          <span style="font-weight: 600;">Remote API:</span>
+          <span class="api-pill-badge" id="footerApiBadge">Port 3000</span>
+          <span style="font-size: 11px; opacity: 0.7;">⚙️</span>
+        </button>
       </div>
 
       <button class="btn-launch" id="btnStartPresentation">
         <span>🚀</span> Start Dual-Screen Presentation
       </button>
     </footer>
+  </div>
+
+  <!-- Remote Control & Companion API Settings Modal -->
+  <div class="modal-backdrop" id="apiModal" role="dialog" aria-modal="true" aria-labelledby="apiModalTitle">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 id="apiModalTitle">
+          <span>🎛️</span> Remote Control & Companion API Settings
+        </h3>
+        <button class="modal-close" id="btnCloseApiModal" aria-label="Close API settings dialog">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 22px;">
+        <!-- Top Switch Card -->
+        <div class="api-modal-toggle-box">
+          <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+            <div style="font-size: 28px;">📡</div>
+            <div>
+              <div style="font-weight: 700; font-size: 14px; color: #f8fafc;">Enable Background REST & WebSocket API</div>
+              <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
+                Allows Bitfocus Companion, Stream Deck, or external remotes to control slides
+              </div>
+            </div>
+          </div>
+          <label class="toggle-switch-wrapper" title="Toggle Remote API on/off">
+            <input type="checkbox" id="chkApiEnabled" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <!-- Configuration Settings (Disabled when toggle is OFF) -->
+        <div class="api-config-body" id="apiConfigBody" style="margin-top: 18px;">
+          <div class="api-fields-row" style="display: flex; gap: 14px; margin-bottom: 16px;">
+            <div class="api-field-col" style="flex: 1.4;">
+              <label for="selApiHost" style="font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; display: block;">Bind IP / Network Adapter:</label>
+              <select class="select-custom" id="selApiHost">
+                <option value="0.0.0.0" selected>0.0.0.0 (All Interfaces - Recommended)</option>
+                <option value="127.0.0.1">127.0.0.1 (Localhost Only - Internal)</option>
+              </select>
+              <input type="text" id="txtCustomApiHost" class="input-custom api-custom-host-input" placeholder="e.g. 192.168.1.100" style="display: none; margin-top: 6px;">
+            </div>
+
+            <div class="api-field-col api-port-col" style="flex: 1;">
+              <label for="numApiPort" style="font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; display: block;">Port Number:</label>
+              <div class="port-input-wrapper">
+                <input type="number" id="numApiPort" class="input-custom" min="1024" max="65535" value="3000" placeholder="3000">
+                <div class="port-quick-presets" style="margin-top: 5px;">
+                  <button type="button" class="preset-port-btn" data-port="3000">3000</button>
+                  <button type="button" class="preset-port-btn" data-port="8080">8080</button>
+                  <button type="button" class="preset-port-btn" data-port="8000">8000</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Base URL & Live Status Indicator -->
+          <div class="api-active-bar" id="apiActiveBar">
+            <div class="api-status-left">
+              <span class="status-indicator-dot online" id="apiStatusDot"></span>
+              <span id="apiStatusLabel" class="api-status-label">Active Base URL:</span>
+              <code class="api-url-code selectable" id="apiBaseUrlDisplay">http://localhost:3000/api/</code>
+            </div>
+            <button type="button" class="btn-copy" id="btnCopyApiUrl" data-clipboard="http://localhost:3000/api/" title="Copy Active API Base URL">📋 Copy URL</button>
+          </div>
+
+          <div class="api-error-banner" id="apiErrorBanner" style="display: none; margin-top: 10px;">
+            ⚠️ <span id="apiErrorMessage">Port conflict detected.</span>
+          </div>
+
+          <div style="margin-top: 14px; font-size: 11.5px; color: #64748b; line-height: 1.5; background: rgba(0,0,0,0.25); padding: 10px 12px; border-radius: 6px;">
+            💡 <strong>Pro Tip:</strong> When disabled, presentations operate 100% offline with zero open network ports. When enabled on <code>0.0.0.0</code>, any Stream Deck or Companion instance on your Wi-Fi/Ethernet can trigger slide actions.
+          </div>
+          <!-- Bitfocus Companion & Stream Deck Presets Export -->
+          <div style="margin-top: 14px; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div style="flex: 1;">
+              <div style="font-size: 12.5px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+                <span>🎛️</span> Stream Deck Presets (.companionconfig)
+              </div>
+              <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">
+                Download a ready-to-use 15-button layout to import into Bitfocus Companion 3.x
+              </div>
+            </div>
+            <button type="button" class="btn btn-primary" id="btnExportCompanionConfig" style="white-space: nowrap; font-size: 11.5px; padding: 6px 12px; display: flex; align-items: center; gap: 5px;">
+              <span>📥</span> Export Presets
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; align-items: center; padding: 14px 20px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-secondary" id="btnApiModalDone">Done</button>
+      </div>
+    </div>
   </div>
 
   <!-- About & Creator Modal -->
@@ -172,7 +298,7 @@
           <div style="font-size: 40px; margin-bottom: 8px;">📽️</div>
           <h2 style="font-size: 22px; font-weight: 800; color: #f8fafc; margin-bottom: 6px;">PDF Presenter Suite</h2>
           <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
-            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.1.2 Production</span>
+            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.1.3 Production</span>
             <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">Open Source</span>
             <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">MIT License</span>
           </div>
@@ -208,6 +334,21 @@
               </button>
             </div>
           </div>
+        </div>
+
+        <!-- Software Version & Updates -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div>
+            <div style="font-size: 12.5px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+              <span>🔄</span> Software Version & Updates
+            </div>
+            <div id="updateStatusText" style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
+              Current build: v1.1.3 (Production)
+            </div>
+          </div>
+          <button type="button" class="btn" id="btnCheckUpdates" style="font-size: 11.5px; padding: 6px 12px; white-space: nowrap; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; cursor: pointer;">
+            Check for Updates
+          </button>
         </div>
 
         <div style="font-size: 12px; color: #64748b; line-height: 1.5; text-align: center;">

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-inline' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: file:; font-src 'self' data: file:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* file:;">
   <title>PDF Presenter - Presenter Cockpit</title>
   <link rel="stylesheet" href="../css/common.css">
   <link rel="stylesheet" href="../css/presenter.css">
@@ -10,6 +11,9 @@
   <script src="../vendor/pdfjs/pdf.min.js"></script>
 </head>
 <body>
+  <!-- Accessibility Screen Reader Live Region (WCAG 2.1 AA) -->
+  <div id="a11yLiveAnnouncer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
   <div class="presenter-app">
     <!-- ====================================================================
          1. TOP STATUS & NAVIGATION BAR
@@ -48,6 +52,11 @@
 
         <button class="btn" id="btnCompanion" title="Bitfocus Companion & Stream Deck API Settings">
           🎛️ Companion API
+        </button>
+
+        <!-- Slide Sorter & Quick Jump Grid -->
+        <button class="btn" id="btnGrid" title="Slide Sorter / Quick Jump Grid (G)">
+          🗂️ Grid (G)
         </button>
 
         <button class="btn btn-icon" id="btnShortcuts" title="Keyboard Shortcuts (?)">
@@ -194,11 +203,11 @@
   <!-- ====================================================================
        4. BITFOCUS COMPANION & STREAM DECK MODAL
        ==================================================================== -->
-  <div class="modal-backdrop" id="companionModal">
+  <div class="modal-backdrop" id="companionModal" role="dialog" aria-modal="true" aria-labelledby="companionModalTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>🎛️ Bitfocus Companion & Stream Deck API</h3>
-        <button class="btn btn-icon modal-close-btn">✕</button>
+        <h3 id="companionModalTitle">🎛️ Bitfocus Companion & Stream Deck API</h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Companion API dialog">✕</button>
       </div>
       <div class="modal-body">
         <div class="companion-guide-box">
@@ -214,6 +223,14 @@
             <div id="companionIpList" class="selectable" style="margin-top: 6px; font-family: monospace; font-size: 13px; color: var(--accent-cyan);">
               <code>http://localhost:3000/api/</code>
             </div>
+          </div>
+          <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <div style="font-size: 11.5px; color: #94a3b8;">
+              Ready-to-use 15-key Stream Deck page layout
+            </div>
+            <button type="button" class="btn btn-primary" id="btnExportCompanionConfigPresenter" style="font-size: 11.5px; padding: 5px 12px;">
+              📥 Export Stream Deck Presets (.companionconfig)
+            </button>
           </div>
         </div>
 
@@ -293,11 +310,11 @@
   <!-- ====================================================================
        5. SLIDE GRID MODAL (G KEY)
        ==================================================================== -->
-  <div class="modal-backdrop" id="gridModal">
+  <div class="modal-backdrop" id="gridModal" role="dialog" aria-modal="true" aria-labelledby="gridModalTitle">
     <div class="modal-card" style="max-width: 960px;">
       <div class="modal-header">
-        <h3>🗂️ Presentation Slide Overview</h3>
-        <button class="btn btn-icon modal-close-btn">✕</button>
+        <h3 id="gridModalTitle">🗂️ Presentation Slide Overview</h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Slide Grid dialog">✕</button>
       </div>
       <div class="modal-body">
         <div class="grid-view-container" id="gridContainer">
@@ -313,11 +330,11 @@
   <!-- ====================================================================
        6. KEYBOARD SHORTCUTS MODAL (?)
        ==================================================================== -->
-  <div class="modal-backdrop" id="shortcutsModal">
+  <div class="modal-backdrop" id="shortcutsModal" role="dialog" aria-modal="true" aria-labelledby="shortcutsModalTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>⌨️ Keyboard & Clicker Shortcuts</h3>
-        <button class="btn btn-icon modal-close-btn">✕</button>
+        <h3 id="shortcutsModalTitle">⌨️ Keyboard & Clicker Shortcuts</h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Shortcuts dialog">✕</button>
       </div>
       <div class="modal-body">
         <div class="shortcut-list">
@@ -370,20 +387,20 @@
   </div>
 
   <!-- About & Creator Modal -->
-  <div class="modal-backdrop" id="aboutModal">
+  <div class="modal-backdrop" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle">
     <div class="modal-card about-card" style="max-width: 580px;">
       <div class="modal-header">
-        <h3>
+        <h3 id="aboutModalTitle">
           <span>📽️</span> About PDF Presenter Suite
         </h3>
-        <button class="modal-close" id="btnClosePresenterAboutModal">&times;</button>
+        <button class="modal-close" id="btnClosePresenterAboutModal" aria-label="Close About dialog">&times;</button>
       </div>
       <div class="modal-body" style="padding: 24px;">
         <div style="text-align: center; margin-bottom: 20px;">
           <div style="font-size: 40px; margin-bottom: 8px;">📽️</div>
           <h2 style="font-size: 22px; font-weight: 800; color: #f8fafc; margin-bottom: 6px;">PDF Presenter Suite</h2>
           <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
-            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.1.2 Production</span>
+            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.1.3 Production</span>
             <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">Open Source</span>
             <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">MIT License</span>
           </div>

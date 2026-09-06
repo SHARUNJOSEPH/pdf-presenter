@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Native OS File Dialog
   selectPdfFile: () => ipcRenderer.invoke('select-pdf-file'),
+  loadRecentPdf: (filePath) => ipcRenderer.invoke('load-recent-pdf', filePath),
   setActivePdfBuffer: (data) => ipcRenderer.invoke('set-active-pdf-buffer', data),
 
   // Presentation Lifecycle
@@ -21,8 +22,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('presentation-ended', listener);
   },
 
-  // Bitfocus Companion Info
+  // Bitfocus Companion & Remote Control API
   getCompanionInfo: () => ipcRenderer.invoke('get-companion-info'),
+  getApiConfig: () => ipcRenderer.invoke('get-api-config'),
+  updateApiConfig: (config) => ipcRenderer.invoke('update-api-config', config),
 
   // External Link Opener (Browser)
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
@@ -36,5 +39,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const listener = (event, data) => callback(data);
     ipcRenderer.on('sync-event', listener);
     return () => ipcRenderer.removeListener('sync-event', listener);
-  }
+  },
+
+  // Updates & Companion Preset Export
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  exportCompanionConfig: (options) => ipcRenderer.invoke('export-companion-config', options)
 });
