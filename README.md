@@ -1,11 +1,58 @@
-# 📽️ PDF Presenter Suite (v1.1.3)
+<div align="center">
 
-> A modern, high-performance desktop application for dual-screen PDF presentations with a PowerPoint/Keynote-style presenter cockpit, 1.0s silky-smooth dissolve transitions, and integrated Bitfocus Companion / Stream Deck REST control.
+# 📽️ PDF Presenter Suite
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Microsoft Store](https://img.shields.io/badge/Microsoft%20Store-Available%20Now-0078D4.svg)](https://apps.microsoft.com/detail/9NS3LKFXHBXW)
-[![Platform: Windows & macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-informational.svg)](https://github.com/SHARUNJOSEPH)
-[![Creator](https://img.shields.io/badge/Creator-Joseph%20Sharun-6366f1.svg)](https://www.linkedin.com/in/joseph-sharun/)
+### Professional Dual-Screen Presentation Software for Keynotes, Conferences & AV Teams
+
+<p>
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest">
+    <img src="https://img.shields.io/badge/⬇️%20Download-Windows%20Setup%20(.exe)-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer" />
+  </a>
+  <a href="https://apps.microsoft.com/detail/9NS3LKFXHBXW">
+    <img src="https://img.shields.io/badge/🛍️%20Get%20it%20from-Microsoft%20Store-0078D4?style=for-the-badge&logo=windows11&logoColor=white" alt="Microsoft Store" />
+  </a>
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases">
+    <img src="https://img.shields.io/badge/📦%20GitHub-All%20Releases-2ea44f?style=for-the-badge&logo=github&logoColor=white" alt="All Releases" />
+  </a>
+</p>
+
+<p>
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest">
+    <img src="https://img.shields.io/github/v/release/SHARUNJOSEPH/pdf-presenter?color=2ea44f&label=Latest%20Version" alt="Latest Version" />
+  </a>
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases">
+    <img src="https://img.shields.io/github/downloads/SHARUNJOSEPH/pdf-presenter/total?color=blue&label=Total%20Downloads" alt="Total Downloads" />
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" />
+  </a>
+  <a href="https://www.linkedin.com/in/joseph-sharun/">
+    <img src="https://img.shields.io/badge/Creator-Joseph%20Sharun-6366f1.svg" alt="Creator: Joseph Sharun" />
+  </a>
+</p>
+
+<br/>
+
+<img src="social-assets/screenshot-1-cockpit-setup-1920x1080.png" alt="PDF Presenter Suite - Presenter Cockpit & Dual-Screen Overview" width="95%" />
+
+<br/>
+<br/>
+
+</div>
+
+---
+
+## 📥 Quick Download & Installation
+
+Choose your preferred way to download and use **PDF Presenter Suite**:
+
+| Distribution Channel | Download Link | Notes |
+| :--- | :--- | :--- |
+| **Windows Setup Installer (.exe)** | [**⬇️ Click Here to Download (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) | **Recommended.** Installs on Windows 10 & 11, creates desktop & start menu shortcuts, in-app auto-update support. |
+| **Microsoft Store** | [**🛍️ Get from Microsoft Store**](https://apps.microsoft.com/detail/9NS3LKFXHBXW) | Verified and certified by Microsoft with silent automatic background updates. |
+| **Portable Version (.exe)** | [**📦 Browse All Releases**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases) | Standalone executable—run directly from a USB drive without installation. |
+
+> 💡 **Tip:** To manually find downloads on GitHub anytime, look at the **"Releases"** section on the right side of this page.
 
 ---
 
@@ -47,16 +94,21 @@
   - ⛶ **Fullscreen Toggle (`F11`)**: Borderless distraction-free presenter view.
 - **Bitfocus Companion & Stream Deck Integration**:
   - Built-in lightweight HTTP REST & WebSocket API on port `3000`.
+  - **1-Click Companion Preset Export**: Generates ready-to-import `.companionconfig` files with 15 pre-styled colored keys (Next, Prev, Blackout, Timers, Laser).
   - 1-Click **"📋 Copy"** buttons for all API endpoints and network IP addresses.
-  - Control slides, blackout, and timers directly from hardware production switchers.
+  - Control slides, blackout, and timers directly from hardware production switchers or Stream Deck panels.
+- **In-App Software Update Checker**:
+  - Built-in GitHub Releases update engine checks for new builds automatically.
+  - One-click update checking in the About dialog with direct download support.
 
 ---
 
 ## 🚀 Getting Started
 
 ### Option 1: Standalone Installers (No Node.js Required)
-1. Download the **Windows Installer** (`PDF Presenter Suite Setup 1.1.2.exe`) or the **Portable `.exe`**.
-2. Run the application, select your PDF presentation, and click **"Start Dual-Screen Presentation"**.
+1. Download the [**Latest Windows Installer (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) or install directly from the [**Microsoft Store**](https://apps.microsoft.com/detail/9NS3LKFXHBXW).
+2. Run the installer or open the application.
+3. Select your PDF presentation (or click **Use Demo Deck**) and click **"Start Dual-Screen Presentation"**.
 
 ### Option 2: Running from Source
 ```bash
