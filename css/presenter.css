@@ -93,6 +93,126 @@
   letter-spacing: 0.5px;
   min-width: 60px;
   text-align: center;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.timer-display.phase-normal {
+  color: #22c55e;
+  text-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.timer-display.phase-warning {
+  color: #f59e0b;
+  animation: pulse-amber 1.5s infinite ease-in-out;
+}
+
+.timer-display.phase-critical {
+  color: #ef4444;
+  animation: pulse-red 0.8s infinite ease-in-out;
+}
+
+.timer-display.phase-overtime {
+  color: #dc2626;
+  animation: flash-red 0.5s infinite ease-in-out;
+}
+
+@keyframes pulse-amber {
+  0%, 100% { opacity: 1; text-shadow: 0 0 6px rgba(245, 158, 11, 0.5); }
+  50% { opacity: 0.65; text-shadow: 0 0 14px rgba(245, 158, 11, 0.9); }
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; text-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+  50% { opacity: 0.4; text-shadow: 0 0 18px rgba(239, 68, 68, 1); }
+}
+
+@keyframes flash-red {
+  0%, 100% { opacity: 1; text-shadow: 0 0 12px rgba(220, 38, 38, 1); }
+  50% { opacity: 0.2; text-shadow: none; }
+}
+
+/* Timer Presets Popover Menu */
+.timer-presets-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preset-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.preset-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+.preset-option-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.preset-option-btn:hover, .preset-option-btn.active {
+  background: var(--primary-color);
+  color: #ffffff;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.preset-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.preset-chip:hover {
+  background: rgba(14, 165, 233, 0.2);
+  border-color: #0ea5e9;
+  color: #38bdf8;
+}
+
+.preset-chip.active {
+  background: #0ea5e9;
+  border-color: #0ea5e9;
+  color: #fff;
 }
 
 .timer-controls {
@@ -304,6 +424,91 @@
   height: 20px;
   background: var(--border-color);
   margin: 0 4px;
+}
+
+/* Annotation Palette */
+.annotation-palette {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.palette-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+.palette-swatch:hover {
+  transform: scale(1.25);
+}
+
+.palette-swatch.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 8px currentColor;
+  transform: scale(1.2);
+}
+
+/* Stroke Width Selector */
+.stroke-width-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 4px;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.width-btn {
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.width-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.width-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.dot-fine {
+  width: 3px;
+  height: 3px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+.dot-medium {
+  width: 6px;
+  height: 6px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+.dot-thick {
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border-radius: 50%;
 }
 
 /* --- Horizontal Splitter Gutter (Left-Right) --- */
@@ -801,9 +1006,93 @@ body.resizing-vertical * {
 @media (max-width: 980px) {
   #btnCompanion span:not(.pro-tag-lock),
   #btnGrid span:not(.pro-tag-lock),
+  #btnWatermark span:not(.pro-tag-lock),
+  #btnAudienceBanner span:not(.pro-tag-lock),
   #btnEndPresentation span {
     display: none;
   }
 }
+
+/* ==========================================================================
+   Watermark & Audience Banner Presenter Modal Styles
+   ========================================================================== */
+.switch-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-toggle .slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #334155;
+  transition: .3s;
+  border-radius: 24px;
+}
+
+.switch-toggle .slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+.switch-toggle input:checked + .slider {
+  background-color: var(--accent-blue, #6366f1) !important;
+}
+
+.switch-toggle input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.btn-preset-banner {
+  padding: 6px 12px;
+  font-size: 11.5px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-preset-banner:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.btn-duration {
+  padding: 8px 12px;
+  font-size: 12px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-duration:hover,
+.btn-duration.active {
+  background: var(--accent-blue, #6366f1);
+  border-color: #818cf8;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+}
+
 
 

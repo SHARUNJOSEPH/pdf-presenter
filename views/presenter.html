@@ -8,6 +8,7 @@
   <title>PDF Presenter - Presenter Cockpit</title>
   <link rel="stylesheet" href="../css/common.css">
   <link rel="stylesheet" href="../css/presenter.css">
+  <link rel="stylesheet" href="../css/pro-features.css">
   <!-- Internationalization (i18n) Engine & Locales -->
   <script src="../js/locales.js"></script>
   <script src="../js/i18n.js"></script>
@@ -37,14 +38,32 @@
 
       <!-- Center: Presentation Timer & Real-Time Clock -->
       <div class="top-bar-center">
-        <div class="timer-widget">
+        <div class="timer-widget" id="timerWidget" style="position: relative;">
           <span style="font-size: 14px;">⏱️</span>
-          <div class="timer-display" id="timerDisplay">00:00</div>
+          <div class="timer-display phase-normal" id="timerDisplay">00:00</div>
           <div class="timer-controls">
             <button class="timer-btn" id="btnTimerToggle" title="Start/Pause Timer" data-i18n-title="presenter.timerToggle">▶️</button>
             <button class="timer-btn" id="btnTimerReset" title="Reset Timer" data-i18n-title="presenter.timerReset">🔄</button>
+            <button class="timer-btn" id="btnTimerPresets" title="Countdown Presets (Pro)" data-i18n-title="presenter.timerPresets">⏳</button>
           </div>
           <div class="clock-display" id="clockDisplay">12:00:00</div>
+
+          <!-- Timer Presets Popover Menu -->
+          <div class="timer-presets-popover" id="timerPresetsPopover" style="display: none;">
+            <div class="preset-header">Timer Mode</div>
+            <button class="preset-option-btn active" id="btnPresetCountup" data-mode="countup">Stopwatch (Count Up)</button>
+            <div class="preset-divider"></div>
+            <div class="preset-header">Keynote Countdown <span class="pro-tag-lock">PRO</span></div>
+            <div class="preset-grid">
+              <button class="preset-chip" data-preset="5m">5m</button>
+              <button class="preset-chip" data-preset="10m">10m</button>
+              <button class="preset-chip" data-preset="15m">15m</button>
+              <button class="preset-chip" data-preset="20m">20m</button>
+              <button class="preset-chip" data-preset="30m">30m</button>
+              <button class="preset-chip" data-preset="45m">45m</button>
+              <button class="preset-chip" data-preset="60m">60m</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -79,6 +98,30 @@
         <!-- Slide Sorter & Quick Jump Grid -->
         <button class="btn" id="btnGrid" title="Slide Sorter / Quick Jump Grid (G)" data-i18n-title="shortcuts.grid">
           🗂️ <span data-i18n="presenter.gridBtn">Grid (G)</span>
+          <span class="pro-tag-lock">PRO</span>
+        </button>
+
+        <!-- Brand Watermark & Event Branding -->
+        <button class="btn" id="btnWatermark" title="Brand Watermark & Event Branding Overlay">
+          🎨 <span>Watermark</span>
+          <span class="pro-tag-lock">PRO</span>
+        </button>
+
+        <!-- Live Audience Lower-Third Ticker Banner -->
+        <button class="btn" id="btnAudienceBanner" title="Live Audience Lower-Third Ticker Banner">
+          📢 <span>Banner</span>
+          <span class="pro-tag-lock">PRO</span>
+        </button>
+
+        <!-- Multi-Deck Conference Playlist (Speaker Queue) -->
+        <button class="btn" id="btnPlaylist" title="Multi-Deck Conference Playlist & Speaker Queue">
+          📑 <span>Playlist</span>
+          <span class="pro-tag-lock">PRO</span>
+        </button>
+
+        <!-- Rehearsal Metrics & Slide Time Heatmap -->
+        <button class="btn" id="btnRehearsalMetrics" title="Rehearsal Analytics & Slide Dwell Heatmap">
+          📊 <span>Analytics</span>
           <span class="pro-tag-lock">PRO</span>
         </button>
 
@@ -142,6 +185,27 @@
             <button class="btn" id="btnPen" title="Toggle Digital Pen Annotation (P)" data-i18n-title="presenter.drawPen">
               ✏️ <span data-i18n="presenter.drawPen">Pen</span>
             </button>
+            <button class="btn" id="btnHighlighter" title="Toggle Semi-Transparent Highlighter (H)" data-i18n-title="presenter.highlighter">
+              🖍️ <span data-i18n="presenter.highlighter">Highlighter</span>
+              <span class="pro-tag-lock">PRO</span>
+            </button>
+
+            <!-- Multi-Color Palette Swatches -->
+            <div class="annotation-palette" id="annotationPalette">
+              <button class="palette-swatch active" data-color="#eab308" style="background-color: #eab308;" title="Yellow (Default)"></button>
+              <button class="palette-swatch pro-swatch" data-color="#22c55e" style="background-color: #22c55e;" title="Neon Green (Pro)"></button>
+              <button class="palette-swatch pro-swatch" data-color="#38bdf8" style="background-color: #38bdf8;" title="Electric Blue (Pro)"></button>
+              <button class="palette-swatch pro-swatch" data-color="#ec4899" style="background-color: #ec4899;" title="Hot Pink (Pro)"></button>
+              <button class="palette-swatch pro-swatch" data-color="#ffffff" style="background-color: #ffffff;" title="White (Pro)"></button>
+            </div>
+
+            <!-- Stroke Width Selector -->
+            <div class="stroke-width-selector" id="strokeWidthSelector">
+              <button class="width-btn" data-width="2" title="Fine (2px)"><span class="dot-fine"></span></button>
+              <button class="width-btn active" data-width="5" title="Medium (5px)"><span class="dot-medium"></span></button>
+              <button class="width-btn" data-width="10" title="Thick (10px)"><span class="dot-thick"></span></button>
+            </div>
+
             <button class="btn btn-icon" id="btnClearDraw" title="Clear Annotations">
               🧹
             </button>
@@ -187,10 +251,14 @@
 
         <!-- Speaker Notes Card -->
         <div class="notes-card" id="notesCard">
-          <div class="panel-header">
+          <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
             <div class="panel-title">
               <span>📝</span> <span data-i18n="presenter.speakerNotes">Speaker Notes</span>
             </div>
+            <button type="button" class="btn" id="btnExportNotes" title="Export all speaker notes to formatted Markdown / Handout" style="padding: 2px 8px; font-size: 11px; display: flex; align-items: center; gap: 4px;">
+              <span>📤</span> <span>Export</span>
+              <span class="pro-tag-lock">PRO</span>
+            </button>
           </div>
           <div class="notes-body">
             <textarea 
@@ -475,6 +543,240 @@
     </div>
   </div>
 
+  <!-- Watermark & Branding Modal -->
+  <div class="modal-backdrop" id="watermarkModal" role="dialog" aria-modal="true" aria-labelledby="watermarkModalTitle">
+    <div class="modal-card" style="max-width: 560px;">
+      <div class="modal-header">
+        <h3 id="watermarkModalTitle">🎨 <span>Brand Watermark & Event Branding</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Watermark dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- Enable Toggle -->
+          <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.6); padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <div>
+              <div style="font-weight: 700; font-size: 14px; color: #f8fafc;">Enable Brand Watermark</div>
+              <div style="font-size: 12px; color: #94a3b8;">Display branding overlay on the audience projector screen</div>
+            </div>
+            <label class="switch-toggle" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <input type="checkbox" id="watermarkEnabled" style="opacity: 0; width: 0; height: 0;">
+              <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: #334155; transition: .3s; border-radius: 24px;"></span>
+            </label>
+          </div>
+
+          <!-- Type Selector: Text vs Image -->
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px;">Watermark Type</label>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" class="btn active" id="btnWatermarkTypeText" style="flex: 1;">📝 Custom Text</button>
+              <button type="button" class="btn" id="btnWatermarkTypeImage" style="flex: 1;">🖼️ Logo Image</button>
+            </div>
+          </div>
+
+          <!-- Text Input Container -->
+          <div id="watermarkTextGroup">
+            <label for="watermarkTextInput" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Watermark Text</label>
+            <input type="text" id="watermarkTextInput" class="key-input" style="width: 100%; box-sizing: border-box;" placeholder="e.g. ACME CORP KEYNOTE 2026" value="CONFIDENTIAL">
+          </div>
+
+          <!-- Image Input Container -->
+          <div id="watermarkImageGroup" style="display: none;">
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Upload Logo / Image URL</label>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="file" id="watermarkFileInput" accept="image/*" style="display: none;">
+              <button type="button" class="btn" id="btnUploadWatermarkFile" style="white-space: nowrap;">📁 Browse Image...</button>
+              <input type="text" id="watermarkUrlInput" class="key-input" style="flex: 1;" placeholder="Or paste image URL or data:image...">
+            </div>
+            <div id="watermarkImagePreviewContainer" style="display: none; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border: 1px dashed var(--border-color);">
+              <img id="watermarkImagePreview" style="max-height: 60px; max-width: 100%; object-fit: contain;">
+            </div>
+          </div>
+
+          <!-- Position Selector -->
+          <div>
+            <label for="watermarkPositionSelect" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Corner Position</label>
+            <select id="watermarkPositionSelect" class="lang-select-control" style="width: 100%; box-sizing: border-box; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; color: #f8fafc;">
+              <option value="bottom-right" selected>Bottom-Right (Default)</option>
+              <option value="top-right">Top-Right</option>
+              <option value="bottom-left">Bottom-Left</option>
+              <option value="top-left">Top-Left</option>
+            </select>
+          </div>
+
+          <!-- Sliders: Opacity & Scale -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <label for="watermarkOpacityRange" style="font-size: 12px; font-weight: 700; color: #cbd5e1;">Opacity</label>
+                <span id="watermarkOpacityVal" style="font-size: 12px; color: var(--accent-cyan);">0.80</span>
+              </div>
+              <input type="range" id="watermarkOpacityRange" min="0.1" max="1.0" step="0.05" value="0.8" style="width: 100%;">
+            </div>
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <label for="watermarkScaleRange" style="font-size: 12px; font-weight: 700; color: #cbd5e1;">Scale</label>
+                <span id="watermarkScaleVal" style="font-size: 12px; color: var(--accent-cyan);">1.00x</span>
+              </div>
+              <input type="range" id="watermarkScaleRange" min="0.5" max="1.5" step="0.05" value="1.0" style="width: 100%;">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="btn btn-secondary" id="btnClearWatermark">Clear / Disable</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn modal-close-btn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="btnApplyWatermark">Apply to Screen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Audience Lower-Third Ticker Banner Modal -->
+  <div class="modal-backdrop" id="audienceBannerModal" role="dialog" aria-modal="true" aria-labelledby="audienceBannerModalTitle">
+    <div class="modal-card" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 id="audienceBannerModalTitle">📢 <span>Live Audience Lower-Third Ticker Banner</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Banner dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- Banner Message Input -->
+          <div>
+            <label for="bannerMessageInput" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Banner Message Text</label>
+            <textarea id="bannerMessageInput" class="notes-textarea selectable" style="height: 70px; resize: vertical;" placeholder="Type broadcast message for audience screen... (e.g. 📢 Q&A session starts now • Ask your questions at sli.do/#TECH2026)"></textarea>
+          </div>
+
+          <!-- Quick Presets -->
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px;">Quick Announcements</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <button type="button" class="btn btn-preset-banner" data-msg="📢 Live Q&A Session is now open! Please submit your questions.">Live Q&A Open</button>
+              <button type="button" class="btn btn-preset-banner" data-msg="☕ We will take a 10-minute coffee break. Session resumes shortly.">10-Min Break</button>
+              <button type="button" class="btn btn-preset-banner" data-msg="📱 Please silence all mobile phones and recording devices.">Silence Phones</button>
+              <button type="button" class="btn btn-preset-banner" data-msg="🌐 Access slides & resources at www.presentation-deck.com">Resource Link</button>
+            </div>
+          </div>
+
+          <!-- Display Duration Mode -->
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Display Duration</label>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-duration active" data-duration="0" style="flex: 1;">📌 Sticky (Until Dismissed)</button>
+              <button type="button" class="btn btn-duration" data-duration="10" style="flex: 1;">⏱️ 10s</button>
+              <button type="button" class="btn btn-duration" data-duration="30" style="flex: 1;">⏱️ 30s</button>
+              <button type="button" class="btn btn-duration" data-duration="60" style="flex: 1;">⏱️ 60s</button>
+            </div>
+          </div>
+
+          <!-- Live Status & Preview -->
+          <div id="bannerActiveStatusBox" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="bannerStatusDot" style="width: 10px; height: 10px; border-radius: 50%; background: #64748b; display: inline-block;"></span>
+              <span id="bannerStatusText" style="font-size: 13px; font-weight: 600; color: #94a3b8;">Banner is currently hidden</span>
+            </div>
+            <button type="button" class="btn btn-danger" id="btnDismissBanner" style="display: none; padding: 4px 12px; font-size: 12px;">Hide Banner Now</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn modal-close-btn">Close</button>
+        <button type="button" class="btn btn-primary" id="btnBroadcastBanner" style="display: flex; align-items: center; gap: 6px;">
+          <span>📢</span> Broadcast to Audience
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multi-Deck Conference Playlist (Speaker Queue) Modal -->
+  <div class="modal-backdrop" id="playlistModal" role="dialog" aria-modal="true" aria-labelledby="playlistModalTitle">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 id="playlistModalTitle">📑 <span>Multi-Deck Conference Playlist (Speaker Queue)</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Playlist dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <div style="font-size: 13.5px; font-weight: 700; color: #f8fafc;">Speaker Presentations Queue</div>
+            <div style="font-size: 12px; color: #94a3b8;">Switch between speaker decks seamlessly with zero audience window restart</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <input type="file" id="playlistFileInput" accept=".pdf" style="display: none;">
+            <button type="button" class="btn btn-primary" id="btnAddDeck" style="font-size: 12px; padding: 6px 12px;">+ Add PDF Deck</button>
+          </div>
+        </div>
+        <div class="playlist-queue-list" id="playlistQueueList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 12px; color: #64748b;">💎 Pro Feature: Unlimited multi-deck conference playlists</span>
+        <button class="btn modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rehearsal Metrics & Slide Time Heatmap Modal -->
+  <div class="modal-backdrop" id="metricsModal" role="dialog" aria-modal="true" aria-labelledby="metricsModalTitle">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 id="metricsModalTitle">📊 <span>Rehearsal Analytics & Slide Dwell Heatmap</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Analytics dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div class="metrics-summary-cards" id="metricsSummaryCards">
+          <div class="metrics-card">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8;">Total Rehearsal Time</div>
+            <div class="metrics-card-value" id="metricsTotalTime">00:00</div>
+          </div>
+          <div class="metrics-card">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8;">Average / Slide</div>
+            <div class="metrics-card-value" id="metricsAvgTime">00:00</div>
+          </div>
+          <div class="metrics-card">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8;">Longest Slide</div>
+            <div class="metrics-card-value" id="metricsLongestSlide" style="font-size: 16px; margin-top: 10px;">—</div>
+          </div>
+        </div>
+        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px;">Slide Dwell Pacing & Heatmap</div>
+        <div class="metrics-chart-list" id="metricsChartList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn" id="btnExportMetricsCsv">📥 Export CSV</button>
+          <button type="button" class="btn" id="btnExportMetricsMd">📋 Export Markdown</button>
+        </div>
+        <button class="btn modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Speaker Notes Export Modal -->
+  <div class="modal-backdrop" id="notesExportModal" role="dialog" aria-modal="true" aria-labelledby="notesExportModalTitle">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 id="notesExportModalTitle">📝 <span>Speaker Notes Handout Export</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Notes Export dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">
+          Formatted Markdown handout of private speaker notes across all slides:
+        </div>
+        <textarea id="notesExportPreview" class="notes-textarea selectable" style="height: 240px; font-family: var(--font-mono); font-size: 12px;" readonly></textarea>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn" id="btnCopyNotesExport">📋 Copy Notes</button>
+          <button type="button" class="btn btn-primary" id="btnDownloadNotesExport">💾 Download .md</button>
+        </div>
+        <button class="btn modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Freemium & Pro In-App Purchase Upgrade Modal -->
   <div class="modal-backdrop" id="upgradeProModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="upgradeModalTitle">
     <div class="modal-card modal-upgrade-card">
@@ -550,6 +852,9 @@
   <script src="../js/demo-deck.js"></script>
   <script src="../js/pdf-loader.js"></script>
   <script src="../js/upgrade-modal.js"></script>
+  <script src="../js/playlist-metrics.js"></script>
+  <script src="../js/timer-annotation.js"></script>
+  <script src="../js/watermark-banner.js"></script>
   <script src="../js/presenter.js"></script>
 </body>
 </html>

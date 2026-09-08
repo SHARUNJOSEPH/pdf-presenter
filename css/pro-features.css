@@ -1,0 +1,380 @@
+/* css/pro-features.css - High-End Pro Suite Enterprise Components */
+
+/* ==========================================================================
+   1. Smart Keynote Countdown Timer & Overtime Flashing
+   ========================================================================== */
+.timer-widget.timer-countdown {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(30, 41, 59, 0.85);
+}
+
+.timer-widget.timer-warning {
+  border-color: rgba(245, 158, 11, 0.7);
+  background: rgba(245, 158, 11, 0.15);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+  animation: timerWarningPulse 2s infinite ease-in-out;
+}
+
+.timer-widget.timer-warning .timer-display {
+  color: #fef08a !important;
+}
+
+.timer-widget.timer-critical {
+  border-color: rgba(239, 68, 68, 0.8);
+  background: rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+  animation: timerCriticalPulse 1s infinite ease-in-out;
+}
+
+.timer-widget.timer-critical .timer-display {
+  color: #fca5a5 !important;
+}
+
+.timer-widget.timer-overtime {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.3) !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.8) !important;
+  animation: timerOvertimeFlash 0.8s infinite alternate ease-in-out;
+}
+
+.timer-widget.timer-overtime .timer-display {
+  color: #ffffff !important;
+  font-weight: 800;
+}
+
+@keyframes timerWarningPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.2); }
+  50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.5); }
+}
+
+@keyframes timerCriticalPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+  50% { box-shadow: 0 0 22px rgba(239, 68, 68, 0.7); }
+}
+
+@keyframes timerOvertimeFlash {
+  0% { background: rgba(239, 68, 68, 0.25); }
+  100% { background: rgba(220, 38, 38, 0.6); }
+}
+
+.timer-mode-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+.timer-mode-badge.badge-countup {
+  background: rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+}
+
+.timer-mode-badge.badge-countdown {
+  background: rgba(99, 102, 241, 0.25);
+  color: #a5b4fc;
+}
+
+/* Timer Setup Quick Select Modal/Dropdown */
+.timer-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.btn-timer-preset {
+  padding: 10px;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: #f8fafc;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-timer-preset:hover, .btn-timer-preset.active {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: #818cf8;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+}
+
+/* ==========================================================================
+   2. Multi-Color Annotation Palette & Highlighter
+   ========================================================================== */
+.annotation-palette-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.75);
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.color-swatch-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.color-swatch-btn:hover {
+  transform: scale(1.2);
+}
+
+.color-swatch-btn.active {
+  transform: scale(1.25);
+  border-color: #ffffff;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.btn-highlighter.active {
+  background: rgba(234, 179, 8, 0.25) !important;
+  color: #fde047 !important;
+  border-color: rgba(234, 179, 8, 0.6) !important;
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.3) !important;
+}
+
+.stroke-width-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-stroke-size {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-stroke-size.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   3. Live Watermark & Event Branding Overlay
+   ========================================================================== */
+.audience-watermark {
+  position: absolute;
+  pointer-events: none;
+  z-index: 25;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.audience-watermark.pos-top-right {
+  top: 24px;
+  right: 28px;
+}
+
+.audience-watermark.pos-top-left {
+  top: 24px;
+  left: 28px;
+}
+
+.audience-watermark.pos-bottom-right {
+  bottom: 24px;
+  right: 28px;
+}
+
+.audience-watermark.pos-bottom-left {
+  bottom: 24px;
+  left: 28px;
+}
+
+.audience-watermark img {
+  max-width: 220px;
+  max-height: 90px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+}
+
+.audience-watermark-text {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 12px;
+  border-radius: 6px;
+}
+
+/* ==========================================================================
+   4. Live Audience Lower-Third Ticker Banner
+   ========================================================================== */
+.audience-banner {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  padding: 0 40px 28px 40px;
+  transform: translateY(120%);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.audience-banner.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.audience-banner-inner {
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-top: 3px solid #38bdf8;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 960px;
+  width: 100%;
+}
+
+.audience-banner-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+#audienceBannerText {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   5. Multi-Deck Conference Playlist Modal & Queue
+   ========================================================================== */
+.playlist-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+  margin: 16px 0;
+}
+
+.playlist-item-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+}
+
+.playlist-item-card:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(30, 41, 59, 0.7);
+}
+
+.playlist-item-card.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+
+.playlist-speaker-pill {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+
+/* ==========================================================================
+   6. Rehearsal Metrics & Slide Heatmap
+   ========================================================================== */
+.metrics-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.metrics-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  text-align: center;
+}
+
+.metrics-card-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #38bdf8;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+}
+
+.metrics-chart-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.metrics-chart-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 70px;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.metrics-bar-track {
+  background: rgba(255, 255, 255, 0.08);
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.metrics-bar-fill {
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.metrics-bar-fill.bar-long {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+}

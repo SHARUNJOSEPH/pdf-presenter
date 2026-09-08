@@ -49,28 +49,81 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnNext = document.getElementById('btnNext');
   const btnLaser = document.getElementById('btnLaser');
   const btnPen = document.getElementById('btnPen');
+  const btnHighlighter = document.getElementById('btnHighlighter');
   const btnClearDraw = document.getElementById('btnClearDraw');
   const btnBlackout = document.getElementById('btnBlackout');
   const btnWhiteout = document.getElementById('btnWhiteout');
   const btnTimerToggle = document.getElementById('btnTimerToggle');
   const btnTimerReset = document.getElementById('btnTimerReset');
+  const btnTimerPresets = document.getElementById('btnTimerPresets');
+  const timerPresetsPopover = document.getElementById('timerPresetsPopover');
+  const annotationPalette = document.getElementById('annotationPalette');
+  const strokeWidthSelector = document.getElementById('strokeWidthSelector');
   const btnCompanion = document.getElementById('btnCompanion');
   const btnGrid = document.getElementById('btnGrid');
+  const btnPlaylist = document.getElementById('btnPlaylist');
+  const btnRehearsalMetrics = document.getElementById('btnRehearsalMetrics');
+  const btnExportNotes = document.getElementById('btnExportNotes');
   const btnShortcuts = document.getElementById('btnShortcuts');
   const btnEndPresentation = document.getElementById('btnEndPresentation');
   const btnTogglePresenterFullscreen = document.getElementById('btnTogglePresenterFullscreen');
-
-  // Resizable Layout Elements
-  const horizontalSplitter = document.getElementById('horizontalSplitter');
-  const verticalSplitter = document.getElementById('verticalSplitter');
-  const sidebarPanel = document.getElementById('sidebarPanel');
-  const nextSlideCard = document.getElementById('nextSlideCard');
 
   // Modals
   const companionModal = document.getElementById('companionModal');
   const gridModal = document.getElementById('gridModal');
   const shortcutsModal = document.getElementById('shortcutsModal');
   const gridContainer = document.getElementById('gridContainer');
+  const playlistModal = document.getElementById('playlistModal');
+  const metricsModal = document.getElementById('metricsModal');
+  const notesExportModal = document.getElementById('notesExportModal');
+  const playlistQueueList = document.getElementById('playlistQueueList');
+  const btnAddDeck = document.getElementById('btnAddDeck');
+  const playlistFileInput = document.getElementById('playlistFileInput');
+
+  // Smart Countdown & Annotation Engine
+  const EngineClass = window.TimerAnnotationEngine || (typeof TimerAnnotationEngine !== 'undefined' ? TimerAnnotationEngine : null);
+  const timerEngine = EngineClass ? new EngineClass({
+    syncBus: syncBus,
+    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : false),
+    onProRequired: (feature) => {
+      if (window.UpgradeModal && typeof window.UpgradeModal.open === 'function') {
+        window.UpgradeModal.open(feature === 'countdown' ? 'timer' : feature);
+      }
+    }
+  }) : null;
+
+  // Multi-Deck Conference Playlist, Rehearsal Metrics & Notes Export Engine
+  const PlaylistMetricsClass = window.PlaylistMetricsEngine || (typeof PlaylistMetricsEngine !== 'undefined' ? PlaylistMetricsEngine : null);
+  const playlistEngine = PlaylistMetricsClass ? new PlaylistMetricsClass({
+    syncBus: syncBus,
+    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : false),
+    onDeckSwitch: async (targetDeck) => {
+      try {
+        if (targetDeck.pdfBuffer) {
+          await engine.loadPDFData(targetDeck.pdfBuffer, targetDeck.title);
+        } else if (targetDeck.path) {
+          await engine.loadPDFFromUrl(targetDeck.path, targetDeck.title);
+        } else {
+          await engine.loadDemo();
+        }
+        documentTitle = targetDeck.title;
+        docTitleEl.textContent = documentTitle;
+        totalPages = engine.totalPages;
+        currentPage = 1;
+        await renderAllSlidesUI();
+        announceA11y(`Switched presentation to ${targetDeck.title}`);
+        renderPlaylistQueue();
+      } catch (err) {
+        console.error('Error switching presentation deck:', err);
+      }
+    }
+  }) : null;
+
+  // Resizable Layout Elements
+  const horizontalSplitter = document.getElementById('horizontalSplitter');
+  const verticalSplitter = document.getElementById('verticalSplitter');
+  const sidebarPanel = document.getElementById('sidebarPanel');
+  const nextSlideCard = document.getElementById('nextSlideCard');
 
   // =========================================================================
   // 1. INITIALIZATION & DATA INGESTION
@@ -149,6 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       currentPage = 1;
       updateDocumentHeader();
       await renderAllSlidesUI();
+      syncActiveDeckToPlaylist();
     } catch (err) {
       console.error('Error loading passed PDF in presenter:', err);
       await loadPresentationDemo();
@@ -162,6 +216,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentPage = 1;
     updateDocumentHeader();
     await renderAllSlidesUI();
+    syncActiveDeckToPlaylist();
+  }
+
+  function syncActiveDeckToPlaylist() {
+    if (!playlistEngine) return;
+    if (playlistEngine.getPlaylist().length === 0) {
+      playlistEngine.addDeck({
+        id: 'deck_1',
+        title: documentTitle,
+        slideCount: totalPages,
+        active: true,
+        speaker: 'Lead Presenter'
+      });
+    }
+    playlistEngine.startTracking(1, `Slide 1`);
   }
 
   function updateDocumentHeader() {
@@ -334,6 +403,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Immediately notify audience window so transition starts simultaneously
     emitSync({ type: 'PAGE_CHANGED', page: currentPage });
 
+    if (playlistEngine) {
+      playlistEngine.recordSlideTransition(currentPage, `Slide ${currentPage}`);
+    }
+
     clearLaserPointer();
     clearPenAnnotations();
     updateThumbnailSelection();
@@ -382,6 +455,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       notesTextarea.value = engine.getSpeakerNotes(currentPage) || '';
     }
     notesSaveStatus.textContent = 'Notes loaded';
+    if (playlistEngine) {
+      playlistEngine.setSpeakerNotes(currentPage, notesTextarea.value);
+    }
   }
 
   let notesSaveTimeout = null;
@@ -391,6 +467,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     notesSaveTimeout = setTimeout(() => {
       localStorage.setItem(getNotesKey(currentPage), notesTextarea.value);
       notesSaveStatus.textContent = 'All changes auto-saved';
+      if (playlistEngine) {
+        playlistEngine.setSpeakerNotes(currentPage, notesTextarea.value);
+      }
     }, 500);
   });
 
@@ -422,9 +501,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function setTool(toolName) {
+    if (toolName === 'highlighter' && timerEngine) {
+      const res = timerEngine.setTool('highlighter');
+      if (!res.success) return;
+    } else if (timerEngine) {
+      timerEngine.setTool(toolName);
+    }
+
     activeTool = toolName;
     btnLaser.classList.toggle('btn-active', activeTool === 'laser');
     btnPen.classList.toggle('btn-active', activeTool === 'pen');
+    if (btnHighlighter) btnHighlighter.classList.toggle('btn-active', activeTool === 'highlighter');
     if (activeTool !== 'laser') clearLaserPointer();
   }
 
@@ -436,10 +523,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (activeTool === 'laser') {
       renderLaserOnPresenter(e.clientX - rect.left, e.clientY - rect.top);
       emitSync({ type: 'LASER_MOVED', x: xPct, y: yPct, visible: true });
-    } else if (activeTool === 'pen' && isDrawing) {
+    } else if ((activeTool === 'pen' || activeTool === 'highlighter') && isDrawing) {
       penStrokes.push({ x: xPct, y: yPct });
+      if (timerEngine) timerEngine.addPoint({ x: xPct, y: yPct });
+      else emitSync({ type: 'PEN_POINT', point: { x: xPct, y: yPct } });
       drawPenSegment(xPct, yPct);
-      emitSync({ type: 'PEN_POINT', point: { x: xPct, y: yPct } });
     }
   });
 
@@ -447,25 +535,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (activeTool === 'laser') clearLaserPointer();
     if (isDrawing) {
       isDrawing = false;
-      emitSync({ type: 'PEN_UP' });
+      if (timerEngine) timerEngine.endStroke();
+      else emitSync({ type: 'PEN_UP' });
     }
   });
 
   drawCanvas.addEventListener('mousedown', (e) => {
-    if (activeTool === 'pen') {
+    if (activeTool === 'pen' || activeTool === 'highlighter') {
       isDrawing = true;
       const rect = drawCanvas.getBoundingClientRect();
       const xPct = (e.clientX - rect.left) / rect.width;
       const yPct = (e.clientY - rect.top) / rect.height;
       penStrokes = [{ x: xPct, y: yPct }];
-      emitSync({ type: 'PEN_DOWN', point: { x: xPct, y: yPct } });
+      if (timerEngine) {
+        timerEngine.startStroke({ x: xPct, y: yPct });
+      } else {
+        emitSync({ type: 'PEN_DOWN', point: { x: xPct, y: yPct } });
+      }
     }
   });
 
   window.addEventListener('mouseup', () => {
     if (isDrawing) {
       isDrawing = false;
-      emitSync({ type: 'PEN_UP' });
+      if (timerEngine) timerEngine.endStroke();
+      else emitSync({ type: 'PEN_UP' });
     }
   });
 
@@ -493,8 +587,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function drawPenSegment(xPct, yPct) {
     const ctx = drawCanvas.getContext('2d');
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 3;
+    const props = timerEngine ? timerEngine.annotations.getEffectiveStrokeProps() : { rgba: '#eab308', width: 5 };
+    ctx.save();
+    ctx.strokeStyle = props.rgba || '#eab308';
+    ctx.lineWidth = props.width || 5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -506,25 +602,46 @@ document.addEventListener('DOMContentLoaded', async () => {
       ctx.lineTo(p2.x * drawCanvas.width, p2.y * drawCanvas.height);
       ctx.stroke();
     }
+    ctx.restore();
   }
 
   function redrawPenStrokes() {
-    if (penStrokes.length < 2) return;
     const ctx = drawCanvas.getContext('2d');
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(penStrokes[0].x * drawCanvas.width, penStrokes[0].y * drawCanvas.height);
-    for (let i = 1; i < penStrokes.length; i++) {
-      ctx.lineTo(penStrokes[i].x * drawCanvas.width, penStrokes[i].y * drawCanvas.height);
+    if (timerEngine && timerEngine.annotations && timerEngine.annotations.allStrokes.length > 0) {
+      timerEngine.annotations.allStrokes.forEach(stroke => {
+        if (!stroke.points || stroke.points.length < 2) return;
+        ctx.save();
+        ctx.strokeStyle = stroke.rgba || stroke.color || '#eab308';
+        ctx.lineWidth = stroke.width || 5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(stroke.points[0].x * drawCanvas.width, stroke.points[0].y * drawCanvas.height);
+        for (let i = 1; i < stroke.points.length; i++) {
+          ctx.lineTo(stroke.points[i].x * drawCanvas.width, stroke.points[i].y * drawCanvas.height);
+        }
+        ctx.stroke();
+        ctx.restore();
+      });
+    } else if (penStrokes.length >= 2) {
+      ctx.save();
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(penStrokes[0].x * drawCanvas.width, penStrokes[0].y * drawCanvas.height);
+      for (let i = 1; i < penStrokes.length; i++) {
+        ctx.lineTo(penStrokes[i].x * drawCanvas.width, penStrokes[i].y * drawCanvas.height);
+      }
+      ctx.stroke();
+      ctx.restore();
     }
-    ctx.stroke();
   }
 
   function clearPenAnnotations() {
     penStrokes = [];
+    if (timerEngine) timerEngine.clearAnnotations();
     const ctx = drawCanvas.getContext('2d');
     ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
     emitSync({ type: 'CLEAR_PEN' });
@@ -554,38 +671,74 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function toggleTimer() {
-    if (timerRunning) pauseTimer();
-    else startTimer();
+    if (timerEngine) {
+      if (timerEngine.timer.running) pauseTimer();
+      else startTimer();
+    } else {
+      if (timerRunning) pauseTimer();
+      else startTimer();
+    }
   }
 
   function startTimer() {
-    if (timerRunning) return;
-    timerRunning = true;
-    btnTimerToggle.textContent = '⏸️';
-    btnTimerToggle.title = 'Pause Timer';
-    timerInterval = setInterval(() => {
-      timerSeconds++;
+    if (timerEngine) {
+      timerEngine.startTimer();
       updateTimerUI();
-    }, 1000);
+    } else {
+      if (timerRunning) return;
+      timerRunning = true;
+      btnTimerToggle.textContent = '⏸️';
+      btnTimerToggle.title = 'Pause Timer';
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerUI();
+      }, 1000);
+    }
   }
 
   function pauseTimer() {
-    timerRunning = false;
-    btnTimerToggle.textContent = '▶️';
-    btnTimerToggle.title = 'Start Timer';
-    clearInterval(timerInterval);
+    if (timerEngine) {
+      timerEngine.pauseTimer();
+      updateTimerUI();
+    } else {
+      timerRunning = false;
+      btnTimerToggle.textContent = '▶️';
+      btnTimerToggle.title = 'Start Timer';
+      clearInterval(timerInterval);
+    }
   }
 
   function resetTimer() {
-    pauseTimer();
-    timerSeconds = 0;
-    updateTimerUI();
+    if (timerEngine) {
+      timerEngine.resetTimer();
+      updateTimerUI();
+    } else {
+      pauseTimer();
+      timerSeconds = 0;
+      updateTimerUI();
+    }
   }
 
-  function updateTimerUI() {
-    const m = Math.floor((timerSeconds % 3600) / 60).toString().padStart(2, '0');
-    const s = (timerSeconds % 60).toString().padStart(2, '0');
-    timerDisplay.textContent = `${m}:${s}`;
+  function updateTimerUI(providedState) {
+    if (timerEngine) {
+      const st = providedState || timerEngine.getTimerState();
+      timerSeconds = st.timerSeconds;
+      timerRunning = st.timerRunning;
+      timerDisplay.textContent = st.formatted;
+      timerDisplay.className = `timer-display phase-${st.phase}`;
+      btnTimerToggle.textContent = st.timerRunning ? '⏸️' : '▶️';
+      btnTimerToggle.title = st.timerRunning ? 'Pause Timer' : 'Start Timer';
+    } else {
+      const m = Math.floor((timerSeconds % 3600) / 60).toString().padStart(2, '0');
+      const s = (timerSeconds % 60).toString().padStart(2, '0');
+      timerDisplay.textContent = `${m}:${s}`;
+    }
+  }
+
+  if (timerEngine) {
+    timerEngine.timer.onChange((st) => {
+      updateTimerUI(st);
+    });
   }
 
   // =========================================================================
@@ -715,12 +868,90 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     btnLaser.addEventListener('click', () => setTool(activeTool === 'laser' ? 'select' : 'laser'));
     btnPen.addEventListener('click', () => setTool(activeTool === 'pen' ? 'select' : 'pen'));
+    if (btnHighlighter) {
+      btnHighlighter.addEventListener('click', () => setTool(activeTool === 'highlighter' ? 'select' : 'highlighter'));
+    }
+
+    if (annotationPalette) {
+      annotationPalette.querySelectorAll('.palette-swatch').forEach(swatch => {
+        swatch.addEventListener('click', () => {
+          const color = swatch.dataset.color;
+          if (timerEngine) {
+            const res = timerEngine.setColor(color);
+            if (res.success) {
+              annotationPalette.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('active'));
+              swatch.classList.add('active');
+              if (activeTool !== 'pen' && activeTool !== 'highlighter') {
+                setTool('pen');
+              }
+            }
+          }
+        });
+      });
+    }
+
+    if (strokeWidthSelector) {
+      strokeWidthSelector.querySelectorAll('.width-btn').forEach(wBtn => {
+        wBtn.addEventListener('click', () => {
+          const w = Number(wBtn.dataset.width);
+          if (timerEngine) {
+            const res = timerEngine.setWidth(w);
+            if (res.success) {
+              strokeWidthSelector.querySelectorAll('.width-btn').forEach(b => b.classList.remove('active'));
+              wBtn.classList.add('active');
+            }
+          }
+        });
+      });
+    }
+
     btnClearDraw.addEventListener('click', clearPenAnnotations);
     btnBlackout.addEventListener('click', () => setBlankMode('black'));
     btnWhiteout.addEventListener('click', () => setBlankMode('white'));
 
     btnTimerToggle.addEventListener('click', toggleTimer);
     btnTimerReset.addEventListener('click', resetTimer);
+
+    if (btnTimerPresets && timerPresetsPopover) {
+      btnTimerPresets.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = timerPresetsPopover.style.display !== 'none';
+        timerPresetsPopover.style.display = isOpen ? 'none' : 'flex';
+      });
+
+      document.addEventListener('click', (e) => {
+        if (timerPresetsPopover && !timerPresetsPopover.contains(e.target) && e.target !== btnTimerPresets) {
+          timerPresetsPopover.style.display = 'none';
+        }
+      });
+
+      const countupBtn = document.getElementById('btnPresetCountup');
+      if (countupBtn) {
+        countupBtn.addEventListener('click', () => {
+          if (timerEngine) timerEngine.setTimerMode('countup');
+          timerPresetsPopover.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+          countupBtn.classList.add('active');
+          timerPresetsPopover.style.display = 'none';
+          updateTimerUI();
+        });
+      }
+
+      timerPresetsPopover.querySelectorAll('.preset-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const preset = chip.dataset.preset;
+          if (timerEngine) {
+            const ok = timerEngine.setPreset(preset);
+            if (ok) {
+              timerPresetsPopover.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+              if (countupBtn) countupBtn.classList.remove('active');
+              chip.classList.add('active');
+              timerPresetsPopover.style.display = 'none';
+              updateTimerUI();
+            }
+          }
+        });
+      });
+    }
 
     btnCompanion.addEventListener('click', openCompanionModal);
 
@@ -736,6 +967,108 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnGrid) btnGrid.addEventListener('click', handleGridRequest);
     const btnGridBottom = document.getElementById('btnGridBottom');
     if (btnGridBottom) btnGridBottom.addEventListener('click', handleGridRequest);
+
+    if (btnPlaylist) {
+      btnPlaylist.addEventListener('click', () => openPlaylistModal());
+    }
+
+    if (btnRehearsalMetrics) {
+      btnRehearsalMetrics.addEventListener('click', () => openMetricsModal());
+    }
+
+    if (btnExportNotes) {
+      btnExportNotes.addEventListener('click', () => openNotesExportModal());
+    }
+
+    if (btnAddDeck && playlistFileInput) {
+      btnAddDeck.addEventListener('click', () => {
+        if (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && !window.UpgradeModal.isPro() && playlistEngine && playlistEngine.getPlaylist().length >= 1) {
+          window.UpgradeModal.open('playlist');
+          return;
+        }
+        playlistFileInput.click();
+      });
+
+      playlistFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        try {
+          const buffer = await file.arrayBuffer();
+          const tempDoc = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+          const slideCount = tempDoc.numPages;
+
+          const res = playlistEngine.addDeck({
+            title: file.name.replace(/\.[^/.]+$/, ''),
+            path: file.path || '',
+            pdfBuffer: buffer,
+            slideCount: slideCount,
+            active: false,
+            speaker: `Speaker ${playlistEngine.getPlaylist().length + 1}`
+          });
+
+          if (res && res.error === 'PRO_REQUIRED') {
+            if (window.UpgradeModal && window.UpgradeModal.open) window.UpgradeModal.open('playlist');
+          } else {
+            renderPlaylistQueue();
+          }
+        } catch (err) {
+          alert('Could not load PDF file into playlist: ' + err.message);
+        } finally {
+          playlistFileInput.value = '';
+        }
+      });
+    }
+
+    const btnExportMetricsCsv = document.getElementById('btnExportMetricsCsv');
+    if (btnExportMetricsCsv) {
+      btnExportMetricsCsv.addEventListener('click', () => {
+        if (!playlistEngine) return;
+        const res = playlistEngine.exportCsvReport();
+        if (res && res.csv) {
+          downloadBlob(res.csv, `${documentTitle}_Rehearsal_Metrics.csv`, 'text/csv;charset=utf-8;');
+        }
+      });
+    }
+
+    const btnExportMetricsMd = document.getElementById('btnExportMetricsMd');
+    if (btnExportMetricsMd) {
+      btnExportMetricsMd.addEventListener('click', () => {
+        if (!playlistEngine) return;
+        const res = playlistEngine.exportMarkdownReport();
+        if (res && res.markdown) {
+          downloadBlob(res.markdown, `${documentTitle}_Rehearsal_Report.md`, 'text/markdown;charset=utf-8;');
+        }
+      });
+    }
+
+    const btnCopyNotesExport = document.getElementById('btnCopyNotesExport');
+    if (btnCopyNotesExport) {
+      btnCopyNotesExport.addEventListener('click', async () => {
+        const preview = document.getElementById('notesExportPreview');
+        if (preview && preview.value) {
+          try {
+            await navigator.clipboard.writeText(preview.value);
+            btnCopyNotesExport.textContent = '✓ Copied!';
+            setTimeout(() => { btnCopyNotesExport.textContent = '📋 Copy Notes'; }, 1500);
+          } catch (e) {
+            preview.select();
+            document.execCommand('copy');
+          }
+        }
+      });
+    }
+
+    const btnDownloadNotesExport = document.getElementById('btnDownloadNotesExport');
+    if (btnDownloadNotesExport) {
+      btnDownloadNotesExport.addEventListener('click', () => {
+        const preview = document.getElementById('notesExportPreview');
+        if (preview && preview.value) {
+          downloadBlob(preview.value, `${documentTitle}_Speaker_Notes.md`, 'text/markdown;charset=utf-8;');
+        }
+      });
+    }
+
     btnShortcuts.addEventListener('click', () => shortcutsModal.classList.add('open'));
     btnEndPresentation.addEventListener('click', handleEndPresentation);
 
@@ -873,6 +1206,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTool(activeTool === 'laser' ? 'select' : 'laser');
       } else if (e.key === 'p' || e.key === 'P') {
         setTool(activeTool === 'pen' ? 'select' : 'pen');
+      } else if (e.key === 'h' || e.key === 'H') {
+        setTool(activeTool === 'highlighter' ? 'select' : 'highlighter');
       } else if (e.key === 'g' || e.key === 'G') {
         e.preventDefault();
         if (gridModal && gridModal.classList.contains('open')) {
@@ -1071,6 +1406,161 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
     });
+  }
+
+  // =========================================================================
+  // 14. PRO FEATURES: PLAYLIST, REHEARSAL METRICS & NOTES EXPORT
+  // =========================================================================
+  function openPlaylistModal() {
+    if (playlistModal) {
+      renderPlaylistQueue();
+      playlistModal.classList.add('open');
+    }
+  }
+
+  function renderPlaylistQueue() {
+    if (!playlistQueueList || !playlistEngine) return;
+    playlistQueueList.innerHTML = '';
+    const playlist = playlistEngine.getPlaylist();
+
+    if (playlist.length === 0) {
+      playlistQueueList.innerHTML = `
+        <div style="text-align: center; padding: 24px; color: #94a3b8; font-size: 13px;">
+          No presentations queued. Click "+ Add PDF Deck" to queue additional speaker decks.
+        </div>
+      `;
+      return;
+    }
+
+    playlist.forEach((deck, idx) => {
+      const card = document.createElement('div');
+      card.className = `playlist-item-card ${deck.active ? 'active' : ''}`;
+
+      card.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+          <span style="font-size: 20px;">${deck.active ? '▶️' : '📄'}</span>
+          <div style="min-width: 0; flex: 1;">
+            <div style="font-weight: 700; font-size: 13.5px; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${escapeHtml(deck.title)}
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-top: 3px;">
+              <span class="playlist-speaker-pill">${escapeHtml(deck.speaker || `Speaker ${idx + 1}`)}</span>
+              <span style="font-size: 11.5px; color: #94a3b8;">${deck.slideCount} slides</span>
+              ${deck.active ? '<span style="font-size: 11px; color: #38bdf8; font-weight: 700;">● Active on Screen</span>' : ''}
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          ${!deck.active ? `<button type="button" class="btn btn-primary btn-switch-deck" data-id="${deck.id}" style="padding: 4px 10px; font-size: 12px;">Switch Deck</button>` : ''}
+          ${playlist.length > 1 ? `<button type="button" class="btn btn-icon btn-remove-deck" data-id="${deck.id}" title="Remove Deck" style="padding: 4px 8px; font-size: 12px; color: #ef4444;">✕</button>` : ''}
+        </div>
+      `;
+
+      playlistQueueList.appendChild(card);
+    });
+
+    playlistQueueList.querySelectorAll('.btn-switch-deck').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        await playlistEngine.switchDeck(id);
+      });
+    });
+
+    playlistQueueList.querySelectorAll('.btn-remove-deck').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        playlistEngine.removeDeck(id);
+        renderPlaylistQueue();
+      });
+    });
+  }
+
+  function openMetricsModal() {
+    if (!window.UpgradeModal || !window.UpgradeModal.isPro || !window.UpgradeModal.isPro()) {
+      if (window.UpgradeModal && window.UpgradeModal.open) window.UpgradeModal.open('metrics');
+      return;
+    }
+    if (!playlistEngine || !metricsModal) return;
+
+    const summary = playlistEngine.getMetricsSummary();
+    const totalEl = document.getElementById('metricsTotalTime');
+    const avgEl = document.getElementById('metricsAvgTime');
+    const longestEl = document.getElementById('metricsLongestSlide');
+    const chartList = document.getElementById('metricsChartList');
+
+    if (totalEl) totalEl.textContent = summary.formattedTotalDuration || '00:00';
+    if (avgEl) avgEl.textContent = `${summary.formattedAverageTime || '00:00'}`;
+    if (longestEl) {
+      longestEl.textContent = summary.longestSlide 
+        ? `Slide ${summary.longestSlide.slide} (${summary.longestSlide.formattedTime})`
+        : '—';
+    }
+
+    if (chartList) {
+      chartList.innerHTML = '';
+      if (!summary.slides || summary.slides.length === 0) {
+        chartList.innerHTML = '<div style="text-align: center; padding: 16px; color: #94a3b8; font-size: 12px;">No rehearsal transitions recorded yet.</div>';
+      } else {
+        summary.slides.forEach(s => {
+          const row = document.createElement('div');
+          row.className = 'metrics-chart-row';
+          const isLong = s.pace === 'slow';
+          row.innerHTML = `
+            <div style="font-weight: 600; color: #cbd5e1;">Slide ${s.slide}</div>
+            <div class="metrics-bar-track">
+              <div class="metrics-bar-fill ${isLong ? 'bar-long' : ''}" style="width: ${Math.max(4, s.percentage)}%;"></div>
+            </div>
+            <div style="text-align: right; font-family: var(--font-mono); color: ${isLong ? '#f59e0b' : '#38bdf8'}; font-weight: 700;">
+              ${s.formattedTime}
+            </div>
+          `;
+          chartList.appendChild(row);
+        });
+      }
+    }
+
+    metricsModal.classList.add('open');
+  }
+
+  function openNotesExportModal() {
+    if (!window.UpgradeModal || !window.UpgradeModal.isPro || !window.UpgradeModal.isPro()) {
+      if (window.UpgradeModal && window.UpgradeModal.open) window.UpgradeModal.open('notes');
+      return;
+    }
+    if (!playlistEngine || !notesExportModal) return;
+
+    const res = playlistEngine.exportSpeakerNotesMarkdown({
+      documentTitle: documentTitle,
+      slideCount: totalPages
+    });
+
+    const preview = document.getElementById('notesExportPreview');
+    if (preview) {
+      preview.value = res.markdown || res.text || '';
+    }
+
+    notesExportModal.classList.add('open');
+  }
+
+  function downloadBlob(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   await init();

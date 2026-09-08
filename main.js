@@ -287,7 +287,7 @@ function startCompanionServer(host = apiSettings.host, port = apiSettings.port) 
       } else {
         res.setHeader('Access-Control-Allow-Origin', '*'); // For non-browser clients (Bitfocus Companion, hardware clickers)
       }
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Range');
       res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges');
 
@@ -504,6 +504,48 @@ function handleCompanionApi(req, res, pathname, query) {
       resetServerTimer();
       relaySyncEvent({ type: 'TIMER_CONTROL', action: 'reset' });
       return jsonResponse({ success: true, state: getPublicState() });
+
+    case 'banner': {
+      if (req.method === 'DELETE' || query.action === 'hide') {
+        relaySyncEvent({ type: 'HIDE_BANNER', source: 'companion_api' });
+        return jsonResponse({ success: true, message: 'Audience banner hidden' });
+      }
+
+      let bannerMsg = query.message || '';
+      let bannerDur = Number(query.duration || 0);
+
+      const processBanner = (msg, dur) => {
+        relaySyncEvent({
+          type: 'SHOW_BANNER',
+          message: msg,
+          duration: dur,
+          source: 'companion_api'
+        });
+        return jsonResponse({
+          success: true,
+          message: 'Audience banner displayed',
+          banner: { message: msg, duration: dur }
+        });
+      };
+
+      if (req.method === 'POST') {
+        let bData = '';
+        req.on('data', c => { bData += c; });
+        req.on('end', () => {
+          if (bData) {
+            try {
+              const parsed = JSON.parse(bData);
+              if (parsed.message !== undefined) bannerMsg = parsed.message;
+              if (parsed.duration !== undefined) bannerDur = Number(parsed.duration);
+            } catch (e) {}
+          }
+          return processBanner(bannerMsg, bannerDur);
+        });
+        return;
+      }
+
+      return processBanner(bannerMsg, bannerDur);
+    }
 
     case 'info':
       return jsonResponse({

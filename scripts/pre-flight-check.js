@@ -38,7 +38,8 @@ runCheck('Syntax validation across all JavaScript source files', () => {
     'js/presenter.js',
     'js/audience.js',
     'js/launcher.js',
-    'js/sync-channel.js'
+    'js/sync-channel.js',
+    'js/playlist-metrics.js'
   ];
 
   for (const file of jsFiles) {

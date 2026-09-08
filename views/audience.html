@@ -8,6 +8,7 @@
   <title>PDF Presenter - Audience Display</title>
   <link rel="stylesheet" href="../css/common.css">
   <link rel="stylesheet" href="../css/audience.css">
+  <link rel="stylesheet" href="../css/pro-features.css">
   <!-- Internationalization (i18n) Engine & Locales -->
   <script src="../js/locales.js"></script>
   <script src="../js/i18n.js"></script>
@@ -23,6 +24,15 @@
       <canvas id="audienceSlideCanvasB" class="slide-canvas"></canvas>
       <canvas id="audienceDrawCanvas"></canvas>
       <div class="laser-dot" id="laserDot"></div>
+      <div id="audienceWatermark" class="audience-watermark" style="display: none;"></div>
+    </div>
+
+    <!-- Live Audience Lower-Third Ticker Banner -->
+    <div id="audienceBanner" class="audience-banner" style="display: none;">
+      <div class="audience-banner-inner">
+        <span class="audience-banner-icon">📢</span>
+        <span id="audienceBannerText"></span>
+      </div>
     </div>
 
     <!-- Screen Curtain (Blackout / Whiteout) -->

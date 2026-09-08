@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentPage = 1;
   let totalPages = 1;
   let currentStroke = [];
+  let currentStrokeMeta = null;
   let allStrokes = [];
 
   // Transition Configuration & Locks (1.0s default for cinematic, buttery smooth dissolve)
@@ -25,6 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const laserDot = document.getElementById('laserDot');
   const screenCurtain = document.getElementById('screenCurtain');
   const placeholder = document.getElementById('placeholder');
+  const audienceWatermark = document.getElementById('audienceWatermark');
+  const audienceBanner = document.getElementById('audienceBanner');
+  const audienceBannerText = document.getElementById('audienceBannerText');
+  let bannerTimeout = null;
 
   let activeCanvas = slideCanvasA;
   let backCanvas = slideCanvasB;
@@ -138,17 +143,27 @@ document.addEventListener('DOMContentLoaded', async () => {
           break;
 
         case 'PEN_DOWN':
+          currentStrokeMeta = {
+            color: data.color || '#eab308',
+            alpha: data.alpha !== undefined ? data.alpha : 1.0,
+            width: data.width || 5,
+            tool: data.tool || 'pen',
+            rgba: data.rgba || null
+          };
           currentStroke = [data.point];
           break;
 
         case 'PEN_POINT':
           currentStroke.push(data.point);
-          drawLiveSegment(data.point);
+          drawLiveSegment(data.point, currentStrokeMeta);
           break;
 
         case 'PEN_UP':
           if (currentStroke.length > 0) {
-            allStrokes.push([...currentStroke]);
+            allStrokes.push({
+              points: [...currentStroke],
+              ...(currentStrokeMeta || { color: '#eab308', alpha: 1.0, width: 5 })
+            });
             currentStroke = [];
           }
           break;
@@ -168,6 +183,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             i18n.setLanguage(data.language);
           }
           break;
+
+        case 'SET_WATERMARK':
+          applyWatermark(data.config || data);
+          break;
+
+        case 'SHOW_BANNER':
+          showAudienceBanner(data.message, data.duration);
+          break;
+
+        case 'HIDE_BANNER':
+          hideAudienceBanner();
+          break;
+
+        case 'LOAD_DOCUMENT':
+          if (data.isDemo || !data.path) {
+            await loadDemo();
+          } else if (data.path) {
+            await loadDocumentConfig({ title: data.title }, null, data.pdfData || null);
+          }
+          clearDrawings();
+          break;
       }
     };
 
@@ -184,7 +220,73 @@ document.addEventListener('DOMContentLoaded', async () => {
       syncBus.on('CLEAR_PEN', handleSync);
       syncBus.on('SET_BLANK', handleSync);
       syncBus.on('SET_LANGUAGE', handleSync);
+      syncBus.on('SET_WATERMARK', handleSync);
+      syncBus.on('SHOW_BANNER', handleSync);
+      syncBus.on('HIDE_BANNER', handleSync);
+      syncBus.on('LOAD_DOCUMENT', handleSync);
     }
+  }
+
+  function applyWatermark(config) {
+    if (!audienceWatermark) return;
+    if (!config || !config.enabled) {
+      audienceWatermark.style.display = 'none';
+      return;
+    }
+
+    const pos = config.position || 'bottom-right';
+    audienceWatermark.className = `audience-watermark pos-${pos}`;
+    audienceWatermark.style.opacity = (config.opacity !== undefined) ? String(config.opacity) : '0.8';
+    audienceWatermark.style.transform = `scale(${(config.scale !== undefined) ? config.scale : '1.0'})`;
+
+    if (config.imageUrl) {
+      audienceWatermark.innerHTML = `<img src="${config.imageUrl}" alt="Brand Watermark">`;
+    } else if (config.text) {
+      audienceWatermark.innerHTML = `<div class="audience-watermark-text">${config.text}</div>`;
+    } else {
+      audienceWatermark.innerHTML = '';
+    }
+
+    audienceWatermark.style.display = 'flex';
+  }
+
+  function showAudienceBanner(message, duration) {
+    if (!audienceBanner) return;
+    if (bannerTimeout) {
+      clearTimeout(bannerTimeout);
+      bannerTimeout = null;
+    }
+
+    if (audienceBannerText) {
+      audienceBannerText.textContent = message || '';
+    }
+
+    audienceBanner.style.display = 'flex';
+    void audienceBanner.offsetHeight; // Force reflow to trigger slide-up CSS transition
+    audienceBanner.classList.add('show');
+
+    const dur = Number(duration || 0);
+    if (dur > 0) {
+      const timeoutMs = dur <= 1000 ? dur * 1000 : dur;
+      bannerTimeout = setTimeout(() => {
+        hideAudienceBanner();
+      }, timeoutMs);
+    }
+  }
+
+  function hideAudienceBanner() {
+    if (!audienceBanner) return;
+    if (bannerTimeout) {
+      clearTimeout(bannerTimeout);
+      bannerTimeout = null;
+    }
+
+    audienceBanner.classList.remove('show');
+    setTimeout(() => {
+      if (!audienceBanner.classList.contains('show')) {
+        audienceBanner.style.display = 'none';
+      }
+    }, 400);
   }
 
   // =========================================================================
@@ -340,14 +442,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     redrawAllStrokes();
   }
 
-  function drawLiveSegment(newPoint) {
+  function hexToRgba(hex, alpha = 1.0) {
+    if (!hex) return `rgba(234, 179, 8, ${alpha})`;
+    let clean = hex.trim().replace(/^#/, '');
+    if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+    if (clean.length !== 6) return `rgba(234, 179, 8, ${alpha})`;
+    const r = parseInt(clean.substring(0, 2), 16);
+    const g = parseInt(clean.substring(2, 4), 16);
+    const b = parseInt(clean.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  function drawLiveSegment(newPoint, meta) {
     if (currentStroke.length < 2) return;
     const p1 = currentStroke[currentStroke.length - 2];
     const p2 = newPoint;
 
     const ctx = drawCanvas.getContext('2d');
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 3;
+    const color = (meta && meta.color) || '#eab308';
+    const alpha = (meta && meta.alpha !== undefined) ? meta.alpha : 1.0;
+    const width = (meta && meta.width) || 5;
+
+    ctx.save();
+    ctx.strokeStyle = (meta && meta.rgba) ? meta.rgba : hexToRgba(color, alpha);
+    ctx.lineWidth = width;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -355,24 +473,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     ctx.moveTo(p1.x * drawCanvas.width, p1.y * drawCanvas.height);
     ctx.lineTo(p2.x * drawCanvas.width, p2.y * drawCanvas.height);
     ctx.stroke();
+    ctx.restore();
   }
 
   function redrawAllStrokes() {
     const ctx = drawCanvas.getContext('2d');
     ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
 
     allStrokes.forEach(stroke => {
-      if (stroke.length < 2) return;
+      const pts = Array.isArray(stroke) ? stroke : stroke.points;
+      if (!pts || pts.length < 2) return;
+      const color = stroke.color || '#eab308';
+      const alpha = stroke.alpha !== undefined ? stroke.alpha : 1.0;
+      const width = stroke.width || 5;
+
+      ctx.save();
+      ctx.strokeStyle = stroke.rgba || hexToRgba(color, alpha);
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
       ctx.beginPath();
-      ctx.moveTo(stroke[0].x * drawCanvas.width, stroke[0].y * drawCanvas.height);
-      for (let i = 1; i < stroke.length; i++) {
-        ctx.lineTo(stroke[i].x * drawCanvas.width, stroke[i].y * drawCanvas.height);
+      ctx.moveTo(pts[0].x * drawCanvas.width, pts[0].y * drawCanvas.height);
+      for (let i = 1; i < pts.length; i++) {
+        ctx.lineTo(pts[i].x * drawCanvas.width, pts[i].y * drawCanvas.height);
       }
       ctx.stroke();
+      ctx.restore();
     });
   }
 

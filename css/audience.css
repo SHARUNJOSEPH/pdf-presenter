@@ -211,3 +211,122 @@ body.audience-view.cursor-hidden {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   Brand Watermark & Event Branding Overlay
+   ========================================================================== */
+.audience-watermark {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.audience-watermark.pos-top-left {
+  top: 32px;
+  left: 36px;
+}
+
+.audience-watermark.pos-top-right {
+  top: 32px;
+  right: 36px;
+}
+
+.audience-watermark.pos-bottom-left {
+  bottom: 32px;
+  left: 36px;
+}
+
+.audience-watermark.pos-bottom-right {
+  bottom: 32px;
+  right: 36px;
+}
+
+.audience-watermark img {
+  max-width: 240px;
+  max-height: 100px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+}
+
+.audience-watermark-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.45);
+  padding: 6px 14px;
+  border-radius: 6px;
+}
+
+/* ==========================================================================
+   Live Audience Lower-Third Ticker Banner
+   ========================================================================== */
+.audience-banner {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  padding: 0 40px 32px 40px;
+  transform: translateY(120%);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.audience-banner.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.audience-banner-inner {
+  position: relative;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 2px solid transparent;
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 960px;
+  width: 100%;
+  font-size: 20px;
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.audience-banner-inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #06b6d4, #8b5cf6);
+}
+
+.audience-banner-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+#audienceBannerText {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+}

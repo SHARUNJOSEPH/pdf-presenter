@@ -6,6 +6,13 @@ const url = require('url');
 const os = require('os');
 const crypto = require('crypto');
 
+let licenseManager;
+try {
+  licenseManager = require('./js/license-manager');
+} catch (e) {
+  licenseManager = { isCompanionApiAuthorized: () => false };
+}
+
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = __dirname;
 
@@ -17,11 +24,35 @@ const state = {
   blankMode: 'none',
   timerSeconds: 0,
   timerRunning: false,
+  timerMode: 'countup', // 'countup' | 'countdown'
+  timerDuration: 0,
+  timerRemaining: 0,
+  isOvertime: false,
+  overtimeSeconds: 0,
   laserActive: false,
   audienceConnected: false,
   presenterConnected: false,
   lastUpdated: Date.now()
 };
+
+function updateTimerDerivedState() {
+  if (state.timerMode === 'countdown' && state.timerDuration > 0) {
+    const rawRemaining = state.timerDuration - state.timerSeconds;
+    if (rawRemaining <= 0) {
+      state.timerRemaining = 0;
+      state.isOvertime = true;
+      state.overtimeSeconds = state.timerSeconds - state.timerDuration;
+    } else {
+      state.timerRemaining = rawRemaining;
+      state.isOvertime = false;
+      state.overtimeSeconds = 0;
+    }
+  } else {
+    state.timerRemaining = 0;
+    state.isOvertime = false;
+    state.overtimeSeconds = 0;
+  }
+}
 
 let timerInterval = null;
 function startServerTimer() {
@@ -31,6 +62,7 @@ function startServerTimer() {
     timerInterval = setInterval(() => {
       if (state.timerRunning) {
         state.timerSeconds++;
+        updateTimerDerivedState();
         broadcastState('TIMER_TICK');
       }
     }, 1000);
@@ -42,6 +74,7 @@ function pauseServerTimer() {
 }
 function resetServerTimer() {
   state.timerSeconds = 0;
+  updateTimerDerivedState();
   broadcastState('TIMER_RESET');
 }
 
@@ -87,6 +120,18 @@ function formatTime(totalSeconds) {
 }
 
 function getPublicState() {
+  updateTimerDerivedState();
+  let timerFormatted;
+  if (state.timerMode === 'countdown' && state.timerDuration > 0) {
+    if (state.isOvertime) {
+      timerFormatted = `+${formatTime(state.overtimeSeconds)}`;
+    } else {
+      timerFormatted = formatTime(state.timerRemaining);
+    }
+  } else {
+    timerFormatted = formatTime(state.timerSeconds);
+  }
+
   return {
     currentPage: state.currentPage,
     totalPages: state.totalPages,
@@ -94,8 +139,13 @@ function getPublicState() {
     documentTitle: state.documentTitle,
     blankMode: state.blankMode,
     timerSeconds: state.timerSeconds,
-    timerFormatted: formatTime(state.timerSeconds),
+    timerFormatted: timerFormatted,
     timerRunning: state.timerRunning,
+    timerMode: state.timerMode || 'countup',
+    timerDuration: state.timerDuration || 0,
+    timerRemaining: state.timerRemaining || 0,
+    isOvertime: Boolean(state.isOvertime),
+    overtimeSeconds: state.overtimeSeconds || 0,
     laserActive: state.laserActive,
     audienceConnected: state.audienceConnected,
     presenterConnected: state.presenterConnected,
@@ -233,7 +283,10 @@ function handleIncomingWsMessage(msg, senderSocket) {
         else pauseServerTimer();
       }
       if (msg.timerSeconds !== undefined) state.timerSeconds = Number(msg.timerSeconds);
+      if (msg.timerMode !== undefined) state.timerMode = msg.timerMode;
+      if (msg.timerDuration !== undefined) state.timerDuration = Number(msg.timerDuration);
       if (msg.laserActive !== undefined) state.laserActive = Boolean(msg.laserActive);
+      updateTimerDerivedState();
       broadcastState('PRESENTER_UPDATE');
       break;
 
@@ -380,21 +433,114 @@ function handleApiRequest(req, res, pathname, query) {
         broadcastWs({ type: 'SET_BLANK', mode: state.blankMode, source: 'companion_api' });
         return jsonResponse({ success: true, blankMode: state.blankMode, state: getPublicState() });
 
-      case 'timer/start':
+      case 'timer/set': {
+        if (!licenseManager.isCompanionApiAuthorized()) {
+          return jsonResponse({
+            success: false,
+            error: 'Companion API requires Pro license or active 15-minute trial.',
+            code: 'PRO_REQUIRED'
+          }, 402);
+        }
+        const setDuration = Number(parsedBody.duration !== undefined ? parsedBody.duration : query.duration);
+        const setMode = (parsedBody.mode || query.mode || 'countdown').toLowerCase();
+        if (isNaN(setDuration) || setDuration < 0) {
+          return jsonResponse({ success: false, error: 'Invalid duration specified' }, 400);
+        }
+        state.timerDuration = setDuration;
+        state.timerMode = setMode === 'countup' ? 'countup' : 'countdown';
+        state.timerSeconds = 0;
+        updateTimerDerivedState();
+        broadcastState('API_TIMER_SET');
+        broadcastWs({
+          type: 'TIMER_CONTROL',
+          action: 'set',
+          duration: state.timerDuration,
+          mode: state.timerMode,
+          source: 'companion_api'
+        });
+        return jsonResponse({
+          success: true,
+          message: `Timer configured for ${setDuration}s (${state.timerMode})`,
+          state: getPublicState()
+        });
+      }
+
+      case 'timer/start': {
+        if (!licenseManager.isCompanionApiAuthorized()) {
+          return jsonResponse({
+            success: false,
+            error: 'Companion API requires Pro license or active 15-minute trial.',
+            code: 'PRO_REQUIRED'
+          }, 402);
+        }
         startServerTimer();
         broadcastWs({ type: 'TIMER_CONTROL', action: 'start', source: 'companion_api' });
         return jsonResponse({ success: true, message: 'Timer started', state: getPublicState() });
+      }
 
       case 'timer/pause':
-      case 'timer/stop':
+      case 'timer/stop': {
+        if (!licenseManager.isCompanionApiAuthorized()) {
+          return jsonResponse({
+            success: false,
+            error: 'Companion API requires Pro license or active 15-minute trial.',
+            code: 'PRO_REQUIRED'
+          }, 402);
+        }
         pauseServerTimer();
         broadcastWs({ type: 'TIMER_CONTROL', action: 'pause', source: 'companion_api' });
         return jsonResponse({ success: true, message: 'Timer paused', state: getPublicState() });
+      }
 
-      case 'timer/reset':
+      case 'timer/reset': {
+        if (!licenseManager.isCompanionApiAuthorized()) {
+          return jsonResponse({
+            success: false,
+            error: 'Companion API requires Pro license or active 15-minute trial.',
+            code: 'PRO_REQUIRED'
+          }, 402);
+        }
         resetServerTimer();
         broadcastWs({ type: 'TIMER_CONTROL', action: 'reset', source: 'companion_api' });
         return jsonResponse({ success: true, message: 'Timer reset', state: getPublicState() });
+      }
+
+      case 'banner': {
+        if (!licenseManager.isCompanionApiAuthorized()) {
+          return jsonResponse({
+            success: false,
+            error: 'Companion API requires Pro license or active 15-minute trial.',
+            code: 'PRO_REQUIRED'
+          }, 402);
+        }
+
+        if (req.method === 'DELETE' || query.action === 'hide') {
+          broadcastWs({ type: 'HIDE_BANNER', source: 'companion_api' });
+          return jsonResponse({
+            success: true,
+            message: 'Audience banner hidden'
+          });
+        }
+
+        const bannerMsg = (parsedBody && parsedBody.message !== undefined) ? String(parsedBody.message) : (query.message ? String(query.message) : '');
+        const bannerDuration = Number((parsedBody && parsedBody.duration !== undefined) ? parsedBody.duration : (query.duration || 0));
+
+        broadcastWs({
+          type: 'SHOW_BANNER',
+          message: bannerMsg,
+          duration: bannerDuration,
+          source: 'companion_api'
+        });
+
+        return jsonResponse({
+          success: true,
+          message: 'Audience banner displayed',
+          banner: {
+            message: bannerMsg,
+            duration: bannerDuration
+          }
+        });
+      }
 
       case 'info':
         const ips = getLocalIPs();
@@ -413,9 +559,12 @@ function handleApiRequest(req, res, pathname, query) {
             { method: 'GET/POST', path: '/api/goto?page=N', desc: 'Go to slide N' },
             { method: 'GET/POST', path: '/api/blackout', desc: 'Toggle blackout' },
             { method: 'GET/POST', path: '/api/whiteout', desc: 'Toggle whiteout' },
+            { method: 'POST', path: '/api/timer/set', desc: 'Configure timer duration & mode' },
             { method: 'GET/POST', path: '/api/timer/start', desc: 'Start timer' },
             { method: 'GET/POST', path: '/api/timer/pause', desc: 'Pause timer' },
             { method: 'GET/POST', path: '/api/timer/reset', desc: 'Reset timer' },
+            { method: 'POST', path: '/api/banner', desc: 'Display lower-third banner (body: { message, duration })' },
+            { method: 'DELETE', path: '/api/banner', desc: 'Hide lower-third banner' },
             { method: 'GET/POST', path: '/api/status', desc: 'Live status JSON' }
           ]
         });
@@ -440,7 +589,20 @@ server.on('upgrade', (req, socket) => {
   }
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  const ips = getLocalIPs();
-  console.log(`\n[PDF Presenter Server] Running on port ${PORT}`);
-});
+if (require.main === module) {
+  server.listen(PORT, '0.0.0.0', () => {
+    const ips = getLocalIPs();
+    console.log(`\n[PDF Presenter Server] Running on port ${PORT}`);
+  });
+}
+
+module.exports = {
+  server,
+  state,
+  startServerTimer,
+  pauseServerTimer,
+  resetServerTimer,
+  updateTimerDerivedState,
+  getPublicState,
+  handleApiRequest
+};
