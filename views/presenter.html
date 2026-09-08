@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-inline' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: file:; font-src 'self' data: file:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* file:;">
   <title>PDF Presenter - Presenter Cockpit</title>
   <link rel="stylesheet" href="../css/common.css">
@@ -54,9 +55,9 @@
         </div>
 
         <!-- Language Selector Dropdown -->
-        <div class="lang-selector-wrapper" style="display: flex; align-items: center; gap: 6px; background: rgba(30, 41, 59, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 4px 8px;">
+        <div class="lang-selector-wrapper">
           <label for="languageSelectPresenter" style="font-size: 13px; cursor: pointer;" title="Language / Idioma / 语言 / لغة">🌐</label>
-          <select id="languageSelectPresenter" aria-label="Language Selector" style="background: transparent; color: var(--text-primary); border: none; font-size: 12px; font-weight: 600; cursor: pointer; outline: none; font-family: inherit;">
+          <select id="languageSelectPresenter" class="lang-select-control" aria-label="Language Selector">
           </select>
         </div>
 
@@ -411,7 +412,7 @@
           <div style="font-size: 40px; margin-bottom: 8px;">📽️</div>
           <h2 style="font-size: 22px; font-weight: 800; color: #f8fafc; margin-bottom: 6px;">PDF Presenter Suite</h2>
           <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
-            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.2.0 Production</span>
+            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.2.1 Production</span>
             <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">Open Source</span>
             <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">MIT License</span>
           </div>

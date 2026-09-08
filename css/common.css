@@ -1,5 +1,6 @@
 /* css/common.css - Shared Design Tokens & Global Styles */
 :root {
+  color-scheme: dark;
   --bg-primary: #0a0e1a;
   --bg-secondary: #121829;
   --bg-tertiary: #1b233a;
@@ -310,5 +311,69 @@ html[dir="rtl"] pre,
 html[dir="rtl"] code {
   direction: ltr !important;
   text-align: left;
+}
+
+/* Global Select & Option Input Theming (Fixes white-on-white dropdown illegibility) */
+html, body {
+  color-scheme: dark;
+}
+
+select {
+  color-scheme: dark !important;
+  background-color: #1b233a !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+}
+
+select option {
+  color-scheme: dark !important;
+  background-color: #121829 !important;
+  color: #f8fafc !important;
+  padding: 8px 12px;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Language Selector Component */
+.lang-selector-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1b233a !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: var(--radius-md);
+  padding: 5px 10px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lang-selector-wrapper:hover,
+.lang-selector-wrapper:focus-within {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+}
+
+.lang-select-control {
+  color-scheme: dark !important;
+  background-color: #1b233a !important;
+  color: #f8fafc !important;
+  border: none !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  font-family: inherit !important;
+}
+
+.lang-select-control option {
+  color-scheme: dark !important;
+  background-color: #121829 !important;
+  color: #f8fafc !important;
+  padding: 8px 12px !important;
 }
 

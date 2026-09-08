@@ -202,6 +202,8 @@
 
       const autoOption = document.createElement('option');
       autoOption.value = 'auto';
+      autoOption.style.backgroundColor = '#121829';
+      autoOption.style.color = '#f8fafc';
       const currentResolved = this.resolveLanguage();
       autoOption.textContent = `🌐 ${this.t('common.systemDefault')} (${SUPPORTED_LANGUAGES[currentResolved].nativeName})`;
       if (this.selectedPreference === 'auto') autoOption.selected = true;
@@ -210,6 +212,8 @@
       for (const [code, info] of Object.entries(SUPPORTED_LANGUAGES)) {
         const opt = document.createElement('option');
         opt.value = code;
+        opt.style.backgroundColor = '#121829';
+        opt.style.color = '#f8fafc';
         opt.textContent = `${info.nativeName} (${info.name})`;
         if (this.selectedPreference === code) opt.selected = true;
         selectElement.appendChild(opt);

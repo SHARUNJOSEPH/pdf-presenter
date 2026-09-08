@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen, ipcMain, dialog, shell, Menu } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, dialog, shell, Menu, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -15,6 +15,9 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[UNHANDLED PROMISE REJECTION]', reason);
 });
+
+// Force dark mode for all native Chromium controls, popups, and dropdown menus
+nativeTheme.themeSource = 'dark';
 
 // Remove default Chromium menu bar (File/Edit/View) across all windows
 Menu.setApplicationMenu(null);
