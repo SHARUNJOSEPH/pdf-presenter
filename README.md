@@ -48,9 +48,11 @@ Choose your preferred way to download and use **PDF Presenter Suite**:
 
 | Distribution Channel | Download Link | Notes |
 | :--- | :--- | :--- |
-| **Windows Setup Installer (.exe)** | [**⬇️ Click Here to Download (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) | **Recommended.** Installs on Windows 10 & 11, creates desktop & start menu shortcuts, in-app auto-update support. |
+| **Windows Setup Installer (.exe)** | [**⬇️ Click Here to Download (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) | **Recommended for Windows.** Multi-language NSIS installer, auto-detects system language, desktop & start menu shortcuts. |
+| **Windows Standalone Portable (.exe)** | [**📦 Browse All Releases**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases) | Zero-install standalone executable—run directly from an AV flash drive. |
 | **Microsoft Store** | [**🛍️ Get from Microsoft Store**](https://apps.microsoft.com/detail/9NS3LKFXHBXW) | Verified and certified by Microsoft with silent automatic background updates. |
-| **Portable Version (.exe)** | [**📦 Browse All Releases**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases) | Standalone executable—run directly from a USB drive without installation. |
+| **macOS Apple Disk Image (.dmg)** | [**🍎 Download for macOS (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) | Drag-and-drop macOS installer package. |
+| **macOS Portable (.zip)** | [**📦 Browse All Releases**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases) | Standalone macOS application archive. |
 
 > 💡 **Tip:** To manually find downloads on GitHub anytime, look at the **"Releases"** section on the right side of this page.
 
@@ -58,6 +60,11 @@ Choose your preferred way to download and use **PDF Presenter Suite**:
 
 ## 🌟 Key Features
 
+- **Enterprise 11-Language Internationalization (i18n)**:
+  - **11 Fully Localized Languages**: English (`en`), Español (`es`), Français (`fr`), Deutsch (`de`), 简体中文 (`zh`), 日本語 (`ja`), العربية (`ar`), Português (`pt`), हिन्दी (`hi`), Русский (`ru`), and Italiano (`it`).
+  - **Auto-Detection**: Automatically detects the host operating system's native language upon launch.
+  - **Arabic Right-to-Left (RTL) Support**: Complete RTL interface flow with strict bidirectional isolation (`unicode-bidi: isolate`) on timers, clocks, and slide counts to prevent digit inversion.
+  - **Zero-Reload Live Synchronization**: Switching languages in the Presenter cockpit propagates instantaneously to the Audience display via `BroadcastChannel` without page reloads.
 - **Multi-Screen Intelligent Routing**:
   - Automatically identifies all connected displays (primary screen, external monitors, HDMI projectors).
   - Clean fullscreen feed for the audience (no browser tabs, toolbars, or mouse pointers).
