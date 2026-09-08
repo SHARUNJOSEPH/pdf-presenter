@@ -86,5 +86,26 @@
   "audience": {
     "waitingTitle": "PDF Presenter Suite",
     "waitingSubtitle": "Ожидание запуска презентации с панели докладчика..."
+  },
+  "pro": {
+    "upgradeBtn": "Обновить до Pro",
+    "proBadge": "PRO",
+    "freeTier": "Бесплатная версия",
+    "modalTitle": "Разблокируйте PDF Presenter Suite Pro",
+    "modalSubtitle": "Повысьте уровень презентаций благодаря профессиональному аппаратному управлению и трансляционным функциям.",
+    "oneTimePrice": "Бессрочная лицензия с единовременной оплатой • Без подписок",
+    "featureCompanion": "REST и WebSocket API для Bitfocus Companion и Stream Deck",
+    "featureGrid": "Интерактивная сетка слайдов для быстрых ответов на вопросы",
+    "featureBranding": "Пользовательский водяной знак с логотипом и оформление событий",
+    "featureTimer": "Умный таймер обратного отсчета с мигающими оповещениями о превышении времени",
+    "featureLicense": "Полная лицензия для коммерческого, корпоративного и конференц-использования",
+    "buyStore": "Купить в Microsoft Store",
+    "enterKey": "У вас есть лицензионный ключ?",
+    "keyPlaceholder": "PRO-XXXX-XXXX-XXXX-XXXX",
+    "activateKey": "Активировать ключ",
+    "keySuccess": "Функции Pro успешно разблокированы!",
+    "keyInvalid": "Недействительный ключ лицензии. Пожалуйста, проверьте и повторите попытку.",
+    "trialBadge": "15-минутная пробная версия активна",
+    "startTrial": "Запустить пробу на 15 мин"
   }
 }

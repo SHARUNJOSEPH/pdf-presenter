@@ -1,4 +1,4 @@
-﻿{
+{
   "common": {
     "appName": "PDF Presenter Suite",
     "close": "Close",
@@ -86,5 +86,26 @@
   "audience": {
     "waitingTitle": "PDF Presenter Suite",
     "waitingSubtitle": "Waiting for presentation to start from Cockpit..."
+  },
+  "pro": {
+    "upgradeBtn": "Upgrade to Pro",
+    "proBadge": "PRO",
+    "freeTier": "Free Tier",
+    "modalTitle": "Unlock PDF Presenter Suite Pro",
+    "modalSubtitle": "Elevate your presentations with professional hardware control and broadcast AV features.",
+    "oneTimePrice": "One-Time Lifetime License • No Subscriptions",
+    "featureCompanion": "Bitfocus Companion & Stream Deck REST / WebSocket API",
+    "featureGrid": "Interactive Slide Sorter Grid View for Rapid Q&A",
+    "featureBranding": "Custom Logo Watermark & Event Branding Overlay",
+    "featureTimer": "Smart Keynote Countdown Timer & Overtime Flashing Alerts",
+    "featureLicense": "Full Commercial, Corporate & Broadcast Event License",
+    "buyStore": "Buy on Microsoft Store",
+    "enterKey": "Have a license key?",
+    "keyPlaceholder": "PRO-XXXX-XXXX-XXXX-XXXX",
+    "activateKey": "Activate Key",
+    "keySuccess": "Pro features unlocked successfully!",
+    "keyInvalid": "Invalid license key. Please check and try again.",
+    "trialBadge": "15-Min Trial Active",
+    "startTrial": "Start 15-Min Trial"
   }
 }

@@ -28,6 +28,15 @@
           </p>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
+          <!-- Pro Badge / Upgrade Button Container -->
+          <div id="proHeaderContainer" style="display: flex; align-items: center;">
+            <button class="btn-upgrade-pro" id="btnHeaderUpgradePro" type="button" title="Upgrade to Pro">
+              <span>💎</span> <span data-i18n="pro.upgradeBtn">Upgrade to Pro</span>
+            </button>
+            <span class="pro-badge-pill" id="badgeHeaderPro" style="display: none;">
+              <span>💎</span> <span data-i18n="pro.proBadge">PRO</span>
+            </span>
+          </div>
           <!-- Language Selector -->
           <div class="lang-selector-wrapper">
             <label for="languageSelect" style="font-size: 14px; cursor: pointer;">🌐</label>
@@ -374,9 +383,80 @@
     </div>
   </div>
 
+  <!-- Freemium & Pro In-App Purchase Upgrade Modal -->
+  <div class="modal-backdrop" id="upgradeProModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="upgradeModalTitle">
+    <div class="modal-card modal-upgrade-card">
+      <div class="modal-header">
+        <h3 id="upgradeModalTitle" style="display: flex; align-items: center; gap: 8px;">
+          <span>💎</span> <span data-i18n="pro.modalTitle">Unlock PDF Presenter Suite Pro</span>
+        </h3>
+        <button class="modal-close" id="btnCloseUpgradeModal" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 24px;">
+        <div class="pro-hero-banner">
+          <div class="pro-hero-icon">💎</div>
+          <p style="font-size: 13.5px; color: #cbd5e1; max-width: 440px; margin: 0 auto; line-height: 1.5;" data-i18n="pro.modalSubtitle">
+            Elevate your presentations with professional hardware control and broadcast AV features.
+          </p>
+        </div>
+
+        <div class="pro-features-grid">
+          <div class="pro-feature-item">
+            <span class="pro-feature-icon">🎛️</span>
+            <span data-i18n="pro.featureCompanion">Bitfocus Companion & Stream Deck REST / WebSocket API</span>
+          </div>
+          <div class="pro-feature-item">
+            <span class="pro-feature-icon">🗂️</span>
+            <span data-i18n="pro.featureGrid">Interactive Slide Sorter Grid View for Rapid Q&A</span>
+          </div>
+          <div class="pro-feature-item">
+            <span class="pro-feature-icon">🎨</span>
+            <span data-i18n="pro.featureBranding">Custom Logo Watermark & Event Branding Overlay</span>
+          </div>
+          <div class="pro-feature-item">
+            <span class="pro-feature-icon">⏱️</span>
+            <span data-i18n="pro.featureTimer">Smart Keynote Countdown Timer & Overtime Flashing Alerts</span>
+          </div>
+          <div class="pro-feature-item">
+            <span class="pro-feature-icon">🏢</span>
+            <span data-i18n="pro.featureLicense">Full Commercial, Corporate & Broadcast Event License</span>
+          </div>
+        </div>
+
+        <div class="pro-pricing-box">
+          <div class="pro-pricing-badge" data-i18n="pro.oneTimePrice">One-Time Lifetime License • No Subscriptions</div>
+        </div>
+
+        <div class="pro-actions-container">
+          <button type="button" class="btn-store-purchase" id="btnStoreBuyPro">
+            <span style="font-size: 18px;">🛒</span> <span data-i18n="pro.buyStore">Buy on Microsoft Store</span>
+          </button>
+
+          <div style="text-align: center;">
+            <button type="button" class="key-toggle-link" id="btnToggleKeyAccordion" data-i18n="pro.enterKey">
+              Have a license key?
+            </button>
+          </div>
+
+          <div id="keyInputRowContainer" style="display: none;">
+            <div class="key-input-row">
+              <input type="text" id="txtProLicenseKey" class="key-input" placeholder="PRO-XXXX-XXXX-XXXX-XXXX" data-i18n-placeholder="pro.keyPlaceholder">
+              <button type="button" class="btn btn-secondary" id="btnActivateProKey" data-i18n="pro.activateKey">
+                Activate Key
+              </button>
+            </div>
+            <div id="upgradeKeyMsg" class="key-msg-container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="../js/demo-deck.js"></script>
   <script src="../js/pdf-loader.js"></script>
+  <script src="../js/upgrade-modal.js"></script>
   <script src="../js/launcher.js"></script>
 </body>
 </html>

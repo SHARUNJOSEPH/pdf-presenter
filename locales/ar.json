@@ -86,5 +86,26 @@
   "audience": {
     "waitingTitle": "PDF Presenter Suite",
     "waitingSubtitle": "في انتظار بدء العرض التقديمي من لوحة التحكم..."
+  },
+  "pro": {
+    "upgradeBtn": "الترقية إلى برو",
+    "proBadge": "برو",
+    "freeTier": "النسخة المجانية",
+    "modalTitle": "فتح ميزات PDF Presenter Suite Pro",
+    "modalSubtitle": "ارتقِ بعروضك التقديمية مع تحكم احترافي بالعتاد وميزات البث المرئي المتقدمة.",
+    "oneTimePrice": "ترخيص مدى الحياة لمرة واحدة • بدون اشتراكات",
+    "featureCompanion": "واجهة برمجة تطبيقات REST و WebSocket لـ Bitfocus Companion و Stream Deck",
+    "featureGrid": "عرض شبكة فرز الشرائح التفاعلي للإجابة السريعة على الأسئلة",
+    "featureBranding": "علامة مائية لشعار مخصص وغطاء هوية الفعالية",
+    "featureTimer": "مؤقت عد تنازلي ذكي مع تنبيهات وميض عند تجاوز الوقت",
+    "featureLicense": "ترخيص كامل للاستخدام التجاري والشركات والفعاليات المباشرة",
+    "buyStore": "الشراء من متجر Microsoft Store",
+    "enterKey": "هل لديك مفتاح ترخيص؟",
+    "keyPlaceholder": "PRO-XXXX-XXXX-XXXX-XXXX",
+    "activateKey": "تفعيل المفتاح",
+    "keySuccess": "تم تفعيل ميزات برو بنجاح!",
+    "keyInvalid": "مفتاح ترخيص غير صالح. يرجى التحقق وإعادة المحاولة.",
+    "trialBadge": "تجربة 15 دقيقة نشطة",
+    "startTrial": "بدء تجربة 15 دقيقة"
   }
 }

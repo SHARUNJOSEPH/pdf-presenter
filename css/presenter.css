@@ -766,3 +766,44 @@ body.resizing-vertical * {
   color: #a5b4fc;
 }
 
+/* ==========================================================================
+   Pro Paywall & Presenter Cockpit Container Styles
+   ========================================================================== */
+#proPresenterContainer {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+#proPresenterContainer .btn-upgrade-pro {
+  padding: 5px 12px !important;
+  font-size: 12px !important;
+}
+
+#proPresenterContainer .pro-badge-pill {
+  padding: 4px 10px !important;
+  font-size: 11px !important;
+}
+
+/* Responsive Top Bar Layout Guards */
+@media (max-width: 1200px) {
+  .doc-info {
+    max-width: 140px;
+  }
+}
+
+@media (max-width: 1080px) {
+  #audienceStatusText {
+    display: none;
+  }
+}
+
+@media (max-width: 980px) {
+  #btnCompanion span:not(.pro-tag-lock),
+  #btnGrid span:not(.pro-tag-lock),
+  #btnEndPresentation span {
+    display: none;
+  }
+}
+
+

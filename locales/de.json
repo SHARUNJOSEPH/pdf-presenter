@@ -86,5 +86,26 @@
   "audience": {
     "waitingTitle": "PDF Presenter Suite",
     "waitingSubtitle": "Warten auf den Start der Präsentation aus dem Cockpit..."
+  },
+  "pro": {
+    "upgradeBtn": "Auf Pro upgraden",
+    "proBadge": "PRO",
+    "freeTier": "Kostenlose Version",
+    "modalTitle": "PDF Presenter Suite Pro freischalten",
+    "modalSubtitle": "Perfektionieren Sie Ihre Präsentationen mit professioneller Hardware-Steuerung und Broadcast-AV-Funktionen.",
+    "oneTimePrice": "Einmalige lebenslange Lizenz • Kein Abonnement",
+    "featureCompanion": "REST- und WebSocket-API für Bitfocus Companion und Stream Deck",
+    "featureGrid": "Interaktive Folienübersicht-Rasteransicht für schnelle Q&A",
+    "featureBranding": "Benutzerdefiniertes Logo-Wasserzeichen und Event-Branding",
+    "featureTimer": "Intelligenter Keynote-Countdown-Timer mit blinkenden Überziehungswarnungen",
+    "featureLicense": "Vollständige Lizenz für kommerzielle Nutzung, Unternehmen und Konferenzen",
+    "buyStore": "Im Microsoft Store kaufen",
+    "enterKey": "Haben Sie einen Lizenzschlüssel?",
+    "keyPlaceholder": "PRO-XXXX-XXXX-XXXX-XXXX",
+    "activateKey": "Schlüssel aktivieren",
+    "keySuccess": "Pro-Funktionen erfolgreich freigeschaltet!",
+    "keyInvalid": "Ungültiger Lizenzschlüssel. Bitte überprüfen und erneut versuchen.",
+    "trialBadge": "15-Minuten-Testversion aktiv",
+    "startTrial": "15-Min.-Testversion starten"
   }
 }

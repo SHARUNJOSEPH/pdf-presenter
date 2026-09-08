@@ -673,6 +673,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function openSlideGridModal() {
+    if (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && !window.UpgradeModal.isPro()) {
+      window.UpgradeModal.open('grid');
+      return;
+    }
+
     gridContainer.innerHTML = '';
     gridModal.classList.add('open');
 
@@ -718,9 +723,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnTimerReset.addEventListener('click', resetTimer);
 
     btnCompanion.addEventListener('click', openCompanionModal);
-    btnGrid.addEventListener('click', openSlideGridModal);
+
+    const handleGridRequest = (e) => {
+      if (e) e.preventDefault();
+      if (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && !window.UpgradeModal.isPro()) {
+        window.UpgradeModal.open('grid');
+        return;
+      }
+      openSlideGridModal();
+    };
+
+    if (btnGrid) btnGrid.addEventListener('click', handleGridRequest);
     const btnGridBottom = document.getElementById('btnGridBottom');
-    if (btnGridBottom) btnGridBottom.addEventListener('click', openSlideGridModal);
+    if (btnGridBottom) btnGridBottom.addEventListener('click', handleGridRequest);
     btnShortcuts.addEventListener('click', () => shortcutsModal.classList.add('open'));
     btnEndPresentation.addEventListener('click', handleEndPresentation);
 
@@ -859,14 +874,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (e.key === 'p' || e.key === 'P') {
         setTool(activeTool === 'pen' ? 'select' : 'pen');
       } else if (e.key === 'g' || e.key === 'G') {
-        if (gridModal.classList.contains('open')) gridModal.classList.remove('open');
-        else openSlideGridModal();
+        e.preventDefault();
+        if (gridModal && gridModal.classList.contains('open')) {
+          gridModal.classList.remove('open');
+        } else {
+          if (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && !window.UpgradeModal.isPro()) {
+            window.UpgradeModal.open('grid');
+          } else {
+            openSlideGridModal();
+          }
+        }
       } else if (e.key === '?') {
         shortcutsModal.classList.toggle('open');
       } else if (e.key === 'Escape') {
         const openModal = document.querySelector('.modal-backdrop.open');
         if (openModal) {
           openModal.classList.remove('open');
+          if (openModal.id === 'upgradeProModal') {
+            if (window.UpgradeModal && typeof window.UpgradeModal.close === 'function') {
+              window.UpgradeModal.close();
+            } else {
+              openModal.style.display = 'none';
+            }
+          }
           return;
         }
         if (activeTool !== 'select') {

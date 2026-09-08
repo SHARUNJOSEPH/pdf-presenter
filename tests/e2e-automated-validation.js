@@ -127,6 +127,15 @@ function setupMockIPC() {
     releaseUrl: 'https://github.com/SHARUNJOSEPH/pdf-presenter/releases'
   }));
 
+  // Freemium License Status Mock
+  ipcMain.handle('get-license-status', () => ({
+    isPro: false,
+    tier: 'free',
+    companionAuthorized: false,
+    trialActive: false,
+    trialRemainingSeconds: 0
+  }));
+
   ipcMain.on('sync-event', (event, data) => {
     // Relay to other windows
     if (presenterWindow && !presenterWindow.isDestroyed() && event.sender !== presenterWindow.webContents) {

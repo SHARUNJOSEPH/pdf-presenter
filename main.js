@@ -7,6 +7,7 @@ const os = require('os');
 const crypto = require('crypto');
 const https = require('https');
 const { generateCompanionConfig } = require('./js/companion-presets.js');
+const licenseManager = require('./js/license-manager.js');
 
 // Global Process Error Boundaries (Google/Microsoft Enterprise Stability)
 process.on('uncaughtException', (err) => {
@@ -180,6 +181,11 @@ function getPublicState() {
     laserActive: state.laserActive,
     audienceConnected: !!audienceWindow && !audienceWindow.isDestroyed(),
     presenterConnected: !!presenterWindow && !presenterWindow.isDestroyed(),
+    isPro: licenseManager.state.isPro,
+    tier: licenseManager.state.tier,
+    companionAuthorized: licenseManager.isCompanionApiAuthorized(),
+    trialActive: licenseManager.getTrialRemainingSeconds() > 0,
+    trialRemainingSeconds: licenseManager.getTrialRemainingSeconds(),
     lastUpdated: state.lastUpdated
   };
 }
@@ -414,6 +420,19 @@ function handleCompanionApi(req, res, pathname, query) {
   };
 
   const action = pathname.replace('/api/', '').toLowerCase();
+
+  // Status and telemetry are accessible for AV discovery,
+  // but control actions require Pro license or active 15-minute trial
+  if (action !== 'status' && action !== 'state' && !licenseManager.isCompanionApiAuthorized()) {
+    return jsonResponse({
+      success: false,
+      error: 'PRO_LICENSE_REQUIRED',
+      message: 'Bitfocus Companion hardware control requires PDF Presenter Suite Pro or an active 15-minute trial.',
+      upgradeUrl: 'https://apps.microsoft.com/detail/9NS3LKFXHBXW',
+      isPro: false,
+      trialActive: false
+    }, 402);
+  }
 
   switch (action) {
     case 'status':
@@ -916,6 +935,23 @@ ipcMain.on('sync-event', (event, data) => {
   relaySyncEvent(data);
 });
 
+// Freemium & In-App Purchase (IAP) IPC Handlers
+ipcMain.handle('get-license-status', () => {
+  return licenseManager.getPublicStatus();
+});
+
+ipcMain.handle('purchase-pro', async () => {
+  return await licenseManager.launchStorePurchase();
+});
+
+ipcMain.handle('activate-license-key', (event, key) => {
+  return licenseManager.activateLicenseKey(key);
+});
+
+ipcMain.handle('start-companion-trial', () => {
+  return licenseManager.startCompanionTrial();
+});
+
 // Semantic Version Parser & Comparator
 function parseSemver(v) {
   if (!v) return [0, 0, 0];
@@ -1038,6 +1074,17 @@ app.whenReady().then(async () => {
     await startCompanionServer(apiSettings.host, apiSettings.port);
   }
   createLauncherWindow();
+
+  // Broadcast License & Entitlement changes to all active windows
+  licenseManager.onChange((licenseStatus) => {
+    const wins = [launcherWindow, presenterWindow, audienceWindow];
+    for (const win of wins) {
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('license-changed', licenseStatus);
+      }
+    }
+    broadcastState('LICENSE_UPDATE');
+  });
 
   // Multi-Screen & Display Hotplug Resilience (Google/Microsoft Enterprise Standard)
   screen.on('display-removed', (event, oldDisplay) => {

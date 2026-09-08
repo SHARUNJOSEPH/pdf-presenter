@@ -86,5 +86,26 @@
   "audience": {
     "waitingTitle": "PDF Presenter Suite",
     "waitingSubtitle": "発表者コックピットからのプレゼンテーション開始を待機中..."
+  },
+  "pro": {
+    "upgradeBtn": "Pro版にアップグレード",
+    "proBadge": "PRO",
+    "freeTier": "無料版",
+    "modalTitle": "PDF Presenter Suite Proを解放",
+    "modalSubtitle": "プロ仕様のハードウェア制御と放送グレードのAV機能でプレゼンテーションを強化します。",
+    "oneTimePrice": "買い切り永久ライセンス • サブスクリプションなし",
+    "featureCompanion": "Bitfocus Companion & Stream Deck REST / WebSocket API",
+    "featureGrid": "迅速なQ&A対応のためのインタラクティブスライドソーターグリッド",
+    "featureBranding": "カスタムロゴ透かし＆イベントブランディングオーバーレイ",
+    "featureTimer": "スマートカウントダウンタイマー＆時間超過点滅アラート",
+    "featureLicense": "商用・企業・大規模カンファレンス配信対応の完全ライセンス",
+    "buyStore": "Microsoft Storeで購入",
+    "enterKey": "ライセンスキーをお持ちですか？",
+    "keyPlaceholder": "PRO-XXXX-XXXX-XXXX-XXXX",
+    "activateKey": "キーを有効化",
+    "keySuccess": "Pro版機能が正常に解放されました！",
+    "keyInvalid": "無効なライセンスキーです。確認して再試行してください。",
+    "trialBadge": "15分間トライアル実行中",
+    "startTrial": "15分間トライアルを開始"
   }
 }

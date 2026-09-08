@@ -86,5 +86,26 @@
   "audience": {
     "waitingTitle": "PDF Presenter Suite",
     "waitingSubtitle": "कॉकपिट से प्रेजेंटेशन शुरू होने की प्रतीक्षा की जा रही है..."
+  },
+  "pro": {
+    "upgradeBtn": "प्रो में अपग्रेड करें",
+    "proBadge": "प्रो",
+    "freeTier": "निःशुल्क संस्करण",
+    "modalTitle": "PDF Presenter Suite Pro अनलॉक करें",
+    "modalSubtitle": "पेशेवर हार्डवेयर नियंत्रण और प्रसारण सुविधाओं के साथ अपनी प्रस्तुतियों को उत्कृष्ट बनाएं।",
+    "oneTimePrice": "एकमुश्त आजीवन लाइसेंस • कोई सदस्यता शुल्क नहीं",
+    "featureCompanion": "Bitfocus Companion और Stream Deck REST / WebSocket API",
+    "featureGrid": "त्वरित प्रश्नोत्तर के लिए इंटरैक्टिव स्लाइड सॉर्टर ग्रिड व्यू",
+    "featureBranding": "कस्टम लोगो वॉटरमार्क और इवेंट ब्रांडिंग ओवरले",
+    "featureTimer": "स्मार्ट काउंटडाउन टाइमर और समय-समाप्ति पर चमकती चेतावनी",
+    "featureLicense": "व्यावसायिक, कॉर्पोरेट और लाइव सम्मेलनों के लिए पूर्ण लाइसेंस",
+    "buyStore": "Microsoft Store पर खरीदें",
+    "enterKey": "क्या आपके पास लाइसेंस कुंजी है?",
+    "keyPlaceholder": "PRO-XXXX-XXXX-XXXX-XXXX",
+    "activateKey": "कुंजी सक्रिय करें",
+    "keySuccess": "प्रो सुविधाएं सफलतापूर्वक अनलॉक हो गईं!",
+    "keyInvalid": "अमान्य लाइसेंस कुंजी। कृपया जांचें और पुनः प्रयास करें।",
+    "trialBadge": "15-मिनट परीक्षण सक्रिय",
+    "startTrial": "15-मिनट परीक्षण शुरू करें"
   }
 }

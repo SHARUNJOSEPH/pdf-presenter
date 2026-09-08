@@ -54,6 +54,16 @@
           <span class="status-dot"></span> <span id="audienceStatusText" data-i18n="presenter.audienceActive">Audience Screen Active</span>
         </div>
 
+        <!-- Pro Header Container -->
+        <div id="proPresenterContainer" style="display: flex; align-items: center;">
+          <button class="btn-upgrade-pro" id="btnPresenterUpgradePro" type="button" title="Upgrade to Pro" data-i18n-title="pro.upgradeBtn">
+            <span>💎</span> <span data-i18n="pro.upgradeBtn">Upgrade to Pro</span>
+          </button>
+          <span class="pro-badge-pill" id="badgePresenterPro" style="display: none;">
+            <span>💎</span> <span data-i18n="pro.proBadge">PRO</span>
+          </span>
+        </div>
+
         <!-- Language Selector Dropdown -->
         <div class="lang-selector-wrapper">
           <label for="languageSelectPresenter" style="font-size: 13px; cursor: pointer;" title="Language / Idioma / 语言 / لغة">🌐</label>
@@ -63,11 +73,13 @@
 
         <button class="btn" id="btnCompanion" title="Bitfocus Companion & Stream Deck API Settings" data-i18n-title="companion.modalTitle">
           🎛️ <span data-i18n="presenter.companionBtn">Companion API</span>
+          <span class="pro-tag-lock">PRO</span>
         </button>
 
         <!-- Slide Sorter & Quick Jump Grid -->
         <button class="btn" id="btnGrid" title="Slide Sorter / Quick Jump Grid (G)" data-i18n-title="shortcuts.grid">
           🗂️ <span data-i18n="presenter.gridBtn">Grid (G)</span>
+          <span class="pro-tag-lock">PRO</span>
         </button>
 
         <button class="btn btn-icon" id="btnShortcuts" title="Keyboard Shortcuts (?)" data-i18n-title="shortcuts.modalTitle">
@@ -203,6 +215,7 @@
       <div class="strip-controls">
         <button class="btn" id="btnGridBottom" title="Open Slide Grid (G)" data-i18n-title="shortcuts.grid">
           🗂️ <span data-i18n="presenter.gridBtn">Grid View</span>
+          <span class="pro-tag-lock">PRO</span>
         </button>
       </div>
 
@@ -222,6 +235,7 @@
         <button class="btn btn-icon modal-close-btn" aria-label="Close Companion API dialog">✕</button>
       </div>
       <div class="modal-body">
+        <div id="companionTrialContainer"></div>
         <div class="companion-guide-box">
           <h4>📡 <span data-i18n="companion.serverStatus">Native Background API Gateway</span></h4>
           <p data-i18n="companion.modalDesc">
@@ -461,10 +475,81 @@
     </div>
   </div>
 
+  <!-- Freemium & Pro In-App Purchase Upgrade Modal -->
+  <div class="modal-backdrop" id="upgradeProModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="upgradeModalTitle">
+    <div class="modal-card modal-upgrade-card">
+      <div class="modal-header">
+        <h3 id="upgradeModalTitle" style="display: flex; align-items: center; gap: 8px;">
+          <span>💎</span> <span data-i18n="pro.modalTitle">Unlock PDF Presenter Suite Pro</span>
+        </h3>
+        <button class="modal-close" id="btnCloseUpgradeModal" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 24px;">
+        <div class="pro-hero-banner">
+          <div class="pro-hero-icon">💎</div>
+          <p style="font-size: 13.5px; color: #cbd5e1; max-width: 440px; margin: 0 auto; line-height: 1.5;" data-i18n="pro.modalSubtitle">
+            Elevate your presentations with professional hardware control and broadcast AV features.
+          </p>
+        </div>
+
+        <div class="pro-features-grid">
+          <div class="pro-feature-item">
+            <span class="pro-feature-icon">🎛️</span>
+            <span data-i18n="pro.featureCompanion">Bitfocus Companion & Stream Deck REST / WebSocket API</span>
+          </div>
+          <div class="pro-feature-item">
+            <span class="pro-feature-icon">🗂️</span>
+            <span data-i18n="pro.featureGrid">Interactive Slide Sorter Grid View for Rapid Q&A</span>
+          </div>
+          <div class="pro-feature-item">
+            <span class="pro-feature-icon">🎨</span>
+            <span data-i18n="pro.featureBranding">Custom Logo Watermark & Event Branding Overlay</span>
+          </div>
+          <div class="pro-feature-item">
+            <span class="pro-feature-icon">⏱️</span>
+            <span data-i18n="pro.featureTimer">Smart Keynote Countdown Timer & Overtime Flashing Alerts</span>
+          </div>
+          <div class="pro-feature-item">
+            <span class="pro-feature-icon">🏢</span>
+            <span data-i18n="pro.featureLicense">Full Commercial, Corporate & Broadcast Event License</span>
+          </div>
+        </div>
+
+        <div class="pro-pricing-box">
+          <div class="pro-pricing-badge" data-i18n="pro.oneTimePrice">One-Time Lifetime License • No Subscriptions</div>
+        </div>
+
+        <div class="pro-actions-container">
+          <button type="button" class="btn-store-purchase" id="btnStoreBuyPro">
+            <span style="font-size: 18px;">🛒</span> <span data-i18n="pro.buyStore">Buy on Microsoft Store</span>
+          </button>
+
+          <div style="text-align: center;">
+            <button type="button" class="key-toggle-link" id="btnToggleKeyAccordion" data-i18n="pro.enterKey">
+              Have a license key?
+            </button>
+          </div>
+
+          <div id="keyInputRowContainer" style="display: none;">
+            <div class="key-input-row">
+              <input type="text" id="txtProLicenseKey" class="key-input" placeholder="PRO-XXXX-XXXX-XXXX-XXXX" data-i18n-placeholder="pro.keyPlaceholder">
+              <button type="button" class="btn btn-secondary" id="btnActivateProKey" data-i18n="pro.activateKey">
+                Activate Key
+              </button>
+            </div>
+            <div id="upgradeKeyMsg" class="key-msg-container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="../js/sync-channel.js"></script>
   <script src="../js/demo-deck.js"></script>
   <script src="../js/pdf-loader.js"></script>
+  <script src="../js/upgrade-modal.js"></script>
   <script src="../js/presenter.js"></script>
 </body>
 </html>

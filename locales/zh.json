@@ -86,5 +86,26 @@
   "audience": {
     "waitingTitle": "PDF Presenter Suite",
     "waitingSubtitle": "正在等待演讲者在控制台启动演示..."
+  },
+  "pro": {
+    "upgradeBtn": "升级至专业版",
+    "proBadge": "专业版",
+    "freeTier": "免费版",
+    "modalTitle": "解锁 PDF Presenter Suite 专业版",
+    "modalSubtitle": "凭借专业的硬件控制与广播级音视频功能，全面升级您的演示体验。",
+    "oneTimePrice": "一次性终身授权 • 无订阅费用",
+    "featureCompanion": "Bitfocus Companion 与 Stream Deck REST / WebSocket API",
+    "featureGrid": "用于快速问答交互的幻灯片网格分类视图",
+    "featureBranding": "自定义徽标水印与活动品牌画中画覆盖",
+    "featureTimer": "智能演讲倒计时器与超时闪烁提醒",
+    "featureLicense": "面向商业、企业及大型峰会广播的完整授权",
+    "buyStore": "在 Microsoft Store 购买",
+    "enterKey": "已有许可证密钥？",
+    "keyPlaceholder": "PRO-XXXX-XXXX-XXXX-XXXX",
+    "activateKey": "激活密钥",
+    "keySuccess": "专业版功能已成功解锁！",
+    "keyInvalid": "许可证密钥无效，请核对后重试。",
+    "trialBadge": "15分钟试用已开启",
+    "startTrial": "开启15分钟试用"
   }
 }

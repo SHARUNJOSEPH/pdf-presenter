@@ -86,5 +86,26 @@
   "audience": {
     "waitingTitle": "PDF Presenter Suite",
     "waitingSubtitle": "In attesa dell'avvio della presentazione dalla console..."
+  },
+  "pro": {
+    "upgradeBtn": "Passa a Pro",
+    "proBadge": "PRO",
+    "freeTier": "Versione Gratuita",
+    "modalTitle": "Sblocca PDF Presenter Suite Pro",
+    "modalSubtitle": "Migliora le tue presentazioni con il controllo hardware professionale e le funzionalità AV per trasmissioni.",
+    "oneTimePrice": "Licenza a Vita Una Tantum • Nessun Abbonamento",
+    "featureCompanion": "API REST e WebSocket per Bitfocus Companion e Stream Deck",
+    "featureGrid": "Visualizzazione Griglia Diapositive per Domande e Risposte Rapide",
+    "featureBranding": "Filigrana Logo Personalizzata e Sovrapposizione Marchio Evento",
+    "featureTimer": "Timer per Conto alla Rovescia Intelligente con Avvisi Lampeggianti di Fuori Tempo",
+    "featureLicense": "Licenza Completa per Uso Commerciale, Aziendale e Conferenze Live",
+    "buyStore": "Acquista su Microsoft Store",
+    "enterKey": "Hai un codice di licenza?",
+    "keyPlaceholder": "PRO-XXXX-XXXX-XXXX-XXXX",
+    "activateKey": "Attiva Codice",
+    "keySuccess": "Funzionalità Pro sbloccate con successo!",
+    "keyInvalid": "Codice di licenza non valido. Verifica e riprova.",
+    "trialBadge": "Prova di 15 Minuti Attiva",
+    "startTrial": "Avvia Prova di 15 Min"
   }
 }

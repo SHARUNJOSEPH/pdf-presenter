@@ -1,4 +1,4 @@
-﻿{
+{
   "common": {
     "appName": "PDF Presenter Suite",
     "close": "Cerrar",
@@ -86,5 +86,26 @@
   "audience": {
     "waitingTitle": "PDF Presenter Suite",
     "waitingSubtitle": "Esperando que comience la presentación desde la consola..."
+  },
+  "pro": {
+    "upgradeBtn": "Actualizar a Pro",
+    "proBadge": "PRO",
+    "freeTier": "Versión Gratuita",
+    "modalTitle": "Desbloquea PDF Presenter Suite Pro",
+    "modalSubtitle": "Mejora tus presentaciones con control de hardware profesional y funciones AV para transmisiones.",
+    "oneTimePrice": "Licencia de Por Vida Única • Sin Suscripciones",
+    "featureCompanion": "API REST y WebSocket para Bitfocus Companion y Stream Deck",
+    "featureGrid": "Vista de Cuadrícula de Diapositivas para Preguntas y Respuestas Rápidas",
+    "featureBranding": "Marca de Agua de Logotipo Personalizado y Superposición de Evento",
+    "featureTimer": "Temporizador de Cuenta Regresiva con Alertas Parpadeantes de Tiempo Excedido",
+    "featureLicense": "Licencia Completa para Uso Comercial, Corporativo y Eventos en Vivo",
+    "buyStore": "Comprar en Microsoft Store",
+    "enterKey": "¿Tienes una clave de licencia?",
+    "keyPlaceholder": "PRO-XXXX-XXXX-XXXX-XXXX",
+    "activateKey": "Activar Clave",
+    "keySuccess": "¡Funciones Pro desbloqueadas con éxito!",
+    "keyInvalid": "Clave de licencia inválida. Por favor verifica e intenta de nuevo.",
+    "trialBadge": "Prueba de 15 Minutos Activa",
+    "startTrial": "Iniciar Prueba de 15 Min"
   }
 }

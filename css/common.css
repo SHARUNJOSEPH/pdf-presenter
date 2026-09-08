@@ -377,3 +377,224 @@ select option:checked {
   padding: 8px 12px !important;
 }
 
+/* ==========================================================================
+   Freemium & Pro In-App Purchase (IAP) UI Components
+   ========================================================================== */
+.btn-upgrade-pro {
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 12.5px !important;
+  padding: 6px 14px !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 2px 10px rgba(236, 72, 153, 0.35);
+  display: inline-flex;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-upgrade-pro:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.5) !important;
+}
+
+.pro-badge-pill {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.35)) !important;
+  color: #fef08a !important;
+  border: 1px solid rgba(245, 158, 11, 0.6) !important;
+  border-radius: 999px !important;
+  padding: 4px 10px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.8px !important;
+  text-transform: uppercase !important;
+  display: inline-flex;
+  align-items: center !important;
+  gap: 5px !important;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+  white-space: nowrap;
+}
+
+.pro-tag-lock {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.35);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Upgrade to Pro Modal */
+.modal-upgrade-card {
+  max-width: 540px !important;
+  width: 92% !important;
+  background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.15), transparent 60%),
+              radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.12), transparent 50%),
+              #121829 !important;
+  border: 1px solid rgba(139, 92, 246, 0.4) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(139, 92, 246, 0.25) !important;
+}
+
+.pro-hero-banner {
+  text-align: center;
+  padding: 10px 0 20px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 18px;
+}
+
+.pro-hero-icon {
+  font-size: 40px;
+  display: inline-block;
+  margin-bottom: 8px;
+  animation: pulse-gem 2s infinite ease-in-out;
+}
+
+@keyframes pulse-gem {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 12px rgba(236, 72, 153, 0.6)); }
+}
+
+.pro-features-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.pro-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #f1f5f9;
+}
+
+.pro-feature-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.pro-pricing-box {
+  text-align: center;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 18px;
+}
+
+.pro-pricing-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #c084fc;
+}
+
+.pro-actions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-store-purchase {
+  background: linear-gradient(135deg, #0078d4 0%, #00bcf2 100%) !important;
+  color: #ffffff !important;
+  font-size: 14.5px !important;
+  font-weight: 700 !important;
+  padding: 12px 20px !important;
+  border-radius: var(--radius-md) !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 120, 212, 0.4) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.btn-store-purchase:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 120, 212, 0.6) !important;
+}
+
+.key-toggle-link {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: underline;
+  padding: 4px;
+}
+
+.key-toggle-link:hover {
+  color: #fff;
+}
+
+.key-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.key-input {
+  flex: 1;
+  background: #0a0e1a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.key-input:focus {
+  outline: none;
+  border-color: #a855f7;
+}
+
+.key-msg-container {
+  font-size: 12px;
+  margin-top: 6px;
+  text-align: center;
+}
+
+.key-msg-success {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.key-msg-error {
+  color: #f87171;
+  font-weight: 600;
+}
+
+html[dir="rtl"] .pro-tag-lock {
+  margin-left: 0;
+  margin-right: 6px;
+}
+
+html[dir="rtl"] .key-input {
+  direction: ltr !important;
+  text-align: left;
+}
+
