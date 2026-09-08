@@ -14,6 +14,7 @@ jobs:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, macos-latest]
 
@@ -36,4 +37,10 @@ jobs:
       - name: Build & Publish Release Assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --publish always
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            npx electron-builder --win --publish always
+          else
+            npx electron-builder --mac --publish always
+          fi
