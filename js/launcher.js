@@ -65,6 +65,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 1. INITIALIZATION & SCREEN ENUMERATION
   // =========================================================================
   async function init() {
+    if (typeof i18n !== 'undefined') {
+      const languageSelect = document.getElementById('languageSelect');
+      if (languageSelect) {
+        i18n.populateLanguageSelector(languageSelect);
+      }
+      i18n.applyTranslations();
+      window.addEventListener('languageChanged', () => {
+        i18n.applyTranslations();
+        if (connectedDisplays && connectedDisplays.length > 0) {
+          renderScreenTopology(connectedDisplays);
+        }
+      });
+    }
+
     setupEventListeners();
     renderRecentDecks();
     await loadInitialDemoDeck();
@@ -652,6 +666,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (e.target === aboutModal) closeAbout();
       });
     }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const openModal = document.querySelector('.modal-backdrop.open');
+        if (openModal) openModal.classList.remove('open');
+      }
+    });
 
     // Handle External Links (LinkedIn & GitHub)
     document.querySelectorAll('.btn-external-link').forEach(btn => {

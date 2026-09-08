@@ -11,7 +11,14 @@ Thumbs.db
 *.log
 *.tmp
 .eslintcache
-.test-userdata/
+.test-userdata*/
+
+# Agent and Swarm Test Artifacts
+.agents/
+artifacts/
+screenshots/
+ORIGINAL_REQUEST.md
+PROJECT.md
 
 # Local Environment
 .env

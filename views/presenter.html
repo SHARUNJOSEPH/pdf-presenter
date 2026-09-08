@@ -7,6 +7,9 @@
   <title>PDF Presenter - Presenter Cockpit</title>
   <link rel="stylesheet" href="../css/common.css">
   <link rel="stylesheet" href="../css/presenter.css">
+  <!-- Internationalization (i18n) Engine & Locales -->
+  <script src="../js/locales.js"></script>
+  <script src="../js/i18n.js"></script>
   <!-- Local Mozilla PDF.js -->
   <script src="../vendor/pdfjs/pdf.min.js"></script>
 </head>
@@ -23,7 +26,7 @@
       <div class="top-bar-left">
         <div class="brand">
           <div class="brand-icon">📽️</div>
-          <span>Presenter Cockpit</span>
+          <span data-i18n="presenter.cockpitTitle">Presenter Cockpit</span>
         </div>
 
         <div class="doc-info" id="docTitle" title="Presentation Title">
@@ -37,8 +40,8 @@
           <span style="font-size: 14px;">⏱️</span>
           <div class="timer-display" id="timerDisplay">00:00</div>
           <div class="timer-controls">
-            <button class="timer-btn" id="btnTimerToggle" title="Start/Pause Timer">▶️</button>
-            <button class="timer-btn" id="btnTimerReset" title="Reset Timer">🔄</button>
+            <button class="timer-btn" id="btnTimerToggle" title="Start/Pause Timer" data-i18n-title="presenter.timerToggle">▶️</button>
+            <button class="timer-btn" id="btnTimerReset" title="Reset Timer" data-i18n-title="presenter.timerReset">🔄</button>
           </div>
           <div class="clock-display" id="clockDisplay">12:00:00</div>
         </div>
@@ -47,34 +50,41 @@
       <!-- Right: Controls, Companion Modal & Exit Button -->
       <div class="top-bar-right">
         <div class="badge badge-connected" id="audienceStatusBadge">
-          <span class="status-dot"></span> Audience Screen Active
+          <span class="status-dot"></span> <span id="audienceStatusText" data-i18n="presenter.audienceActive">Audience Screen Active</span>
         </div>
 
-        <button class="btn" id="btnCompanion" title="Bitfocus Companion & Stream Deck API Settings">
-          🎛️ Companion API
+        <!-- Language Selector Dropdown -->
+        <div class="lang-selector-wrapper" style="display: flex; align-items: center; gap: 6px; background: rgba(30, 41, 59, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 4px 8px;">
+          <label for="languageSelectPresenter" style="font-size: 13px; cursor: pointer;" title="Language / Idioma / 语言 / لغة">🌐</label>
+          <select id="languageSelectPresenter" aria-label="Language Selector" style="background: transparent; color: var(--text-primary); border: none; font-size: 12px; font-weight: 600; cursor: pointer; outline: none; font-family: inherit;">
+          </select>
+        </div>
+
+        <button class="btn" id="btnCompanion" title="Bitfocus Companion & Stream Deck API Settings" data-i18n-title="companion.modalTitle">
+          🎛️ <span data-i18n="presenter.companionBtn">Companion API</span>
         </button>
 
         <!-- Slide Sorter & Quick Jump Grid -->
-        <button class="btn" id="btnGrid" title="Slide Sorter / Quick Jump Grid (G)">
-          🗂️ Grid (G)
+        <button class="btn" id="btnGrid" title="Slide Sorter / Quick Jump Grid (G)" data-i18n-title="shortcuts.grid">
+          🗂️ <span data-i18n="presenter.gridBtn">Grid (G)</span>
         </button>
 
-        <button class="btn btn-icon" id="btnShortcuts" title="Keyboard Shortcuts (?)">
+        <button class="btn btn-icon" id="btnShortcuts" title="Keyboard Shortcuts (?)" data-i18n-title="shortcuts.modalTitle">
           ⌨️
         </button>
 
-        <button class="btn btn-icon" id="btnPresenterAbout" title="About & Creator">
+        <button class="btn btn-icon" id="btnPresenterAbout" title="About & Creator" data-i18n-title="launcher.aboutCreator">
           ℹ️
         </button>
 
         <!-- Fullscreen Presenter Cockpit Toggle -->
-        <button class="btn btn-icon" id="btnTogglePresenterFullscreen" title="Toggle Fullscreen (F11)">
+        <button class="btn btn-icon" id="btnTogglePresenterFullscreen" title="Toggle Fullscreen (F11)" data-i18n-title="shortcuts.fullscreen">
           ⛶
         </button>
 
         <!-- Exit Presentation Button -->
-        <button class="btn btn-danger" id="btnEndPresentation" title="End presentation, close audience projector, and return to launcher (Esc)">
-          🛑 End Presentation
+        <button class="btn btn-danger" id="btnEndPresentation" title="End presentation, close audience projector, and return to launcher (Esc)" data-i18n-title="shortcuts.exit">
+          🛑 <span data-i18n="presenter.exitBtn">End Presentation</span>
         </button>
       </div>
     </header>
@@ -87,7 +97,7 @@
       <section class="active-slide-panel" id="activeSlidePanel">
         <div class="panel-header">
           <div class="panel-title">
-            <span>🖥️ Active Slide (Audience View)</span>
+            <span>🖥️</span> <span data-i18n="presenter.currentSlide">Active Slide (Audience View)</span>
           </div>
           <div class="slide-counter-badge" id="slideCounter">
             Slide 1 of 6
@@ -108,16 +118,16 @@
 
           <!-- Floating Presentation Controls -->
           <div class="floating-toolbar">
-            <button class="btn btn-icon" id="btnPrev" title="Previous Slide (← / PageUp)">◀</button>
-            <button class="btn btn-icon" id="btnNext" title="Next Slide (→ / PageDown)">▶</button>
+            <button class="btn btn-icon" id="btnPrev" title="Previous Slide (← / PageUp)" data-i18n-title="presenter.prev">◀</button>
+            <button class="btn btn-icon" id="btnNext" title="Next Slide (→ / PageDown)" data-i18n-title="presenter.next">▶</button>
             
             <div class="tool-separator"></div>
 
-            <button class="btn" id="btnLaser" title="Toggle Real-Time Laser Pointer (L)">
-              🔴 Laser
+            <button class="btn" id="btnLaser" title="Toggle Real-Time Laser Pointer (L)" data-i18n-title="presenter.laserPointer">
+              🔴 <span data-i18n="presenter.laserPointer">Laser</span>
             </button>
-            <button class="btn" id="btnPen" title="Toggle Digital Pen Annotation (P)">
-              ✏️ Pen
+            <button class="btn" id="btnPen" title="Toggle Digital Pen Annotation (P)" data-i18n-title="presenter.drawPen">
+              ✏️ <span data-i18n="presenter.drawPen">Pen</span>
             </button>
             <button class="btn btn-icon" id="btnClearDraw" title="Clear Annotations">
               🧹
@@ -125,11 +135,11 @@
 
             <div class="tool-separator"></div>
 
-            <button class="btn" id="btnBlackout" title="Toggle Black Screen (B)">
-              ⬛ Black
+            <button class="btn" id="btnBlackout" title="Toggle Black Screen (B)" data-i18n-title="presenter.blackout">
+              ⬛ <span data-i18n="presenter.blackout">Black</span>
             </button>
-            <button class="btn" id="btnWhiteout" title="Toggle White Screen (W)">
-              ⬜ White
+            <button class="btn" id="btnWhiteout" title="Toggle White Screen (W)" data-i18n-title="presenter.whiteout">
+              ⬜ <span data-i18n="presenter.whiteout">White</span>
             </button>
           </div>
         </div>
@@ -146,7 +156,7 @@
         <div class="next-slide-card" id="nextSlideCard">
           <div class="panel-header">
             <div class="panel-title">
-              <span>⏭️ Next Slide Preview</span>
+              <span>⏭️</span> <span data-i18n="presenter.nextSlide">Next Slide Preview</span>
             </div>
           </div>
           <div class="next-slide-viewport">
@@ -166,7 +176,7 @@
         <div class="notes-card" id="notesCard">
           <div class="panel-header">
             <div class="panel-title">
-              <span>📝 Speaker Notes</span>
+              <span>📝</span> <span data-i18n="presenter.speakerNotes">Speaker Notes</span>
             </div>
           </div>
           <div class="notes-body">
@@ -174,6 +184,7 @@
               class="notes-textarea selectable" 
               id="notesTextarea" 
               placeholder="Type speaker notes for this slide here... (Auto-saved)"
+              data-i18n-placeholder="presenter.notesPlaceholder"
             ></textarea>
             <div class="notes-status">
               <span id="notesSaveStatus">All changes auto-saved</span>
@@ -189,8 +200,8 @@
          ==================================================================== -->
     <footer class="bottom-strip">
       <div class="strip-controls">
-        <button class="btn" id="btnGrid" title="Open Slide Grid (G)">
-          🗂️ Grid View
+        <button class="btn" id="btnGridBottom" title="Open Slide Grid (G)" data-i18n-title="shortcuts.grid">
+          🗂️ <span data-i18n="presenter.gridBtn">Grid View</span>
         </button>
       </div>
 
@@ -206,30 +217,30 @@
   <div class="modal-backdrop" id="companionModal" role="dialog" aria-modal="true" aria-labelledby="companionModalTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 id="companionModalTitle">🎛️ Bitfocus Companion & Stream Deck API</h3>
+        <h3 id="companionModalTitle">🎛️ <span data-i18n="companion.modalTitle">Bitfocus Companion & Stream Deck API</span></h3>
         <button class="btn btn-icon modal-close-btn" aria-label="Close Companion API dialog">✕</button>
       </div>
       <div class="modal-body">
         <div class="companion-guide-box">
-          <h4>📡 Native Background API Gateway</h4>
-          <p>
+          <h4>📡 <span data-i18n="companion.serverStatus">Native Background API Gateway</span></h4>
+          <p data-i18n="companion.modalDesc">
             You can control this presentation from <strong>Bitfocus Companion</strong>, an <strong>Elgato Stream Deck</strong>, or any network device using standard HTTP requests.
           </p>
           <div style="margin-top: 8px;">
             <div style="display: flex; align-items: center; justify-content: space-between;">
-              <strong style="color: #cbd5e1; font-size: 12px;">Local Base URLs:</strong>
-              <button type="button" class="btn-copy" id="btnCopyCompanionBase" data-clipboard="http://localhost:3000/api/" title="Copy Primary API Base URL">📋 Copy Base URL</button>
+              <strong style="color: #cbd5e1; font-size: 12px;" data-i18n="companion.ipLabel">Local Base URLs:</strong>
+              <button type="button" class="btn-copy" id="btnCopyCompanionBase" data-clipboard="http://localhost:3000/api/" title="Copy Primary API Base URL">📋 <span data-i18n="common.copy">Copy Base URL</span></button>
             </div>
             <div id="companionIpList" class="selectable" style="margin-top: 6px; font-family: monospace; font-size: 13px; color: var(--accent-cyan);">
               <code>http://localhost:3000/api/</code>
             </div>
           </div>
           <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-            <div style="font-size: 11.5px; color: #94a3b8;">
+            <div style="font-size: 11.5px; color: #94a3b8;" data-i18n="companion.exportDesc">
               Ready-to-use 15-key Stream Deck page layout
             </div>
             <button type="button" class="btn btn-primary" id="btnExportCompanionConfigPresenter" style="font-size: 11.5px; padding: 5px 12px;">
-              📥 Export Stream Deck Presets (.companionconfig)
+              📥 <span data-i18n="companion.exportPresets">Export Stream Deck Presets (.companionconfig)</span>
             </button>
           </div>
         </div>
@@ -302,7 +313,7 @@
         </table>
       </div>
       <div class="modal-footer">
-        <button class="btn modal-close-btn">Close</button>
+        <button class="btn modal-close-btn" data-i18n="common.close">Close</button>
       </div>
     </div>
   </div>
@@ -313,7 +324,7 @@
   <div class="modal-backdrop" id="gridModal" role="dialog" aria-modal="true" aria-labelledby="gridModalTitle">
     <div class="modal-card" style="max-width: 960px;">
       <div class="modal-header">
-        <h3 id="gridModalTitle">🗂️ Presentation Slide Overview</h3>
+        <h3 id="gridModalTitle">🗂️ <span data-i18n="shortcuts.grid">Presentation Slide Overview</span></h3>
         <button class="btn btn-icon modal-close-btn" aria-label="Close Slide Grid dialog">✕</button>
       </div>
       <div class="modal-body">
@@ -322,7 +333,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn modal-close-btn">Close (Esc)</button>
+        <button class="btn modal-close-btn" data-i18n="common.close">Close (Esc)</button>
       </div>
     </div>
   </div>
@@ -333,55 +344,55 @@
   <div class="modal-backdrop" id="shortcutsModal" role="dialog" aria-modal="true" aria-labelledby="shortcutsModalTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 id="shortcutsModalTitle">⌨️ Keyboard & Clicker Shortcuts</h3>
+        <h3 id="shortcutsModalTitle">⌨️ <span data-i18n="shortcuts.modalTitle">Keyboard & Clicker Shortcuts</span></h3>
         <button class="btn btn-icon modal-close-btn" aria-label="Close Shortcuts dialog">✕</button>
       </div>
       <div class="modal-body">
         <div class="shortcut-list">
           <div class="shortcut-item">
-            <span>Next Slide</span>
+            <span data-i18n="shortcuts.nextSlide">Next Slide</span>
             <div><span class="kbd-badge">→</span> <span class="kbd-badge">Space</span> <span class="kbd-badge">PgDn</span></div>
           </div>
           <div class="shortcut-item">
-            <span>Previous Slide</span>
+            <span data-i18n="shortcuts.prevSlide">Previous Slide</span>
             <div><span class="kbd-badge">←</span> <span class="kbd-badge">PgUp</span> <span class="kbd-badge">Backspace</span></div>
           </div>
           <div class="shortcut-item">
-            <span>First / Last Slide</span>
+            <span data-i18n="shortcuts.firstLast">First / Last Slide</span>
             <div><span class="kbd-badge">Home</span> / <span class="kbd-badge">End</span></div>
           </div>
           <div class="shortcut-item">
-            <span>Toggle Laser Pointer</span>
+            <span data-i18n="shortcuts.laser">Toggle Laser Pointer</span>
             <span class="kbd-badge">L</span>
           </div>
           <div class="shortcut-item">
-            <span>Toggle Digital Pen</span>
+            <span data-i18n="shortcuts.pen">Toggle Digital Pen</span>
             <span class="kbd-badge">P</span>
           </div>
           <div class="shortcut-item">
-            <span>Blackout Screen</span>
+            <span data-i18n="shortcuts.blackout">Blackout Screen</span>
             <span class="kbd-badge">B</span>
           </div>
           <div class="shortcut-item">
-            <span>Whiteout Screen</span>
+            <span data-i18n="shortcuts.whiteout">Whiteout Screen</span>
             <span class="kbd-badge">W</span>
           </div>
           <div class="shortcut-item">
-            <span>Open Slide Grid</span>
+            <span data-i18n="shortcuts.grid">Open Slide Grid</span>
             <span class="kbd-badge">G</span>
           </div>
           <div class="shortcut-item">
-            <span>Toggle Fullscreen</span>
+            <span data-i18n="shortcuts.fullscreen">Toggle Fullscreen</span>
             <span class="kbd-badge">F11</span>
           </div>
           <div class="shortcut-item">
-            <span>Exit Presentation / Close Modal</span>
+            <span data-i18n="shortcuts.exit">Exit Presentation / Close Modal</span>
             <span class="kbd-badge" style="background:#ef4444; color:#fff;">Esc</span>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn modal-close-btn">Got it</button>
+        <button class="btn modal-close-btn" data-i18n="common.close">Got it</button>
       </div>
     </div>
   </div>
@@ -391,7 +402,7 @@
     <div class="modal-card about-card" style="max-width: 580px;">
       <div class="modal-header">
         <h3 id="aboutModalTitle">
-          <span>📽️</span> About PDF Presenter Suite
+          <span>📽️</span> <span data-i18n="launcher.aboutCreator">About PDF Presenter Suite</span>
         </h3>
         <button class="modal-close" id="btnClosePresenterAboutModal" aria-label="Close About dialog">&times;</button>
       </div>
@@ -400,7 +411,7 @@
           <div style="font-size: 40px; margin-bottom: 8px;">📽️</div>
           <h2 style="font-size: 22px; font-weight: 800; color: #f8fafc; margin-bottom: 6px;">PDF Presenter Suite</h2>
           <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
-            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.1.3 Production</span>
+            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.2.0 Production</span>
             <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">Open Source</span>
             <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">MIT License</span>
           </div>
@@ -444,7 +455,7 @@
       </div>
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
         <span style="font-size: 11.5px; color: #64748b;">© 2026 Joseph Sharun • MIT License</span>
-        <button class="btn btn-secondary modal-close-btn">Close</button>
+        <button class="btn btn-secondary modal-close-btn" data-i18n="common.close">Close</button>
       </div>
     </div>
   </div>

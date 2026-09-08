@@ -75,7 +75,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   // =========================================================================
   // 1. INITIALIZATION & DATA INGESTION
   // =========================================================================
+  function updateSlideCounterBadge() {
+    if (slideCounterEl) {
+      if (typeof i18n !== 'undefined') {
+        slideCounterEl.textContent = i18n.t('presenter.slideCounter', { current: currentPage, total: totalPages });
+      } else {
+        slideCounterEl.textContent = `Slide ${currentPage} of ${totalPages}`;
+      }
+    }
+  }
+
   async function init() {
+    if (typeof i18n !== 'undefined') {
+      const languageSelectPresenter = document.getElementById('languageSelectPresenter');
+      if (languageSelectPresenter) {
+        i18n.populateLanguageSelector(languageSelectPresenter);
+      }
+      i18n.applyTranslations();
+      window.addEventListener('languageChanged', (e) => {
+        i18n.applyTranslations();
+        updateSlideCounterBadge();
+        if (typeof emitSync === 'function') {
+          emitSync({ type: 'SET_LANGUAGE', language: e.detail ? e.detail.language : i18n.getCurrentLanguage() });
+        }
+      });
+    }
+
     setupEventListeners();
     setupDrawingLayer();
     setupResizableLayout();
@@ -173,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function renderCurrentSlide() {
-    slideCounterEl.textContent = `Slide ${currentPage} of ${totalPages}`;
+    updateSlideCounterBadge();
 
     if (isSlideTransitioning) {
       finishPresenterTransitionImmediately();
@@ -336,7 +361,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   function emitSync(msg) {
     if (window.electronAPI && window.electronAPI.sendSync) {
       window.electronAPI.sendSync(msg);
-    } else {
+    }
+    if (typeof syncBus !== 'undefined' && syncBus) {
       syncBus.send(msg);
     }
   }
@@ -589,15 +615,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (data.action === 'start') startTimer();
         else if (data.action === 'pause') pauseTimer();
         else if (data.action === 'reset') resetTimer();
+      } else if (data.type === 'SET_LANGUAGE') {
+        if (typeof i18n !== 'undefined' && data.language && i18n.getCurrentLanguage() !== data.language) {
+          i18n.setLanguage(data.language);
+        }
       }
     };
 
     if (window.electronAPI && window.electronAPI.onSync) {
       window.electronAPI.onSync(handleRemoteEvent);
-    } else {
+    }
+    if (typeof syncBus !== 'undefined' && syncBus) {
       syncBus.on('GOTO_PAGE', handleRemoteEvent);
       syncBus.on('SET_BLANK', handleRemoteEvent);
       syncBus.on('TIMER_CONTROL', handleRemoteEvent);
+      syncBus.on('SET_LANGUAGE', handleRemoteEvent);
     }
   }
 
@@ -687,6 +719,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     btnCompanion.addEventListener('click', openCompanionModal);
     btnGrid.addEventListener('click', openSlideGridModal);
+    const btnGridBottom = document.getElementById('btnGridBottom');
+    if (btnGridBottom) btnGridBottom.addEventListener('click', openSlideGridModal);
     btnShortcuts.addEventListener('click', () => shortcutsModal.classList.add('open'));
     btnEndPresentation.addEventListener('click', handleEndPresentation);
 
@@ -709,6 +743,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.modal-close-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('open'));
+      });
+    });
+
+    document.querySelectorAll('.modal-backdrop').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('open');
+        }
       });
     });
 

@@ -39,6 +39,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 1. INITIALIZATION & SYNC LISTENERS
   // =========================================================================
   async function init() {
+    if (typeof i18n !== 'undefined') {
+      i18n.applyTranslations();
+      window.addEventListener('languageChanged', () => {
+        i18n.applyTranslations();
+      });
+    }
+
     setupSyncListeners();
     setupInactivityHiding();
     window.addEventListener('resize', handleResize);
@@ -155,12 +162,19 @@ document.addEventListener('DOMContentLoaded', async () => {
           else if (data.mode === 'white') screenCurtain.className = 'screen-curtain whiteout';
           else screenCurtain.className = 'screen-curtain';
           break;
+
+        case 'SET_LANGUAGE':
+          if (typeof i18n !== 'undefined' && data.language) {
+            i18n.setLanguage(data.language);
+          }
+          break;
       }
     };
 
     if (window.electronAPI && window.electronAPI.onSync) {
       window.electronAPI.onSync(handleSync);
-    } else {
+    }
+    if (typeof syncBus !== 'undefined') {
       syncBus.on('PAGE_CHANGED', handleSync);
       syncBus.on('GOTO_PAGE', handleSync);
       syncBus.on('LASER_MOVED', handleSync);
@@ -169,6 +183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       syncBus.on('PEN_UP', handleSync);
       syncBus.on('CLEAR_PEN', handleSync);
       syncBus.on('SET_BLANK', handleSync);
+      syncBus.on('SET_LANGUAGE', handleSync);
     }
   }
 

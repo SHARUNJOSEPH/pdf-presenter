@@ -7,6 +7,9 @@
   <title>PDF Presenter - Audience Display</title>
   <link rel="stylesheet" href="../css/common.css">
   <link rel="stylesheet" href="../css/audience.css">
+  <!-- Internationalization (i18n) Engine & Locales -->
+  <script src="../js/locales.js"></script>
+  <script src="../js/i18n.js"></script>
   <!-- Local Mozilla PDF.js -->
   <script src="../vendor/pdfjs/pdf.min.js"></script>
 </head>
@@ -27,8 +30,8 @@
     <!-- Initial Loading Placeholder -->
     <div class="audience-placeholder" id="placeholder">
       <div class="placeholder-spinner"></div>
-      <h2 style="font-size: 20px; font-weight: 700; color: #f8fafc;">Audience Projector Screen Ready</h2>
-      <p style="font-size: 14px; color: #94a3b8;">Waiting for slide stream</p>
+      <h2 style="font-size: 20px; font-weight: 700; color: #f8fafc;" data-i18n="audience.waitingTitle">Audience Projector Screen Ready</h2>
+      <p style="font-size: 14px; color: #94a3b8;" data-i18n="audience.waitingSubtitle">Waiting for slide stream</p>
     </div>
   </main>
 

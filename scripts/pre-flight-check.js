@@ -31,6 +31,8 @@ runCheck('Syntax validation across all JavaScript source files', () => {
   const jsFiles = [
     'main.js',
     'preload.js',
+    'js/locales.js',
+    'js/i18n.js',
     'js/demo-deck.js',
     'js/pdf-loader.js',
     'js/presenter.js',
@@ -110,6 +112,17 @@ runCheck('Application package metadata and scripts', () => {
   }
   if (!pkg.build || !pkg.build.appId || !pkg.build.productName) {
     throw new Error('package.json missing electron-builder appId or productName.');
+  }
+});
+
+// 6. Internationalization (i18n) 11-Language Bundle Audit
+runCheck('Internationalization (i18n) 11-language integrity & parity', () => {
+  const locales = require('../js/locales');
+  const requiredLangs = ['en', 'es', 'fr', 'de', 'zh', 'ja', 'ar', 'pt', 'hi', 'ru', 'it'];
+  for (const lang of requiredLangs) {
+    if (!locales[lang]) {
+      throw new Error(`Locale bundle missing language: ${lang}`);
+    }
   }
 });
 

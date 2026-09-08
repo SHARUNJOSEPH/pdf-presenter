@@ -7,6 +7,9 @@
   <title>PDF Presenter Suite - Setup & Display Launcher</title>
   <link rel="stylesheet" href="../css/common.css">
   <link rel="stylesheet" href="../css/launcher.css">
+  <!-- Internationalization (i18n) Engine & Locales -->
+  <script src="../js/locales.js"></script>
+  <script src="../js/i18n.js"></script>
   <!-- Local Mozilla PDF.js with CDN fallback -->
   <script src="../vendor/pdfjs/pdf.min.js"></script>
 </head>
@@ -17,15 +20,23 @@
       <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
         <div>
           <h1 class="launcher-title">
-            <span>📽️</span> PDF Presenter Suite
+            <span>📽️</span> <span data-i18n="common.appName">PDF Presenter Suite</span>
           </h1>
-          <p class="launcher-subtitle">
+          <p class="launcher-subtitle" data-i18n="launcher.subtitle">
             Native Multi-Screen Dual Display & Bitfocus Companion Presentation Controller
           </p>
         </div>
-        <button class="btn btn-secondary" id="btnOpenAbout" style="display: flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 13px; font-weight: 600; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-surface); cursor: pointer;">
-          <span>ℹ️</span> About & Creator
-        </button>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <!-- Language Selector -->
+          <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 5px 10px;">
+            <label for="languageSelect" style="font-size: 14px; cursor: pointer;">🌐</label>
+            <select id="languageSelect" aria-label="Select Application Language" style="background: transparent; color: var(--text-primary); border: none; font-size: 12.5px; font-weight: 600; cursor: pointer; outline: none; font-family: inherit;">
+            </select>
+          </div>
+          <button class="btn btn-secondary" id="btnOpenAbout" style="display: flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 13px; font-weight: 600; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-surface); cursor: pointer;">
+            <span>ℹ️</span> <span data-i18n="launcher.aboutCreator">About & Creator</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -34,15 +45,15 @@
       <div style="display: flex; align-items: center; gap: 12px;">
         <span style="font-size: 20px;">🚀</span>
         <div>
-          <div id="updateBannerTitle" style="font-size: 13.5px; font-weight: 700;">A New Version of PDF Presenter is Available!</div>
-          <div id="updateBannerSubtitle" style="font-size: 11.5px; opacity: 0.9;">Includes performance enhancements, security updates, and new features.</div>
+          <div id="updateBannerTitle" style="font-size: 13.5px; font-weight: 700;" data-i18n="launcher.updateBannerTitle">A New Version of PDF Presenter is Available!</div>
+          <div id="updateBannerSubtitle" style="font-size: 11.5px; opacity: 0.9;" data-i18n="launcher.updateBannerSubtitle">Includes performance enhancements, security updates, and new features.</div>
         </div>
       </div>
       <div style="display: flex; gap: 8px; align-items: center;">
-        <button type="button" class="btn" id="btnDownloadUpdate" style="background: #ffffff; color: #1e1b4b; font-weight: 700; font-size: 12px; padding: 6px 14px; border: none; border-radius: var(--radius-sm); cursor: pointer;">
+        <button type="button" class="btn" id="btnDownloadUpdate" style="background: #ffffff; color: #1e1b4b; font-weight: 700; font-size: 12px; padding: 6px 14px; border: none; border-radius: var(--radius-sm); cursor: pointer;" data-i18n="launcher.downloadUpdate">
           Download Update
         </button>
-        <button type="button" class="btn" id="btnDismissUpdate" style="background: transparent; color: #ffffff; border: 1px solid rgba(255,255,255,0.4); font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); cursor: pointer;">
+        <button type="button" class="btn" id="btnDismissUpdate" style="background: transparent; color: #ffffff; border: 1px solid rgba(255,255,255,0.4); font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); cursor: pointer;" data-i18n="launcher.dismiss">
           Dismiss
         </button>
       </div>
@@ -53,23 +64,23 @@
       <!-- Left Card: Presentation Document Ingestion -->
       <section class="setup-card">
         <h2 class="card-title">
-          <span>📄</span> 1. Select Presentation PDF
+          <span>📄</span> <span data-i18n="launcher.step1Title">1. Select Presentation PDF</span>
         </h2>
 
         <!-- Drag & Drop Zone -->
         <div class="pdf-dropzone" id="pdfDropzone">
           <div class="dropzone-icon">📂</div>
-          <div class="dropzone-text">Click to Browse or Drag & Drop PDF here</div>
-          <div class="dropzone-subtext">Supports all PDF presentations & slide decks</div>
+          <div class="dropzone-text" data-i18n="launcher.dropTitle">Click to Browse or Drag & Drop PDF here</div>
+          <div class="dropzone-subtext" data-i18n="launcher.dropSubtitle">Supports all PDF presentations & slide decks</div>
           <input type="file" id="pdfFileInput" accept="application/pdf" style="display: none;">
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 12px;">
           <button class="btn" id="btnBrowseNative" style="flex: 1;">
-            📁 Browse Files
+            📁 <span data-i18n="launcher.browseFiles">Browse Files</span>
           </button>
           <button class="btn" id="btnUseDemo" style="flex: 1;">
-            ✨ Use Demo Deck
+            ✨ <span data-i18n="launcher.useDemo">Use Demo Deck</span>
           </button>
         </div>
 
@@ -86,7 +97,7 @@
         <div class="recent-presentations-section" id="recentPresentationsSection" style="display: none;">
           <div class="recent-header">
             <span class="recent-header-title">
-              <span>🕒</span> Recent Presentations
+              <span>🕒</span> <span data-i18n="launcher.recentDecks">Recent Presentations</span>
             </span>
             <button type="button" class="btn-clear-recent" id="btnClearRecent" title="Clear all recent presentations">Clear All</button>
           </div>
@@ -99,7 +110,7 @@
       <!-- Right Card: Display Topology & Multi-Screen Assignment -->
       <section class="setup-card">
         <h2 class="card-title">
-          <span>🖥️</span> 2. Assign Target Displays
+          <span>🖥️</span> <span data-i18n="launcher.step2Title">2. Assign Target Displays</span>
         </h2>
 
         <!-- Connected Monitors List -->
@@ -177,7 +188,7 @@
         </span>
 
         <!-- Bottom Left API Settings Trigger Button -->
-        <button type="button" class="btn-api-pill" id="btnOpenApiModal" title="Configure Bitfocus Companion & Remote Control API">
+        <button type="button" class="btn-api-pill" id="btnOpenApiModal" data-i18n-title="launcher.companionApi" title="Configure Bitfocus Companion & Remote Control API">
           <span class="status-indicator-dot online" id="footerApiStatusDot"></span>
           <span style="font-weight: 600;">Remote API:</span>
           <span class="api-pill-badge" id="footerApiBadge">Port 3000</span>
@@ -186,7 +197,7 @@
       </div>
 
       <button class="btn-launch" id="btnStartPresentation">
-        <span>🚀</span> Start Dual-Screen Presentation
+        <span>🚀</span> <span data-i18n="launcher.launchBtn">Start Dual-Screen Presentation</span>
       </button>
     </footer>
   </div>
@@ -298,7 +309,7 @@
           <div style="font-size: 40px; margin-bottom: 8px;">📽️</div>
           <h2 style="font-size: 22px; font-weight: 800; color: #f8fafc; margin-bottom: 6px;">PDF Presenter Suite</h2>
           <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
-            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.1.3 Production</span>
+            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">v1.2.0 Production</span>
             <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">Open Source</span>
             <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">MIT License</span>
           </div>
@@ -343,7 +354,7 @@
               <span>🔄</span> Software Version & Updates
             </div>
             <div id="updateStatusText" style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
-              Current build: v1.1.3 (Production)
+              Current build: v1.2.0 (Production)
             </div>
           </div>
           <button type="button" class="btn" id="btnCheckUpdates" style="font-size: 11.5px; padding: 6px 12px; white-space: nowrap; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; cursor: pointer;">

@@ -289,3 +289,26 @@ code, pre, input, textarea, .selectable, .api-path, .api-endpoint, .ip-list, .co
   outline: 2px solid #38bdf8 !important;
   outline-offset: 2px !important;
 }
+
+/* Internationalization & RTL Support (Arabic, Hebrew) */
+html[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .top-bar-left,
+html[dir="rtl"] .modal-header,
+html[dir="rtl"] .launcher-header > div {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .timer-widget,
+html[dir="rtl"] .api-active-bar,
+html[dir="rtl"] .slide-counter-badge,
+html[dir="rtl"] #slideCounter,
+html[dir="rtl"] pre,
+html[dir="rtl"] code {
+  direction: ltr !important;
+  text-align: left;
+}
+
