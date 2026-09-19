@@ -355,7 +355,7 @@ function startCompanionServer(host = apiSettings.host, port = apiSettings.port) 
 
       // --- 1. STREAM CURRENT ACTIVE PDF FILE DIRECTLY (ZERO BASE64 OVERHEAD) ---
       if (pathname === '/api/document/current.pdf') {
-        if (activePdfBuffer) {
+        if (activePdfBuffer && activePdfBuffer.length > 0) {
           res.writeHead(200, {
             'Content-Type': 'application/pdf',
             'Content-Length': activePdfBuffer.length,
@@ -864,7 +864,7 @@ function startPresentationWindows(config) {
   } else if (config.filePath && fs.existsSync(config.filePath)) {
     activePdfPath = config.filePath;
     activePdfBuffer = null; // Stream directly from file
-  } else if (config.pdfBuffer) {
+  } else if (config.pdfBuffer && (config.pdfBuffer.length > 0 || config.pdfBuffer.byteLength > 0)) {
     activePdfBuffer = Buffer.isBuffer(config.pdfBuffer) ? config.pdfBuffer : Buffer.from(config.pdfBuffer);
     activePdfPath = null;
   }
@@ -1214,8 +1214,10 @@ ipcMain.handle('load-recent-pdf', (event, filePath) => {
 });
 
 ipcMain.handle('set-active-pdf-buffer', (event, { fileName, buffer }) => {
-  activePdfBuffer = Buffer.from(buffer);
-  activePdfPath = null;
+  if (buffer && (buffer.length > 0 || buffer.byteLength > 0)) {
+    activePdfBuffer = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer.buffer || buffer);
+    activePdfPath = null;
+  }
   return {
     success: true,
     streamUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/api/document/current.pdf` : null
@@ -1234,7 +1236,7 @@ ipcMain.handle('end-presentation', () => {
 
 ipcMain.handle('get-presentation-data', () => {
   let bufferData = null;
-  if (activePdfBuffer) {
+  if (activePdfBuffer && activePdfBuffer.length > 0) {
     bufferData = activePdfBuffer;
   } else if (activePdfPath && fs.existsSync(activePdfPath)) {
     try {
@@ -1247,7 +1249,7 @@ ipcMain.handle('get-presentation-data', () => {
   return {
     config: currentPdfConfig,
     streamUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/api/document/current.pdf` : null,
-    pdfData: bufferData ? bufferData.buffer.slice(bufferData.byteOffset, bufferData.byteOffset + bufferData.byteLength) : null,
+    pdfData: (bufferData && bufferData.length > 0) ? bufferData.buffer.slice(bufferData.byteOffset, bufferData.byteOffset + bufferData.byteLength) : null,
     state: getPublicState()
   };
 });

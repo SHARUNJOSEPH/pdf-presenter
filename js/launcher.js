@@ -331,6 +331,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       docMetaTitle.textContent = `Loading ${fileName}...`;
       docMetaPages.textContent = 'Parsing presentation...';
 
+      const safeBuffer = (pdfData && (pdfData.byteLength > 0 || pdfData.length > 0))
+        ? (pdfData.slice ? pdfData.slice(0) : new Uint8Array(pdfData).slice(0))
+        : null;
+
       let docInfo;
       if (pdfData) {
         docInfo = await engine.loadPDFData(pdfData, fileName);
@@ -346,7 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         title: fileName,
         filePath: filePath,
         totalPages: docInfo.totalPages,
-        pdfBuffer: pdfData || null
+        pdfBuffer: safeBuffer || pdfData || null
       };
       updateDocPreviewUI();
       saveRecentDeck({ title: fileName, filePath: filePath, totalPages: docInfo.totalPages });
@@ -730,7 +734,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           } else {
             const buffer = await file.arrayBuffer();
             if (window.electronAPI && window.electronAPI.setActivePdfBuffer) {
-              const res = await window.electronAPI.setActivePdfBuffer({ fileName: file.name, buffer: Array.from(new Uint8Array(buffer)) });
+              const res = await window.electronAPI.setActivePdfBuffer({ fileName: file.name, buffer: buffer });
               await handleSelectedPdf(null, file.name, res.streamUrl, buffer);
             } else {
               await handleSelectedPdf(null, file.name, null, buffer);
@@ -780,7 +784,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
           const buffer = await file.arrayBuffer();
           if (window.electronAPI && window.electronAPI.setActivePdfBuffer) {
-            const res = await window.electronAPI.setActivePdfBuffer({ fileName: file.name, buffer: Array.from(new Uint8Array(buffer)) });
+            const res = await window.electronAPI.setActivePdfBuffer({ fileName: file.name, buffer: buffer });
             await handleSelectedPdf(null, file.name, res.streamUrl, buffer);
           } else {
             await handleSelectedPdf(null, file.name, null, buffer);
@@ -828,7 +832,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         playlist: playlist
       };
 
-      if (activeBuffer && window.electronAPI && window.electronAPI.setActivePdfBuffer) {
+      if (activeBuffer && (!config.filePath || !config.filePath.trim()) && window.electronAPI && window.electronAPI.setActivePdfBuffer) {
         try {
           await window.electronAPI.setActivePdfBuffer({ fileName: config.title, buffer: activeBuffer });
         } catch (e) {

@@ -109,7 +109,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       let docInfo;
-      if (pdfData) {
+      const hasValidData = pdfData && (pdfData.byteLength > 0 || pdfData.length > 0);
+      if (hasValidData) {
         docInfo = await engine.loadPDFData(pdfData, config.title);
       } else if (streamUrl) {
         docInfo = await engine.loadPDFFromUrl(streamUrl, config.title);

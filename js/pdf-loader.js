@@ -39,9 +39,7 @@ class PDFDocumentEngine {
 
     try {
       const loadingTask = window.pdfjsLib.getDocument({
-        url: pdfUrl,
-        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-        cMapPacked: true
+        url: pdfUrl
       });
       this.pdfDoc = await loadingTask.promise;
       this.isDemo = false;
@@ -67,10 +65,19 @@ class PDFDocumentEngine {
     }
 
     try {
+      // Ensure we pass a clone of data to PDF.js worker so that the caller's
+      // original ArrayBuffer is not neutered or detached by worker transfer
+      let dataForPdfJs;
+      if (data instanceof ArrayBuffer) {
+        dataForPdfJs = data.slice(0);
+      } else if (ArrayBuffer.isView(data)) {
+        dataForPdfJs = new Uint8Array(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));
+      } else {
+        dataForPdfJs = data;
+      }
+
       const loadingTask = window.pdfjsLib.getDocument({
-        data: data,
-        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-        cMapPacked: true
+        data: dataForPdfJs
       });
       this.pdfDoc = await loadingTask.promise;
       this.isDemo = false;
@@ -142,12 +149,18 @@ class PDFDocumentEngine {
     const baseViewport = page.getViewport({ scale: 1.0 });
 
     let scale = (options.scale || 1.5) * dpr;
-    if (options.targetWidth) {
-      scale = (options.targetWidth / baseViewport.width) * dpr;
+    if (options.targetWidth && options.targetHeight) {
+      const scaleX = options.targetWidth / baseViewport.width;
+      const scaleY = options.targetHeight / baseViewport.height;
+      scale = Math.min(scaleX, scaleY) * dpr;
     } else if (options.width && options.height) {
       const scaleX = options.width / baseViewport.width;
       const scaleY = options.height / baseViewport.height;
       scale = Math.min(scaleX, scaleY) * dpr;
+    } else if (options.targetWidth) {
+      scale = (options.targetWidth / baseViewport.width) * dpr;
+    } else if (options.width) {
+      scale = (options.width / baseViewport.width) * dpr;
     }
 
     const viewport = page.getViewport({ scale: scale });
