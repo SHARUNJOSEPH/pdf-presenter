@@ -191,11 +191,6 @@
       </div>
     </div>
 
-    <!-- Horizontal Draggable Splitter (Resize Timer vs Slides & Notes) -->
-    <div class="conf-resizer-h" id="confResizerH" title="Drag up/down to resize Timer vs Slides/Notes (Double-click to reset)">
-      <div class="resizer-handle-bar"></div>
-    </div>
-
     <!-- Main Section: WATCHOUT 7 Dockable Dashboard Grid -->
     <main class="conf-main-content" id="confMainContent">
       <div class="conf-dashboard-grid conf-dock-grid" id="confDashboardGrid">
@@ -417,9 +412,10 @@
         </article>
       </div>
 
-      <!-- Backward-compatible wrappers for splitter testing -->
+      <!-- Stage Resizers & Backward-Compatible Wrappers -->
+      <div class="conf-resizer-h" id="confResizerH" title="Drag up/down to adjust Slides vs Notes height ratio (Double-click to reset)"><div class="resizer-handle-bar"></div></div>
+      <div class="conf-resizer-v" id="confResizerV" title="Drag left/right to adjust Live vs Up Next width ratio (Double-click to reset)"><div class="resizer-handle-bar-v"></div></div>
       <section class="conf-slides-section" id="confSlidesSection" style="display: none;"></section>
-      <div class="conf-resizer-v" id="confResizerV" style="display: none;" title="Drag left/right to resize Slides vs Teleprompter Notes (Double-click to reset)"><div class="resizer-handle-bar-v"></div></div>
       <section class="conf-notes-section" id="confNotesSection" style="display: none;"></section>
     </main>
   </div>

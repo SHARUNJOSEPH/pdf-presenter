@@ -1,8 +1,7 @@
 /**
  * js/confidence.js
  * Stage Floor Confidence Monitor & Teleprompter Controller
- * Synchronizes slide visuals, high-contrast teleprompter notes, keynote countdown,
- * and live silent stage cues from the Presenter Cockpit.
+ * Professional Pro Studio Matrix for Broadcast Keynotes, AV Teams & Speakers
  */
 
 (function() {
@@ -23,6 +22,15 @@
   let lastScrollTimestamp = 0;
 
   // DOM Elements
+  const confContainer = document.getElementById('confContainer');
+  const confTopBar = document.getElementById('confTopBar');
+  const confDashboardGrid = document.getElementById('confDashboardGrid');
+  const confMainContent = document.getElementById('confMainContent');
+  const confSlidesSection = document.getElementById('confSlidesSection');
+  const confNotesSection = document.getElementById('confNotesSection');
+  const confResizerH = document.getElementById('confResizerH');
+  const confResizerV = document.getElementById('confResizerV');
+
   const confTimerDisplay = document.getElementById('confTimerDisplay');
   const confClockDisplay = document.getElementById('confClockDisplay');
   const confSlideCounter = document.getElementById('confSlideCounter');
@@ -39,6 +47,28 @@
   const btnFontIncrease = document.getElementById('btnFontIncrease');
   const confStageCueBanner = document.getElementById('confStageCueBanner');
   const confStageCueText = document.getElementById('confStageCueText');
+  const confCueIdleMsg = document.getElementById('confCueIdleMsg');
+
+  // Presets & Controls
+  const btnPresetBalanced = document.getElementById('btnPresetBalanced');
+  const btnPresetNotes = document.getElementById('btnPresetNotes');
+  const btnPresetTimer = document.getElementById('btnPresetTimer');
+  const btnPresetSlides = document.getElementById('btnPresetSlides');
+  const btnPresetCockpit = document.getElementById('btnPresetCockpit');
+
+  const btnScaleDown = document.getElementById('btnScaleDown');
+  const btnScaleReset = document.getElementById('btnScaleReset');
+  const btnScaleUp = document.getElementById('btnScaleUp');
+
+  const btnWidgetsMenu = document.getElementById('btnWidgetsMenu');
+  const confWidgetsDropdown = document.getElementById('confWidgetsDropdown');
+  const btnEditTabSizes = document.getElementById('btnEditTabSizes');
+  const btnLockDashboard = document.getElementById('btnLockDashboard');
+  const btnResetLayout = document.getElementById('btnResetLayout');
+  const btnFullscreenConf = document.getElementById('btnFullscreenConf');
+
+  const confTabSizeDrawer = document.getElementById('confTabSizeDrawer');
+  const btnCloseTabSizeDrawer = document.getElementById('btnCloseTabSizeDrawer');
 
   // =========================================================================
   // 1. REAL-TIME LOCAL STAGE CLOCK
@@ -60,33 +90,33 @@
   // =========================================================================
   let hudDimTimeout = null;
   function resetHudDimmer() {
-    if (confTopBar) {
-      confTopBar.classList.remove('hud-dimmed');
-    }
+    if (!confTopBar) return;
+    confTopBar.classList.remove('hud-dimmed');
     if (hudDimTimeout) {
       clearTimeout(hudDimTimeout);
+      hudDimTimeout = null;
     }
-    hudDimTimeout = setTimeout(() => {
-      const container = document.querySelector('.confidence-container');
-      const drawer = document.getElementById('confTabSizeDrawer');
-      const isDrawerOpen = drawer && drawer.style.display !== 'none';
-      if (container && container.classList.contains('mode-seamless') && !container.classList.contains('studio-edit-mode') && !isDrawerOpen) {
-        if (confTopBar) confTopBar.classList.add('hud-dimmed');
-      }
-    }, 3500);
+    // Auto-dim after 3.5 seconds of inactivity in non-edit mode
+    if (confContainer && !confContainer.classList.contains('studio-edit-mode')) {
+      hudDimTimeout = setTimeout(() => {
+        if (confTopBar && (!confWidgetsDropdown || confWidgetsDropdown.style.display === 'none') &&
+            (!confTabSizeDrawer || confTabSizeDrawer.style.display === 'none')) {
+          confTopBar.classList.add('hud-dimmed');
+        }
+      }, 3500);
+    }
   }
 
-  window.addEventListener('mousemove', resetHudDimmer, { passive: true });
-  window.addEventListener('mousedown', resetHudDimmer, { passive: true });
-  window.addEventListener('keydown', resetHudDimmer, { passive: true });
+  window.addEventListener('mousemove', resetHudDimmer);
+  window.addEventListener('mousedown', resetHudDimmer);
+  window.addEventListener('keydown', resetHudDimmer);
   resetHudDimmer();
 
-  const btnFullscreenConf = document.getElementById('btnFullscreenConf');
   if (btnFullscreenConf) {
     btnFullscreenConf.addEventListener('click', () => {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
-        btnFullscreenConf.textContent = '↙ Exit Fullscreen';
+        btnFullscreenConf.textContent = '✕ Exit Fullscreen';
       } else {
         document.exitFullscreen().catch(() => {});
         btnFullscreenConf.textContent = '⤢ Fullscreen';
@@ -95,7 +125,7 @@
 
     document.addEventListener('fullscreenchange', () => {
       if (document.fullscreenElement) {
-        btnFullscreenConf.textContent = '↙ Exit Fullscreen';
+        btnFullscreenConf.textContent = '✕ Exit Fullscreen';
       } else {
         btnFullscreenConf.textContent = '⤢ Fullscreen';
       }
@@ -127,11 +157,9 @@
       lastScrollTimestamp = now;
 
       if (confNotesViewport) {
-        // Smooth scroll rate: base ~35px/s scaled by autoScrollSpeed
         const px = (autoScrollSpeed * 35 * delta) / 1000;
         confNotesViewport.scrollTop += px;
 
-        // Auto-pause at bottom with slight buffer
         if (confNotesViewport.scrollTop + confNotesViewport.clientHeight >= confNotesViewport.scrollHeight - 4) {
           toggleAutoScroll(false);
           return;
@@ -167,13 +195,13 @@
     btnScrollSpeed.addEventListener('click', cycleScrollSpeed);
   }
 
-  // Font Scaling Controls
   if (btnFontDecrease) {
     btnFontDecrease.addEventListener('click', () => {
       notesFontSize = Math.max(16, notesFontSize - 4);
       if (confNotesText) confNotesText.style.fontSize = `${notesFontSize}px`;
     });
   }
+
   if (btnFontIncrease) {
     btnFontIncrease.addEventListener('click', () => {
       notesFontSize = Math.min(56, notesFontSize + 4);
@@ -183,14 +211,29 @@
 
   // Keyboard navigation & shortcuts
   window.addEventListener('keydown', (e) => {
+    if (e.target && e.target.matches('input, textarea, select')) return;
+
     if (e.key === 's' || e.key === 'S') {
       e.preventDefault();
       toggleAutoScroll();
     } else if (e.key === '+' || e.key === '=') {
-      if (btnFontIncrease) btnFontIncrease.click();
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        applyStageScale(currentScale + 0.1);
+      } else if (btnFontIncrease) {
+        btnFontIncrease.click();
+      }
     } else if (e.key === '-' || e.key === '_') {
-      if (btnFontDecrease) btnFontDecrease.click();
-    } else if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        applyStageScale(currentScale - 0.1);
+      } else if (btnFontDecrease) {
+        btnFontDecrease.click();
+      }
+    } else if ((e.key === '0') && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      applyStageScale(1.0);
+    } else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
       if (currentPage < totalPages) navigateSlide(currentPage + 1);
     } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
       if (currentPage > 1) navigateSlide(currentPage - 1);
@@ -199,7 +242,7 @@
 
   function navigateSlide(targetPage) {
     updateSlides(targetPage);
-    if (syncBus) {
+    if (typeof syncBus !== 'undefined' && syncBus && syncBus.send) {
       syncBus.send({ type: 'GOTO_PAGE', page: targetPage });
     }
     if (window.electronAPI && window.electronAPI.sendSync) {
@@ -208,24 +251,14 @@
   }
 
   // =========================================================================
-  // 2.5. LAYOUT RESIZING & PRESETS CONTROLLER
+  // 3. LAYOUT RESIZING & PRESETS CONTROLLER
   // =========================================================================
   const STORAGE_KEY_LAYOUT = 'pdf_presenter_confidence_layout';
-  const confTopBar = document.getElementById('confTopBar');
-  const confMainContent = document.getElementById('confMainContent');
-  const confSlidesSection = document.getElementById('confSlidesSection');
-  const confNotesSection = document.getElementById('confNotesSection');
-  const confResizerH = document.getElementById('confResizerH');
-  const confResizerV = document.getElementById('confResizerV');
-  const btnPresetTimer = document.getElementById('btnPresetTimer');
-  const btnPresetSlides = document.getElementById('btnPresetSlides');
-  const btnPresetNotes = document.getElementById('btnPresetNotes');
-  const btnPresetBalanced = document.getElementById('btnPresetBalanced');
 
   let currentLayout = {
-    topHeight: 90,
-    slidesWidthPercent: 58,
-    timerFontSize: 50,
+    topHeight: 92,
+    slidesWidthPercent: 50,
+    timerFontSize: 52,
     activePreset: 'balanced'
   };
 
@@ -234,16 +267,13 @@
     currentLayout = { ...currentLayout, ...layout };
 
     if (confTopBar) {
-      if (typeof currentLayout.topHeight === 'number') {
-        confTopBar.style.height = `${currentLayout.topHeight}px`;
-      } else {
-        confTopBar.style.height = currentLayout.topHeight;
-      }
+      confTopBar.style.height = typeof currentLayout.topHeight === 'number' ? `${currentLayout.topHeight}px` : currentLayout.topHeight;
     }
 
-    if (confDashboardGrid && currentLayout.topHeight) {
+    if (confDashboardGrid) {
       const topHStr = typeof currentLayout.topHeight === 'number' ? `${currentLayout.topHeight}px` : currentLayout.topHeight;
       confDashboardGrid.style.setProperty('--conf-row-top-h', topHStr);
+      confDashboardGrid.style.setProperty('--conf-timer-font-size', `${currentLayout.timerFontSize}px`);
     }
 
     if (confTimerDisplay) {
@@ -255,1728 +285,672 @@
     }
 
     if (confDashboardGrid && currentLayout.slidesWidthPercent) {
-      const curWin = getDockWindowEl('current');
-      const nextWin = getDockWindowEl('next');
+      const curWin = document.getElementById('dockWindowCurrent');
+      const nextWin = document.getElementById('dockWindowNext');
       if (curWin && nextWin) {
-        const spanCurrent = Math.max(15, Math.min(105, Math.round((currentLayout.slidesWidthPercent / 100) * 120)));
-        const spanNext = 120 - spanCurrent;
-        curWin.style.gridColumn = `span ${spanCurrent}`;
+        const curPct = Math.max(15, Math.min(85, currentLayout.slidesWidthPercent));
+        const spanCur = Math.max(15, Math.min(105, Math.round((curPct / 100) * 120)));
+        const spanNext = 120 - spanCur;
+        curWin.style.gridColumn = `span ${spanCur}`;
         nextWin.style.gridColumn = `span ${spanNext}`;
       }
     }
 
-    [btnPresetTimer, btnPresetSlides, btnPresetNotes, btnPresetBalanced].forEach(btn => {
-      if (btn) btn.classList.remove('active');
-    });
-
-    if (currentLayout.activePreset === 'timer' && btnPresetTimer) {
-      btnPresetTimer.classList.add('active');
-    } else if (currentLayout.activePreset === 'slides' && btnPresetSlides) {
-      btnPresetSlides.classList.add('active');
-    } else if (currentLayout.activePreset === 'notes' && btnPresetNotes) {
-      btnPresetNotes.classList.add('active');
-    } else if (btnPresetBalanced) {
-      btnPresetBalanced.classList.add('active');
-    }
-
-    if (save && typeof localStorage !== 'undefined') {
+    if (save) {
       try {
         localStorage.setItem(STORAGE_KEY_LAYOUT, JSON.stringify(currentLayout));
       } catch (e) {}
     }
-  }
 
-  function loadStoredLayout() {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_LAYOUT);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        applyLayout(parsed, false);
-      }
-    } catch (e) {}
-  }
-
-  function setPreset(presetName) {
-    if (presetName === 'timer') {
-      const vh36 = typeof window !== 'undefined' ? Math.max(180, Math.round(window.innerHeight * 0.36)) : 240;
-      applyLayout({
-        topHeight: vh36,
-        timerFontSize: 96,
-        slidesWidthPercent: 50,
-        activePreset: 'timer'
-      });
-      if (typeof applyDockPreset === 'function') applyDockPreset('timer');
-    } else if (presetName === 'slides') {
-      applyLayout({
-        topHeight: 85,
-        timerFontSize: 46,
-        slidesWidthPercent: 68,
-        activePreset: 'slides'
-      });
-      if (typeof applyDockPreset === 'function') applyDockPreset('slides');
-    } else if (presetName === 'notes') {
-      applyLayout({
-        topHeight: 85,
-        timerFontSize: 46,
-        slidesWidthPercent: 35,
-        activePreset: 'notes'
-      });
-      if (typeof applyDockPreset === 'function') applyDockPreset('notes');
-    } else if (presetName === 'cockpit') {
-      applyLayout({
-        topHeight: 90,
-        timerFontSize: 50,
-        slidesWidthPercent: 58,
-        activePreset: 'cockpit'
-      });
-      if (typeof applyDockPreset === 'function') applyDockPreset('cockpit');
-    } else {
-      applyLayout({
-        topHeight: 90,
-        timerFontSize: 50,
-        slidesWidthPercent: 58,
-        activePreset: 'balanced'
-      });
-      if (typeof applyDockPreset === 'function') applyDockPreset('balanced');
-    }
-  }
-
-  const btnPresetCockpit = document.getElementById('btnPresetCockpit');
-  if (btnPresetTimer) btnPresetTimer.addEventListener('click', () => setPreset('timer'));
-  if (btnPresetSlides) btnPresetSlides.addEventListener('click', () => setPreset('slides'));
-  if (btnPresetNotes) btnPresetNotes.addEventListener('click', () => setPreset('notes'));
-  if (btnPresetBalanced) btnPresetBalanced.addEventListener('click', () => setPreset('balanced'));
-  if (btnPresetCockpit) btnPresetCockpit.addEventListener('click', () => setPreset('cockpit'));
-
-  if (confResizerH) {
-    let isDraggingH = false;
-    let startY = 0;
-    let startHeight = 90;
-
-    confResizerH.addEventListener('pointerdown', (e) => {
-      isDraggingH = true;
-      startY = e.clientY;
-      startHeight = confTopBar ? confTopBar.getBoundingClientRect().height : 90;
-      confResizerH.classList.add('dragging');
-      if (typeof confResizerH.setPointerCapture === 'function') {
-        try { confResizerH.setPointerCapture(e.pointerId); } catch (err) {}
-      }
-      document.body.style.cursor = 'row-resize';
-    });
-
-    confResizerH.addEventListener('pointermove', (e) => {
-      if (!isDraggingH) return;
-      const deltaY = e.clientY - startY;
-      const minH = 70;
-      const maxH = typeof window !== 'undefined' ? Math.round(window.innerHeight * 0.65) : 500;
-      const newH = Math.max(minH, Math.min(maxH, startHeight + deltaY));
-      const newFontSize = Math.round(Math.max(40, Math.min(120, newH * 0.38)));
-
-      applyLayout({
-        topHeight: newH,
-        timerFontSize: newFontSize,
-        activePreset: 'custom'
-      });
-    });
-
-    const stopDragH = (e) => {
-      if (!isDraggingH) return;
-      isDraggingH = false;
-      confResizerH.classList.remove('dragging');
-      if (typeof confResizerH.releasePointerCapture === 'function') {
-        try { confResizerH.releasePointerCapture(e.pointerId); } catch (err) {}
-      }
-      document.body.style.cursor = '';
-      applyLayout(currentLayout, true);
-      if (typeof updateSlides === 'function') updateSlides(currentPage);
-    };
-
-    confResizerH.addEventListener('pointerup', stopDragH);
-    confResizerH.addEventListener('pointercancel', stopDragH);
-    confResizerH.addEventListener('dblclick', () => {
-      if (confDashboardGrid) confDashboardGrid.style.removeProperty('--conf-row-top-h');
-      setPreset('balanced');
-      if (typeof updateSlides === 'function') updateSlides(currentPage);
-    });
-  }
-
-  if (confResizerV) {
-    let isDraggingV = false;
-    let startX = 0;
-    let startWidth = 58;
-
-    confResizerV.addEventListener('pointerdown', (e) => {
-      isDraggingV = true;
-      startX = e.clientX;
-      const totalW = confMainContent ? confMainContent.getBoundingClientRect().width : (typeof window !== 'undefined' ? window.innerWidth : 1200);
-      const currentSlidesW = confSlidesSection ? confSlidesSection.getBoundingClientRect().width : (totalW * 0.58);
-      startWidth = (currentSlidesW / totalW) * 100;
-      confResizerV.classList.add('dragging');
-      if (typeof confResizerV.setPointerCapture === 'function') {
-        try { confResizerV.setPointerCapture(e.pointerId); } catch (err) {}
-      }
-      document.body.style.cursor = 'col-resize';
-    });
-
-    confResizerV.addEventListener('pointermove', (e) => {
-      if (!isDraggingV) return;
-      const totalW = confMainContent ? confMainContent.getBoundingClientRect().width : (typeof window !== 'undefined' ? window.innerWidth : 1200);
-      if (totalW <= 0) return;
-      const deltaX = e.clientX - startX;
-      const deltaPercent = (deltaX / totalW) * 100;
-      const newPercent = Math.max(20, Math.min(80, Math.round(startWidth + deltaPercent)));
-
-      applyLayout({
-        slidesWidthPercent: newPercent,
-        activePreset: 'custom'
-      });
-    });
-
-    const stopDragV = (e) => {
-      if (!isDraggingV) return;
-      isDraggingV = false;
-      confResizerV.classList.remove('dragging');
-      if (typeof confResizerV.releasePointerCapture === 'function') {
-        try { confResizerV.releasePointerCapture(e.pointerId); } catch (err) {}
-      }
-      document.body.style.cursor = '';
-      applyLayout(currentLayout, true);
-      if (typeof updateSlides === 'function') updateSlides(currentPage);
-    };
-
-    confResizerV.addEventListener('pointerup', stopDragV);
-    confResizerV.addEventListener('pointercancel', stopDragV);
-    confResizerV.addEventListener('dblclick', () => {
-      const curWin = getDockWindowEl('current');
-      const nextWin = getDockWindowEl('next');
-      if (curWin) curWin.style.gridColumn = '';
-      if (nextWin) nextWin.style.gridColumn = '';
-      applyLayout({ slidesWidthPercent: 58, activePreset: 'balanced' });
-      if (typeof updateSlides === 'function') updateSlides(currentPage);
-    });
-  }
-
-  loadStoredLayout();
-
-  // =========================================================================
-  // 2.7. STAGE SCALE & DISPLAY ZOOM CONTROLLER (SCALE BIG OR SMALL)
-  // =========================================================================
-  const STORAGE_KEY_SCALE = 'pdf_presenter_confidence_scale';
-  const confScaleToolbar = document.getElementById('confScaleToolbar');
-  const btnScaleDown = document.getElementById('btnScaleDown');
-  const btnScaleReset = document.getElementById('btnScaleReset');
-  const btnScaleUp = document.getElementById('btnScaleUp');
-
-  let currentStageScale = 1.0;
-
-  function applyStageScale(newScale, save = true) {
-    currentStageScale = Math.max(0.6, Math.min(2.2, Math.round(newScale * 100) / 100));
-    const container = document.getElementById('confContainer') || document.querySelector('.confidence-container');
-    if (container) {
-      container.style.setProperty('--conf-scale', String(currentStageScale));
-    }
-    if (btnScaleReset) {
-      btnScaleReset.textContent = `${Math.round(currentStageScale * 100)}%`;
-      btnScaleReset.title = `Current Scale: ${Math.round(currentStageScale * 100)}% (Click to reset to 100%)`;
-      btnScaleReset.classList.toggle('scale-modified', currentStageScale !== 1.0);
-    }
-    if (typeof adjustGridForActiveWindows === 'function') {
-      adjustGridForActiveWindows();
-    }
-    if (save && typeof localStorage !== 'undefined') {
-      try {
-        localStorage.setItem(STORAGE_KEY_SCALE, String(currentStageScale));
-      } catch (e) {}
-    }
-  }
-
-  function loadStoredScale() {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_SCALE);
-      if (stored) {
-        const val = parseFloat(stored);
-        if (!isNaN(val) && val >= 0.5 && val <= 2.5) {
-          applyStageScale(val, false);
-        }
-      }
-    } catch (e) {}
-  }
-
-  if (btnScaleDown) {
-    btnScaleDown.addEventListener('click', () => applyStageScale(currentStageScale - 0.1));
-  }
-  if (btnScaleUp) {
-    btnScaleUp.addEventListener('click', () => applyStageScale(currentStageScale + 0.1));
-  }
-  if (btnScaleReset) {
-    btnScaleReset.addEventListener('click', () => applyStageScale(1.0));
-  }
-
-  // Keyboard Shortcuts: Ctrl + Plus, Ctrl + Minus, Ctrl + 0
-  window.addEventListener('keydown', (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      if (e.key === '+' || e.key === '=') {
-        e.preventDefault();
-        applyStageScale(currentStageScale + 0.1);
-      } else if (e.key === '-' || e.key === '_') {
-        e.preventDefault();
-        applyStageScale(currentStageScale - 0.1);
-      } else if (e.key === '0') {
-        e.preventDefault();
-        applyStageScale(1.0);
-      }
-    }
-  });
-
-  loadStoredScale();
-
-  // =========================================================================
-  // 2.8. WATCHOUT 7 DOCKABLE DASHBOARD & DRAG-AND-DROP WORKSPACE
-  // =========================================================================
-  const STORAGE_KEY_DASHBOARD = 'pdf_presenter_confidence_dashboard_layout';
-  const confDashboardGrid = document.getElementById('confDashboardGrid');
-  const btnLockDashboard = document.getElementById('btnLockDashboard');
-  const btnResetLayout = document.getElementById('btnResetLayout');
-  const btnWidgetsMenu = document.getElementById('btnWidgetsMenu');
-  const confWidgetsDropdown = document.getElementById('confWidgetsDropdown');
-
-  let isDashboardLocked = false;
-  let draggedWindow = null;
-
-  const DEFAULT_DASHBOARD_STATE = {
-    locked: false,
-    order: ['timer', 'clock', 'counter', 'current', 'next', 'notes', 'cue'],
-    windows: {
-      timer: { visible: true, collapsed: false, span: 'span-1', rowSpan: 'row-span-1', maximized: false },
-      clock: { visible: true, collapsed: false, span: 'span-1', rowSpan: 'row-span-1', maximized: false },
-      counter: { visible: true, collapsed: false, span: 'span-1', rowSpan: 'row-span-1', maximized: false },
-      current: { visible: true, collapsed: false, span: 'span-2', rowSpan: 'row-span-1', maximized: false },
-      next: { visible: true, collapsed: false, span: 'span-2', rowSpan: 'row-span-1', maximized: false },
-      notes: { visible: true, collapsed: false, span: 'span-2', rowSpan: 'row-span-1', maximized: false },
-      cue: { visible: true, collapsed: false, span: 'span-full', rowSpan: 'row-span-1', maximized: false }
-    }
-  };
-
-  let dashboardState = JSON.parse(JSON.stringify(DEFAULT_DASHBOARD_STATE));
-
-  function getDockWindowEl(windowId) {
-    if (!windowId) return null;
-    const capitalized = windowId.charAt(0).toUpperCase() + windowId.slice(1);
-    return document.getElementById(`dockWindow${capitalized}`) || document.querySelector(`.conf-dock-window[data-window-id="${windowId}"]`);
-  }
-
-  function getCheckboxEl(windowId) {
-    if (!windowId) return null;
-    const capitalized = windowId.charAt(0).toUpperCase() + windowId.slice(1);
-    return document.getElementById(`chkWin${capitalized}`);
-  }
-
-  function setWindowVisibility(windowId, isVisible) {
-    const win = getDockWindowEl(windowId);
-    if (win) {
-      win.style.display = isVisible ? '' : 'none';
-    }
-    const chk = getCheckboxEl(windowId);
-    if (chk) {
-      chk.checked = Boolean(isVisible);
-    }
-    const item = document.querySelector(`.widget-toggle-item[data-window-id="${windowId}"]`) || (chk ? chk.closest('.widget-toggle-item') : null);
-    if (item) {
-      item.classList.toggle('is-disabled', !isVisible);
-      const badge = item.querySelector('.widget-toggle-badge');
-      if (badge) {
-        badge.textContent = isVisible ? 'ON' : 'OFF';
-        badge.classList.toggle('status-off', !isVisible);
-      }
-    }
-    if (!dashboardState.windows[windowId]) {
-      dashboardState.windows[windowId] = {};
-    }
-    dashboardState.windows[windowId].visible = Boolean(isVisible);
-
-    adjustGridForActiveWindows();
-
-    if (isVisible && (windowId === 'current' || windowId === 'next')) {
-      if (typeof updateSlides === 'function') {
-        updateSlides(currentPage);
-      }
-    }
-
-    saveDashboardState();
-  }
-
-  function adjustGridForActiveWindows() {
-    if (!confDashboardGrid) return;
-    const wins = dashboardState.windows || {};
-    const isTimerVis = wins.timer?.visible !== false;
-    const isClockVis = wins.clock?.visible !== false;
-    const isCounterVis = wins.counter?.visible !== false;
-    const isCurrentVis = wins.current?.visible !== false;
-    const isNextVis = wins.next?.visible !== false;
-    const isNotesVis = wins.notes?.visible !== false;
-    const isCueVis = wins.cue?.visible !== false;
-
-    // Top row adaptation:
-    if (isTimerVis && !isClockVis && !isCounterVis) {
-      setWindowSpan('timer', 'span-full');
-    } else if (isTimerVis && (!isClockVis || !isCounterVis)) {
-      setWindowSpan('timer', 'span-2');
-      if (isClockVis) setWindowSpan('clock', 'span-2');
-      if (isCounterVis) setWindowSpan('counter', 'span-2');
-    } else if (!isTimerVis && isClockVis && isCounterVis) {
-      setWindowSpan('clock', 'span-2');
-      setWindowSpan('counter', 'span-2');
-    } else if (!isTimerVis && isClockVis && !isCounterVis) {
-      setWindowSpan('clock', 'span-full');
-    } else if (!isTimerVis && !isClockVis && isCounterVis) {
-      setWindowSpan('counter', 'span-full');
-    } else if (isTimerVis && isClockVis && isCounterVis) {
-      setWindowSpan('timer', 'span-1');
-      setWindowSpan('clock', 'span-1');
-      setWindowSpan('counter', 'span-1');
-    }
-
-    // Slides section adaptation:
-    if (isCurrentVis && !isNextVis) {
-      // Single-slide cinema view: Live Audience slide takes full width
-      setWindowSpan('current', 'span-full');
-    } else if (!isCurrentVis && isNextVis) {
-      setWindowSpan('next', 'span-full');
-    } else if (isCurrentVis && isNextVis) {
-      setWindowSpan('current', 'span-2');
-      setWindowSpan('next', 'span-2');
-    }
-
-    // Notes adaptation:
-    if (isNotesVis && !isCueVis) {
-      setWindowSpan('notes', 'span-full');
-    } else if (isNotesVis && isCueVis) {
-      setWindowSpan('notes', 'span-3');
-      setWindowSpan('cue', 'span-1');
-    }
-
-    // Responsive grid row heights based on active rows:
-    const hasTopRow = isTimerVis || isClockVis || isCounterVis;
-    const hasSlidesRow = isCurrentVis || isNextVis;
-    const hasBottomRow = isNotesVis || isCueVis;
-
-    let topRowH = hasTopRow ? `var(--conf-row-top-h, calc(92px * var(--conf-scale, 1)))` : '0px';
-    let bottomRowH = hasBottomRow ? `var(--conf-row-bottom-h, calc(148px * var(--conf-scale, 1)))` : '0px';
-    let slidesRowH = hasSlidesRow ? `var(--conf-row-middle-h, 1fr)` : (hasBottomRow ? `var(--conf-row-middle-h, 1fr)` : 'auto');
-
-    if (!hasSlidesRow && hasBottomRow) {
-      bottomRowH = `var(--conf-row-bottom-h, 1fr)`;
-    }
-
-    confDashboardGrid.style.gridTemplateRows = `${topRowH} ${slidesRowH} ${bottomRowH}`;
-  }
-
-  function toggleDashboardLock(force) {
-    isDashboardLocked = typeof force === 'boolean' ? force : !isDashboardLocked;
-    dashboardState.locked = isDashboardLocked;
-
-    const container = document.querySelector('.confidence-container');
-    if (container) {
-      container.classList.toggle('dashboard-locked', isDashboardLocked);
-    }
-
-    if (btnLockDashboard) {
-      btnLockDashboard.textContent = isDashboardLocked ? '🔒 Locked' : '🔓 Unlock';
-      btnLockDashboard.classList.toggle('active-locked', isDashboardLocked);
-      btnLockDashboard.title = isDashboardLocked ? 'Unlock dashboard to allow drag-and-drop rearrangement' : 'Lock dashboard to prevent accidental dragging on stage';
-    }
-
-    document.querySelectorAll('.conf-dock-window').forEach(win => {
-      win.setAttribute('draggable', isDashboardLocked ? 'false' : 'true');
-    });
-
-    saveDashboardState();
-  }
-
-  function applyDockPreset(presetName) {
-    if (!confDashboardGrid) return;
-    const container = document.querySelector('.confidence-container');
-    if (container) {
-      if (presetName === 'cockpit') {
-        container.classList.remove('mode-seamless');
-        container.classList.add('studio-edit-mode');
-      } else {
-        container.classList.add('mode-seamless');
-        container.classList.remove('studio-edit-mode');
-      }
-    }
-    const wins = dashboardState.windows || {};
-
-    let order = DEFAULT_DASHBOARD_STATE.order;
-    if (presetName === 'timer') {
-      order = ['timer', 'current', 'next', 'notes', 'clock', 'counter', 'cue'];
-    } else if (presetName === 'slides') {
-      order = ['current', 'next', 'timer', 'clock', 'counter', 'notes', 'cue'];
-    } else if (presetName === 'notes') {
-      order = ['notes', 'current', 'timer', 'clock', 'next', 'counter', 'cue'];
-    }
-
-    // Reset inline overrides so template snaps into perfect proportions
-    ['timer', 'clock', 'counter', 'current', 'next', 'notes', 'cue'].forEach(wid => {
-      const el = getDockWindowEl(wid);
-      if (el) el.style.gridColumn = '';
-    });
-
-    order.forEach(wid => {
-      const el = getDockWindowEl(wid);
-      if (el) {
-        const isVisible = wins[wid]?.visible !== false;
-        el.style.display = isVisible ? '' : 'none';
-        confDashboardGrid.appendChild(el);
-      }
-      const chk = getCheckboxEl(wid);
-      if (chk) {
-        chk.checked = wins[wid]?.visible !== false;
-      }
-      const item = document.querySelector(`.widget-toggle-item[data-window-id="${wid}"]`) || (chk ? chk.closest('.widget-toggle-item') : null);
-      if (item) {
-        const isVisible = wins[wid]?.visible !== false;
-        item.classList.toggle('is-disabled', !isVisible);
-        const badge = item.querySelector('.widget-toggle-badge');
-        if (badge) {
-          badge.textContent = isVisible ? 'ON' : 'OFF';
-          badge.classList.toggle('status-off', !isVisible);
-        }
-      }
-    });
-
-    if (presetName === 'timer') {
-      setWindowSpan('timer', 'span-full');
-      setWindowSpan('current', 'span-2');
-      setWindowSpan('next', 'span-2');
-      setWindowSpan('notes', 'span-full');
-      setWindowSpan('clock', 'span-1');
-      setWindowSpan('counter', 'span-1');
-      setWindowSpan('cue', 'span-1');
-      confDashboardGrid.style.setProperty('--conf-row-top-h', '180px');
-    } else if (presetName === 'slides') {
-      setWindowSpan('current', 'span-full');
-      setWindowSpan('next', 'span-1');
-      const nextEl = getDockWindowEl('next');
-      if (nextEl) nextEl.style.display = 'none';
-      setWindowSpan('timer', 'span-1');
-      setWindowSpan('clock', 'span-1');
-      setWindowSpan('counter', 'span-1');
-      setWindowSpan('notes', 'span-full');
-      setWindowSpan('cue', 'span-1');
-    } else if (presetName === 'notes') {
-      setWindowSpan('notes', 'span-full');
-      setWindowSpan('current', 'span-2');
-      setWindowSpan('next', 'span-2');
-      setWindowSpan('timer', 'span-1');
-      setWindowSpan('clock', 'span-1');
-      setWindowSpan('counter', 'span-1');
-      setWindowSpan('cue', 'span-1');
-      confDashboardGrid.style.setProperty('--conf-row-bottom-h', '320px');
-      notesFontSize = 34;
-      if (confNotesText) confNotesText.style.fontSize = '34px';
-    } else {
-      setWindowSpan('timer', 'span-1');
-      setWindowSpan('clock', 'span-1');
-      setWindowSpan('counter', 'span-1');
-      setWindowSpan('current', 'span-2');
-      setWindowSpan('next', 'span-2');
-      setWindowSpan('notes', 'span-3');
-      setWindowSpan('cue', 'span-1');
-      confDashboardGrid.style.setProperty('--conf-row-top-h', '92px');
-      confDashboardGrid.style.setProperty('--conf-row-bottom-h', '148px');
-      notesFontSize = 28;
-      if (confNotesText) confNotesText.style.fontSize = '28px';
-    }
-
-    if (presetName !== 'slides') {
-      const nextEl = getDockWindowEl('next');
-      if (nextEl && wins.next?.visible !== false) nextEl.style.display = '';
-    }
-
-    adjustGridForActiveWindows();
-    saveDashboardState();
-  }
-
-  function setWindowSpan(windowId, spanClass) {
-    const win = getDockWindowEl(windowId);
-    if (!win) return;
-    win.classList.remove('span-1', 'span-2', 'span-3', 'span-full');
-    win.classList.add(spanClass);
-    if (dashboardState.windows[windowId]) {
-      dashboardState.windows[windowId].span = spanClass;
-    }
-  }
-
-  function setWindowRowSpan(windowId, rowSpanClass) {
-    const win = getDockWindowEl(windowId);
-    if (!win) return;
-    win.classList.remove('row-span-1', 'row-span-2', 'row-span-full');
-    win.classList.add(rowSpanClass);
-    if (dashboardState.windows[windowId]) {
-      dashboardState.windows[windowId].rowSpan = rowSpanClass;
-    }
-  }
-
-  function cycleWindowWidth(windowId) {
-    const win = getDockWindowEl(windowId);
-    if (!win) return;
-    const spans = ['span-1', 'span-2', 'span-3', 'span-full'];
-    let currentSpan = spans.find(s => win.classList.contains(s)) || 'span-1';
-    win.classList.remove('span-1', 'span-2', 'span-3', 'span-full');
-    const nextSpan = spans[(spans.indexOf(currentSpan) + 1) % spans.length];
-    win.classList.add(nextSpan);
-    win.style.gridColumn = '';
-    if (!dashboardState.windows[windowId]) dashboardState.windows[windowId] = {};
-    dashboardState.windows[windowId].span = nextSpan;
-    if (dashboardState.flexibleSpans) {
-      delete dashboardState.flexibleSpans[windowId];
-    }
-    saveDashboardState();
-    if (windowId === 'current' || windowId === 'next') {
-      if (typeof updateSlides === 'function') updateSlides(currentPage);
-    }
-  }
-
-  function cycleWindowHeight(windowId) {
-    const win = getDockWindowEl(windowId);
-    if (!win) return;
-    const rowSpans = ['row-span-1', 'row-span-2', 'row-span-full'];
-    let currentRowSpan = rowSpans.find(s => win.classList.contains(s)) || 'row-span-1';
-    win.classList.remove('row-span-1', 'row-span-2', 'row-span-full');
-    const nextRowSpan = rowSpans[(rowSpans.indexOf(currentRowSpan) + 1) % rowSpans.length];
-    win.classList.add(nextRowSpan);
-    win.style.height = '';
-    if (!dashboardState.windows[windowId]) dashboardState.windows[windowId] = {};
-    dashboardState.windows[windowId].rowSpan = nextRowSpan;
-    saveDashboardState();
-    if (windowId === 'current' || windowId === 'next') {
-      if (typeof updateSlides === 'function') updateSlides(currentPage);
-    }
-  }
-
-  function toggleWindowMaximize(windowId) {
-    const win = getDockWindowEl(windowId);
-    if (!win) return;
-    const wasMaximized = win.classList.contains('is-maximized');
-
-    document.querySelectorAll('.conf-dock-window.is-maximized').forEach(w => {
-      w.classList.remove('is-maximized');
-      const wid = w.dataset.windowId;
-      if (wid && dashboardState.windows[wid]) {
-        dashboardState.windows[wid].maximized = false;
-      }
-      updateMaxButtons(w, false);
-    });
-
-    if (!wasMaximized) {
-      win.classList.add('is-maximized');
-      if (!dashboardState.windows[windowId]) dashboardState.windows[windowId] = {};
-      dashboardState.windows[windowId].maximized = true;
-      updateMaxButtons(win, true);
-    }
-
-    saveDashboardState();
-    if (windowId === 'current' || windowId === 'next') {
-      if (typeof updateSlides === 'function') updateSlides(currentPage);
-    }
-  }
-
-  function updateMaxButtons(winEl, isMax) {
-    if (!winEl) return;
-    const maxBtns = winEl.querySelectorAll('.btn-hud-max, .btn-dock-max');
-    maxBtns.forEach(btn => {
-      btn.textContent = isMax ? '↙' : '⤢';
-      btn.title = isMax ? 'Restore Window Size (↙ / Double-click)' : 'Maximize Window (⤢ / Double-click)';
-      btn.classList.toggle('is-active', isMax);
-    });
-  }
-
-  function resetDashboardLayout() {
-    dashboardState = JSON.parse(JSON.stringify(DEFAULT_DASHBOARD_STATE));
-    if (confDashboardGrid) {
-      confDashboardGrid.style.removeProperty('--conf-row-top-h');
-      confDashboardGrid.style.removeProperty('--conf-row-middle-h');
-      confDashboardGrid.style.removeProperty('--conf-row-bottom-h');
-      dashboardState.order.forEach(wid => {
-        const el = getDockWindowEl(wid);
-        if (el) {
-          el.style.display = '';
-          el.style.gridColumn = '';
-          el.style.width = '';
-          el.style.height = '';
-          el.classList.remove('is-collapsed', 'is-maximized', 'span-1', 'span-2', 'span-3', 'span-full', 'row-span-1', 'row-span-2', 'row-span-full');
-          el.classList.add(dashboardState.windows[wid]?.span || 'span-1');
-          el.classList.add(dashboardState.windows[wid]?.rowSpan || 'row-span-1');
-          const btnCollapse = el.querySelector('.btn-dock-collapse');
-          if (btnCollapse) btnCollapse.textContent = '▾';
-          updateMaxButtons(el, false);
-          confDashboardGrid.appendChild(el);
-        }
-        const chk = getCheckboxEl(wid);
-        if (chk) chk.checked = true;
-        const item = document.querySelector(`.widget-toggle-item[data-window-id="${wid}"]`) || (chk ? chk.closest('.widget-toggle-item') : null);
-        if (item) {
-          item.classList.remove('is-disabled');
-          const badge = item.querySelector('.widget-toggle-badge');
-          if (badge) {
-            badge.textContent = 'ON';
-            badge.classList.remove('status-off');
-          }
-        }
-      });
-    }
-    delete dashboardState.flexibleSpans;
-    delete dashboardState.flexibleRows;
-    toggleDashboardLock(false);
-    adjustGridForActiveWindows();
-    saveDashboardState();
-    if (typeof applyLayout === 'function') {
-      applyLayout({ activePreset: 'balanced' }, true);
-    }
-    if (typeof syncDrawerControlsFromState === 'function') {
-      syncDrawerControlsFromState();
-    }
     if (typeof updateSlides === 'function') {
       updateSlides(currentPage);
     }
   }
 
-  function saveDashboardState() {
-    const container = document.querySelector('.confidence-container');
-    if (container) {
-      dashboardState.mode = container.classList.contains('mode-seamless') ? 'seamless' : 'modular';
+  function setPreset(presetName) {
+    const presets = {
+      balanced: { topHeight: 92, slidesWidthPercent: 50, timerFontSize: 52, activePreset: 'balanced' },
+      slides: { topHeight: 70, slidesWidthPercent: 80, timerFontSize: 38, activePreset: 'slides' },
+      notes: { topHeight: 70, slidesWidthPercent: 35, timerFontSize: 38, activePreset: 'notes' },
+      timer: { topHeight: 180, slidesWidthPercent: 50, timerFontSize: 92, activePreset: 'timer' }
+    };
+
+    const target = presets[presetName] || presets.balanced;
+    applyLayout(target);
+
+    document.querySelectorAll('.btn-conf-preset').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById(`btnPreset${presetName.charAt(0).toUpperCase() + presetName.slice(1)}`);
+    if (btn) btn.classList.add('active');
+  }
+
+  // Load stored layout
+  try {
+    const savedLayout = localStorage.getItem(STORAGE_KEY_LAYOUT);
+    if (savedLayout) {
+      applyLayout(JSON.parse(savedLayout), false);
     }
-    if (confDashboardGrid) {
-      const currentOrder = Array.from(confDashboardGrid.children)
-        .map(c => c.dataset ? c.dataset.windowId : null)
-        .filter(Boolean);
-      if (currentOrder.length > 0) {
-        dashboardState.order = currentOrder;
-      }
-      dashboardState.flexibleSpans = {};
-      ['timer', 'clock', 'counter', 'current', 'next', 'notes', 'cue'].forEach(wid => {
-        const win = getDockWindowEl(wid);
-        if (win && win.style.gridColumn) {
-          dashboardState.flexibleSpans[wid] = win.style.gridColumn;
-        }
-      });
-      dashboardState.flexibleRows = {
-        topH: confDashboardGrid.style.getPropertyValue('--conf-row-top-h') || null,
-        middleH: confDashboardGrid.style.getPropertyValue('--conf-row-middle-h') || null,
-        bottomH: confDashboardGrid.style.getPropertyValue('--conf-row-bottom-h') || null
-      };
+  } catch (e) {}
+
+  // =========================================================================
+  // 4. DISPLAY SCALE CONTROLLER
+  // =========================================================================
+  const STORAGE_KEY_SCALE = 'pdf_presenter_confidence_scale';
+  let currentScale = 1.0;
+
+  function applyStageScale(scale, save = true) {
+    currentScale = Math.max(0.6, Math.min(2.2, Math.round(scale * 100) / 100));
+    document.documentElement.style.setProperty('--conf-scale', currentScale);
+
+    if (btnScaleReset) {
+      btnScaleReset.textContent = `${Math.round(currentScale * 100)}%`;
     }
-    if (typeof localStorage !== 'undefined') {
+
+    if (save) {
       try {
-        localStorage.setItem(STORAGE_KEY_DASHBOARD, JSON.stringify(dashboardState));
+        localStorage.setItem(STORAGE_KEY_SCALE, String(currentScale));
       } catch (e) {}
+    }
+
+    if (typeof updateSlides === 'function') {
+      updateSlides(currentPage);
     }
   }
 
+  try {
+    const savedScale = localStorage.getItem(STORAGE_KEY_SCALE);
+    if (savedScale) {
+      applyStageScale(parseFloat(savedScale), false);
+    }
+  } catch (e) {}
+
+  if (btnScaleDown) btnScaleDown.addEventListener('click', () => applyStageScale(currentScale - 0.1));
+  if (btnScaleReset) btnScaleReset.addEventListener('click', () => applyStageScale(1.0));
+  if (btnScaleUp) btnScaleUp.addEventListener('click', () => applyStageScale(currentScale + 0.1));
+
+  // =========================================================================
+  // 5. DASHBOARD GRID, WINDOWS, DOCKING & RESIZERS
+  // =========================================================================
+  const STORAGE_KEY_DASHBOARD = 'pdf_presenter_confidence_dashboard_layout';
+  let dashboardLocked = false;
+  let maximizedWindowId = null;
+
+  let dashboardState = {
+    order: ['timer', 'clock', 'counter', 'current', 'next', 'notes', 'cue'],
+    hidden: [],
+    collapsed: [],
+    spans: {
+      timer: 'span-1',
+      clock: 'span-1',
+      counter: 'span-1',
+      current: 'span-2',
+      next: 'span-2',
+      notes: 'span-2',
+      cue: 'span-full'
+    },
+    rowSpans: {
+      timer: 'row-span-1',
+      clock: 'row-span-1',
+      counter: 'row-span-1',
+      current: 'row-span-1',
+      next: 'row-span-1',
+      notes: 'row-span-1',
+      cue: 'row-span-1'
+    },
+    flexibleSpans: {},
+    flexibleRows: {},
+    activePreset: 'balanced'
+  };
+
   function loadDashboardState() {
-    if (typeof localStorage === 'undefined') return;
     try {
-      const stored = localStorage.getItem(STORAGE_KEY_DASHBOARD);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        dashboardState = { ...DEFAULT_DASHBOARD_STATE, ...parsed };
-
-        const container = document.querySelector('.confidence-container');
-        if (container) {
-          if (dashboardState.mode === 'modular') {
-            container.classList.remove('mode-seamless');
-          } else {
-            container.classList.add('mode-seamless');
-          }
-        }
-
-        if (confDashboardGrid && Array.isArray(dashboardState.order)) {
-          dashboardState.order.forEach(wid => {
-            const el = getDockWindowEl(wid);
-            if (el) confDashboardGrid.appendChild(el);
-          });
-        }
-
-        if (dashboardState.windows) {
-          Object.entries(dashboardState.windows).forEach(([wid, cfg]) => {
-            const el = getDockWindowEl(wid);
-            if (!el) return;
-            if (typeof cfg.visible === 'boolean') {
-              el.style.display = cfg.visible ? '' : 'none';
-              const chk = getCheckboxEl(wid);
-              if (chk) chk.checked = cfg.visible;
-              const item = document.querySelector(`.widget-toggle-item[data-window-id="${wid}"]`) || (chk ? chk.closest('.widget-toggle-item') : null);
-              if (item) {
-                item.classList.toggle('is-disabled', !cfg.visible);
-                const badge = item.querySelector('.widget-toggle-badge');
-                if (badge) {
-                  badge.textContent = cfg.visible ? 'ON' : 'OFF';
-                  badge.classList.toggle('status-off', !cfg.visible);
-                }
-              }
-            }
-            if (cfg.collapsed) {
-              el.classList.add('is-collapsed');
-              const btnCollapse = el.querySelector('.btn-dock-collapse');
-              if (btnCollapse) btnCollapse.textContent = '▸';
-            }
-            if (cfg.span) {
-              el.classList.remove('span-1', 'span-2', 'span-3', 'span-full');
-              el.classList.add(cfg.span);
-            }
-            if (cfg.rowSpan) {
-              el.classList.remove('row-span-1', 'row-span-2', 'row-span-full');
-              el.classList.add(cfg.rowSpan);
-            }
-            if (cfg.maximized) {
-              el.classList.add('is-maximized');
-              updateMaxButtons(el, true);
-            }
-          });
-          adjustGridForActiveWindows();
-        }
-
-        if (dashboardState.flexibleSpans && confDashboardGrid) {
-          Object.entries(dashboardState.flexibleSpans).forEach(([wid, spanVal]) => {
-            const win = getDockWindowEl(wid);
-            if (win && spanVal) {
-              win.style.gridColumn = spanVal;
-            }
-          });
-        }
-        if (dashboardState.flexibleRows && confDashboardGrid) {
-          if (dashboardState.flexibleRows.topH) {
-            confDashboardGrid.style.setProperty('--conf-row-top-h', dashboardState.flexibleRows.topH);
-          }
-          if (dashboardState.flexibleRows.middleH) {
-            confDashboardGrid.style.setProperty('--conf-row-middle-h', dashboardState.flexibleRows.middleH);
-          }
-          if (dashboardState.flexibleRows.bottomH) {
-            confDashboardGrid.style.setProperty('--conf-row-bottom-h', dashboardState.flexibleRows.bottomH);
-          }
-        }
-
-        if (typeof dashboardState.locked === 'boolean') {
-          toggleDashboardLock(dashboardState.locked);
-        }
+      const raw = localStorage.getItem(STORAGE_KEY_DASHBOARD);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        dashboardState = { ...dashboardState, ...parsed };
       }
+    } catch (e) {}
+    renderDashboardOrder();
+    syncWidgetCheckboxes();
+  }
+
+  function saveDashboardState() {
+    try {
+      localStorage.setItem(STORAGE_KEY_DASHBOARD, JSON.stringify(dashboardState));
     } catch (e) {}
   }
 
-  function initWindowResizers(win) {
-    if (!win) return;
-    const resizerR = win.querySelector('.conf-dock-resizer-r');
-    const resizerB = win.querySelector('.conf-dock-resizer-b');
-    const resizerSE = win.querySelector('.conf-dock-resizer-se');
-    const windowId = win.dataset.windowId;
-
-    function getRowPair(wid) {
-      if (wid === 'current') return getDockWindowEl('next');
-      if (wid === 'next') return getDockWindowEl('current');
-      if (wid === 'timer') return getDockWindowEl('clock') || getDockWindowEl('counter');
-      if (wid === 'clock') return getDockWindowEl('counter') || getDockWindowEl('timer');
-      if (wid === 'counter') return getDockWindowEl('clock');
-      if (wid === 'notes') return getDockWindowEl('cue');
-      if (wid === 'cue') return getDockWindowEl('notes');
-      return null;
-    }
-
-    // --- 1. HORIZONTAL RESIZING (Right Edge: Continuous Click-and-Drag) ---
-    if (resizerR) {
-      let isDragging = false;
-      let startX = 0;
-      let startWinW = 0;
-      let startPairW = 0;
-      let pairEl = null;
-
-      resizerR.addEventListener('pointerdown', (e) => {
-        if (isDashboardLocked) return;
-        e.stopPropagation();
-        isDragging = true;
-        startX = e.clientX;
-        const winRect = win.getBoundingClientRect();
-        startWinW = winRect.width;
-
-        pairEl = getRowPair(windowId);
-        if (pairEl && pairEl.style.display !== 'none') {
-          const pairRect = pairEl.getBoundingClientRect();
-          if (Math.abs(winRect.top - pairRect.top) < 35) {
-            startPairW = pairRect.width;
-          } else {
-            pairEl = null;
-          }
-        } else {
-          pairEl = null;
-        }
-
-        resizerR.classList.add('is-resizing');
-        document.body.classList.add('conf-resizing-col');
-        if (typeof resizerR.setPointerCapture === 'function') {
-          try { resizerR.setPointerCapture(e.pointerId); } catch (err) {}
-        }
-      });
-
-      resizerR.addEventListener('pointermove', (e) => {
-        if (!isDragging) return;
-        const deltaX = e.clientX - startX;
-        if (pairEl) {
-          const totalW = startWinW + startPairW;
-          if (totalW > 0) {
-            const newWinW = Math.max(60, Math.min(totalW - 60, startWinW + deltaX));
-            const pct = newWinW / totalW;
-            const spanWin = Math.max(15, Math.min(105, Math.round(pct * 120)));
-            const spanPair = 120 - spanWin;
-            win.style.gridColumn = `span ${spanWin}`;
-            pairEl.style.gridColumn = `span ${spanPair}`;
-          }
-        } else if (confDashboardGrid) {
-          const gridW = confDashboardGrid.getBoundingClientRect().width;
-          if (gridW > 0) {
-            const newW = Math.max(60, Math.min(gridW, startWinW + deltaX));
-            const span = Math.max(15, Math.min(120, Math.round((newW / gridW) * 120)));
-            win.style.gridColumn = `span ${span}`;
-          }
-        }
-      });
-
-      const stopR = (e) => {
-        if (!isDragging) return;
-        isDragging = false;
-        resizerR.classList.remove('is-resizing');
-        document.body.classList.remove('conf-resizing-col');
-        if (typeof resizerR.releasePointerCapture === 'function') {
-          try { resizerR.releasePointerCapture(e.pointerId); } catch (err) {}
-        }
-        saveDashboardState();
-        if (windowId === 'current' || windowId === 'next') {
-          if (typeof updateSlides === 'function') updateSlides(currentPage);
-        }
-      };
-
-      resizerR.addEventListener('pointerup', stopR);
-      resizerR.addEventListener('pointercancel', stopR);
-
-      // Double-click to reset horizontal width to balanced default
-      resizerR.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        win.style.gridColumn = '';
-        const pair = getRowPair(windowId);
-        if (pair) pair.style.gridColumn = '';
-        adjustGridForActiveWindows();
-        saveDashboardState();
-        if (windowId === 'current' || windowId === 'next') {
-          if (typeof updateSlides === 'function') updateSlides(currentPage);
-        }
-      });
-    }
-
-    // --- 2. VERTICAL RESIZING (Bottom Edge: Continuous Click-and-Drag) ---
-    if (resizerB) {
-      let isDragging = false;
-      let startY = 0;
-      let startH = 0;
-
-      resizerB.addEventListener('pointerdown', (e) => {
-        if (isDashboardLocked) return;
-        e.stopPropagation();
-        isDragging = true;
-        startY = e.clientY;
-        startH = win.getBoundingClientRect().height;
-        resizerB.classList.add('is-resizing');
-        document.body.classList.add('conf-resizing-row');
-        if (typeof resizerB.setPointerCapture === 'function') {
-          try { resizerB.setPointerCapture(e.pointerId); } catch (err) {}
-        }
-      });
-
-      resizerB.addEventListener('pointermove', (e) => {
-        if (!isDragging || !confDashboardGrid) return;
-        const gridRect = confDashboardGrid.getBoundingClientRect();
-        const deltaY = e.clientY - startY;
-
-        if (windowId === 'timer' || windowId === 'clock' || windowId === 'counter') {
-          const newTopH = Math.max(50, Math.min(Math.round(gridRect.height * 0.55), startH + deltaY));
-          confDashboardGrid.style.setProperty('--conf-row-top-h', `${newTopH}px`);
-          if (confTopBar) confTopBar.style.height = `${newTopH}px`;
-        } else if (windowId === 'current' || windowId === 'next') {
-          const newBottomH = Math.max(60, Math.min(Math.round(gridRect.height * 0.65), gridRect.bottom - e.clientY));
-          confDashboardGrid.style.setProperty('--conf-row-bottom-h', `${newBottomH}px`);
-          confDashboardGrid.style.setProperty('--conf-row-middle-h', '1fr');
-        } else if (windowId === 'notes' || windowId === 'cue') {
-          const newBottomH = Math.max(60, Math.min(Math.round(gridRect.height * 0.7), startH + deltaY));
-          confDashboardGrid.style.setProperty('--conf-row-bottom-h', `${newBottomH}px`);
-        }
-      });
-
-      const stopB = (e) => {
-        if (!isDragging) return;
-        isDragging = false;
-        resizerB.classList.remove('is-resizing');
-        document.body.classList.remove('conf-resizing-row');
-        if (typeof resizerB.releasePointerCapture === 'function') {
-          try { resizerB.releasePointerCapture(e.pointerId); } catch (err) {}
-        }
-        saveDashboardState();
-        if (typeof updateSlides === 'function') updateSlides(currentPage);
-      };
-
-      resizerB.addEventListener('pointerup', stopB);
-      resizerB.addEventListener('pointercancel', stopB);
-
-      // Double-click to reset vertical height to balanced defaults
-      resizerB.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        if (confDashboardGrid) {
-          if (windowId === 'timer' || windowId === 'clock' || windowId === 'counter') {
-            confDashboardGrid.style.removeProperty('--conf-row-top-h');
-          } else {
-            confDashboardGrid.style.removeProperty('--conf-row-middle-h');
-            confDashboardGrid.style.removeProperty('--conf-row-bottom-h');
-          }
-        }
-        adjustGridForActiveWindows();
-        saveDashboardState();
-        if (typeof updateSlides === 'function') updateSlides(currentPage);
-      });
-    }
-
-    // --- 3. CORNER RESIZING (SE Corner: Width + Height Simultaneously) ---
-    if (resizerSE) {
-      let isDragging = false;
-      let startX = 0;
-      let startY = 0;
-      let startWinW = 0;
-      let startPairW = 0;
-      let pairEl = null;
-      let startH = 0;
-
-      resizerSE.addEventListener('pointerdown', (e) => {
-        if (isDashboardLocked) return;
-        e.stopPropagation();
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        const winRect = win.getBoundingClientRect();
-        startWinW = winRect.width;
-        startH = winRect.height;
-
-        pairEl = getRowPair(windowId);
-        if (pairEl && pairEl.style.display !== 'none') {
-          const pairRect = pairEl.getBoundingClientRect();
-          if (Math.abs(winRect.top - pairRect.top) < 35) {
-            startPairW = pairRect.width;
-          } else {
-            pairEl = null;
-          }
-        } else {
-          pairEl = null;
-        }
-
-        resizerSE.classList.add('is-resizing');
-        document.body.classList.add('conf-resizing-se');
-        if (typeof resizerSE.setPointerCapture === 'function') {
-          try { resizerSE.setPointerCapture(e.pointerId); } catch (err) {}
-        }
-      });
-
-      resizerSE.addEventListener('pointermove', (e) => {
-        if (!isDragging) return;
-        const deltaX = e.clientX - startX;
-        const deltaY = e.clientY - startY;
-
-        // Width
-        if (pairEl) {
-          const totalW = startWinW + startPairW;
-          if (totalW > 0) {
-            const newWinW = Math.max(60, Math.min(totalW - 60, startWinW + deltaX));
-            const pct = newWinW / totalW;
-            const spanWin = Math.max(15, Math.min(105, Math.round(pct * 120)));
-            const spanPair = 120 - spanWin;
-            win.style.gridColumn = `span ${spanWin}`;
-            pairEl.style.gridColumn = `span ${spanPair}`;
-          }
-        } else if (confDashboardGrid) {
-          const gridW = confDashboardGrid.getBoundingClientRect().width;
-          if (gridW > 0) {
-            const newW = Math.max(60, Math.min(gridW, startWinW + deltaX));
-            const span = Math.max(15, Math.min(120, Math.round((newW / gridW) * 120)));
-            win.style.gridColumn = `span ${span}`;
-          }
-        }
-
-        // Height
-        if (confDashboardGrid) {
-          const gridRect = confDashboardGrid.getBoundingClientRect();
-          if (windowId === 'timer' || windowId === 'clock' || windowId === 'counter') {
-            const newTopH = Math.max(50, Math.min(Math.round(gridRect.height * 0.55), startH + deltaY));
-            confDashboardGrid.style.setProperty('--conf-row-top-h', `${newTopH}px`);
-          } else if (windowId === 'current' || windowId === 'next') {
-            const newBottomH = Math.max(60, Math.min(Math.round(gridRect.height * 0.65), gridRect.bottom - e.clientY));
-            confDashboardGrid.style.setProperty('--conf-row-bottom-h', `${newBottomH}px`);
-            confDashboardGrid.style.setProperty('--conf-row-middle-h', '1fr');
-          } else if (windowId === 'notes' || windowId === 'cue') {
-            const newBottomH = Math.max(60, Math.min(Math.round(gridRect.height * 0.7), startH + deltaY));
-            confDashboardGrid.style.setProperty('--conf-row-bottom-h', `${newBottomH}px`);
-          }
-        }
-      });
-
-      const stopSE = (e) => {
-        if (!isDragging) return;
-        isDragging = false;
-        resizerSE.classList.remove('is-resizing');
-        document.body.classList.remove('conf-resizing-se');
-        if (typeof resizerSE.releasePointerCapture === 'function') {
-          try { resizerSE.releasePointerCapture(e.pointerId); } catch (err) {}
-        }
-        saveDashboardState();
-        if (typeof updateSlides === 'function') updateSlides(currentPage);
-      };
-
-      resizerSE.addEventListener('pointerup', stopSE);
-      resizerSE.addEventListener('pointercancel', stopSE);
-
-      // Double-click to reset both
-      resizerSE.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        win.style.gridColumn = '';
-        const pair = getRowPair(windowId);
-        if (pair) pair.style.gridColumn = '';
-        if (confDashboardGrid) {
-          if (windowId === 'timer' || windowId === 'clock' || windowId === 'counter') {
-            confDashboardGrid.style.removeProperty('--conf-row-top-h');
-          } else {
-            confDashboardGrid.style.removeProperty('--conf-row-middle-h');
-            confDashboardGrid.style.removeProperty('--conf-row-bottom-h');
-          }
-        }
-        adjustGridForActiveWindows();
-        saveDashboardState();
-        if (typeof updateSlides === 'function') updateSlides(currentPage);
-      });
-    }
+  function getDockWindowEl(windowId) {
+    const idMap = {
+      timer: 'dockWindowTimer',
+      clock: 'dockWindowClock',
+      counter: 'dockWindowCounter',
+      current: 'dockWindowCurrent',
+      next: 'dockWindowNext',
+      notes: 'dockWindowNotes',
+      cue: 'dockWindowCue'
+    };
+    return document.getElementById(idMap[windowId]);
   }
 
-  function initDockableDashboard() {
-    const dockWindows = document.querySelectorAll('.conf-dock-window');
-    dockWindows.forEach(win => {
-      initWindowResizers(win);
-      win.addEventListener('dragstart', (e) => {
-        if (isDashboardLocked ||
-            e.target.closest('.conf-dock-resizer') ||
-            e.target.closest('.conf-window-hud') ||
-            e.target.closest('button, input, textarea, canvas, a, .conf-notes-viewport, .conf-font-controls')) {
-          e.preventDefault();
-          return false;
+  function renderDashboardOrder() {
+    if (!confDashboardGrid) return;
+
+    dashboardState.order.forEach(wid => {
+      const el = getDockWindowEl(wid);
+      if (el) {
+        confDashboardGrid.appendChild(el);
+
+        // Apply Spans
+        el.className = el.className.replace(/\bspan-\S+/g, '').trim();
+        const spanClass = dashboardState.spans[wid] || 'span-1';
+        el.classList.add(spanClass);
+
+        // Apply Row Spans
+        el.className = el.className.replace(/\brow-span-\S+/g, '').trim();
+        const rowSpanClass = dashboardState.rowSpans[wid] || 'row-span-1';
+        el.classList.add(rowSpanClass);
+
+        // Hidden & Collapsed
+        el.style.display = dashboardState.hidden.includes(wid) ? 'none' : 'flex';
+        el.classList.toggle('is-collapsed', dashboardState.collapsed.includes(wid));
+
+        // Flexible spans
+        if (dashboardState.flexibleSpans[wid]) {
+          el.style.gridColumn = `span ${dashboardState.flexibleSpans[wid]}`;
         }
-        draggedWindow = win;
-        win.classList.add('is-dragging');
-        if (e.dataTransfer) {
-          e.dataTransfer.effectAllowed = 'move';
-          e.dataTransfer.setData('text/plain', win.dataset.windowId || '');
-        }
-      });
-
-      win.addEventListener('dragover', (e) => {
-        if (isDashboardLocked || !draggedWindow || draggedWindow === win) return;
-        e.preventDefault();
-        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-
-        const rect = win.getBoundingClientRect();
-        const isAfter = (e.clientX - rect.left) > (rect.width / 2);
-        if (isAfter) {
-          win.classList.add('drop-target-after');
-          win.classList.remove('drop-target-before');
-        } else {
-          win.classList.add('drop-target-before');
-          win.classList.remove('drop-target-after');
-        }
-      });
-
-      win.addEventListener('dragleave', () => {
-        win.classList.remove('drop-target-before', 'drop-target-after');
-      });
-
-      win.addEventListener('drop', (e) => {
-        if (isDashboardLocked || !draggedWindow || draggedWindow === win) return;
-        e.preventDefault();
-        const isAfter = win.classList.contains('drop-target-after');
-        win.classList.remove('drop-target-before', 'drop-target-after');
-
-        if (confDashboardGrid) {
-          if (isAfter) {
-            confDashboardGrid.insertBefore(draggedWindow, win.nextSibling);
-          } else {
-            confDashboardGrid.insertBefore(draggedWindow, win);
-          }
-        }
-        saveDashboardState();
-      });
-
-      win.addEventListener('dragend', () => {
-        if (draggedWindow) draggedWindow.classList.remove('is-dragging');
-        draggedWindow = null;
-        document.querySelectorAll('.conf-dock-window').forEach(w => {
-          w.classList.remove('drop-target-before', 'drop-target-after', 'is-dragging');
-        });
-      });
-
-      const btnCollapse = win.querySelector('.btn-dock-collapse');
-      if (btnCollapse) {
-        btnCollapse.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const isCollapsed = win.classList.toggle('is-collapsed');
-          btnCollapse.textContent = isCollapsed ? '▸' : '▾';
-          btnCollapse.title = isCollapsed ? 'Expand Window' : 'Collapse Window';
-          const wid = win.dataset.windowId;
-          if (wid && dashboardState.windows[wid]) {
-            dashboardState.windows[wid].collapsed = isCollapsed;
-            saveDashboardState();
-          }
-        });
-      }
-
-      // Interactive Size Drawer Openers (Floating HUD & Dock Header 📐 Button)
-      const editorBtns = win.querySelectorAll('.btn-hud-editor, .btn-dock-editor');
-      editorBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const wid = win.dataset.windowId;
-          let group = 'slides';
-          if (wid === 'timer' || wid === 'clock' || wid === 'counter') group = 'top';
-          else if (wid === 'notes' || wid === 'cue') group = 'bottom';
-          openTabSizeDrawer(group);
-        });
-      });
-
-      // Interactive Width Controls (Floating HUD & Dock Header)
-      const widthBtns = win.querySelectorAll('.btn-hud-width, .btn-dock-span');
-      widthBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const wid = win.dataset.windowId;
-          if (wid) cycleWindowWidth(wid);
-        });
-      });
-
-      // Interactive Height Controls (Floating HUD & Dock Header)
-      const heightBtns = win.querySelectorAll('.btn-hud-height, .btn-dock-height');
-      heightBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const wid = win.dataset.windowId;
-          if (wid) cycleWindowHeight(wid);
-        });
-      });
-
-      // Interactive Maximize Controls (Floating HUD & Dock Header)
-      const maxBtns = win.querySelectorAll('.btn-hud-max, .btn-dock-max');
-      maxBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const wid = win.dataset.windowId;
-          if (wid) toggleWindowMaximize(wid);
-        });
-      });
-
-      // Double-Click Window or Header to Maximize / Restore
-      win.addEventListener('dblclick', (e) => {
-        if (e.target.closest('button, canvas, input, a, .conf-notes-viewport, .conf-font-controls')) return;
-        const wid = win.dataset.windowId;
-        if (wid) toggleWindowMaximize(wid);
-      });
-
-      const btnClose = win.querySelector('.btn-dock-close');
-      if (btnClose) {
-        btnClose.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const wid = win.dataset.windowId;
-          if (wid) setWindowVisibility(wid, false);
-        });
       }
     });
 
+    adjustGridForActiveWindows();
+  }
+
+  function adjustGridForActiveWindows() {
+    const isCurrent = !dashboardState.hidden.includes('current');
+    const isNext = !dashboardState.hidden.includes('next');
+    const curEl = getDockWindowEl('current');
+    if (curEl) {
+      if (isCurrent && !isNext) {
+        curEl.style.gridColumn = 'span 120';
+      } else if (!dashboardState.flexibleSpans['current']) {
+        curEl.style.gridColumn = '';
+      }
+    }
+  }
+
+  function toggleDashboardLock() {
+    dashboardLocked = !dashboardLocked;
+    if (confDashboardGrid) {
+      confDashboardGrid.classList.toggle('dashboard-locked', dashboardLocked);
+    }
     if (btnLockDashboard) {
-      btnLockDashboard.addEventListener('click', () => toggleDashboardLock());
-    }
-
-    if (btnResetLayout) {
-      btnResetLayout.addEventListener('click', () => resetDashboardLayout());
-    }
-
-    if (btnWidgetsMenu && confWidgetsDropdown) {
-      btnWidgetsMenu.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isOpen = confWidgetsDropdown.style.display !== 'none';
-        confWidgetsDropdown.style.display = isOpen ? 'none' : 'flex';
-      });
-
-      confWidgetsDropdown.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!confWidgetsDropdown.contains(e.target) && e.target !== btnWidgetsMenu) {
-          confWidgetsDropdown.style.display = 'none';
-        }
-      });
-
-      ['timer', 'clock', 'counter', 'current', 'next', 'notes', 'cue'].forEach(wid => {
-        const chk = getCheckboxEl(wid);
-        const item = document.querySelector(`.widget-toggle-item[data-window-id="${wid}"]`) || (chk ? chk.closest('.widget-toggle-item') : null);
-
-        if (item) {
-          item.addEventListener('click', (e) => {
-            if (e.target !== chk) {
-              e.preventDefault();
-              if (chk) {
-                chk.checked = !chk.checked;
-              }
-            }
-            if (chk) {
-              setWindowVisibility(wid, chk.checked);
-            }
-          });
-
-          item.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              if (chk) {
-                chk.checked = !chk.checked;
-                setWindowVisibility(wid, chk.checked);
-              }
-            }
-          });
-        }
-      });
-    }
-
-    loadDashboardState();
-  }
-
-  initDockableDashboard();
-
-  // =========================================================================
-  // 2.9. INTERACTIVE TAB SIZE DRAWER & REAL-TIME WIDTH/HEIGHT CONTROLLER
-  // =========================================================================
-  const confTabSizeDrawer = document.getElementById('confTabSizeDrawer');
-  const btnEditTabSizes = document.getElementById('btnEditTabSizes');
-  const btnCloseTabSizeDrawer = document.getElementById('btnCloseTabSizeDrawer');
-
-  // Sliders and badges
-  const sliderSlidesSplit = document.getElementById('sliderSlidesSplit');
-  const btnSlideCurrentLess = document.getElementById('btnSlideCurrentLess');
-  const btnSlideCurrentMore = document.getElementById('btnSlideCurrentMore');
-  const valSlidesSplit = document.getElementById('valSlidesSplit');
-  const badgeSlidesSplit = document.getElementById('badgeSlidesSplit');
-
-  const sliderSlidesHeight = document.getElementById('sliderSlidesHeight');
-  const btnSlidesHeightLess = document.getElementById('btnSlidesHeightLess');
-  const btnSlidesHeightMore = document.getElementById('btnSlidesHeightMore');
-  const badgeSlidesHeight = document.getElementById('badgeSlidesHeight');
-
-  const sliderTopHeight = document.getElementById('sliderTopHeight');
-  const btnTopHeightLess = document.getElementById('btnTopHeightLess');
-  const btnTopHeightMore = document.getElementById('btnTopHeightMore');
-  const valTopHeight = document.getElementById('valTopHeight');
-  const badgeTopHeight = document.getElementById('badgeTopHeight');
-
-  const sliderTimerWidth = document.getElementById('sliderTimerWidth');
-  const btnTimerWidthLess = document.getElementById('btnTimerWidthLess');
-  const btnTimerWidthMore = document.getElementById('btnTimerWidthMore');
-  const badgeTimerWidth = document.getElementById('badgeTimerWidth');
-
-  const sliderBottomHeight = document.getElementById('sliderBottomHeight');
-  const btnBottomHeightLess = document.getElementById('btnBottomHeightLess');
-  const btnBottomHeightMore = document.getElementById('btnBottomHeightMore');
-  const valBottomHeight = document.getElementById('valBottomHeight');
-  const badgeBottomHeight = document.getElementById('badgeBottomHeight');
-
-  const sliderNotesWidth = document.getElementById('sliderNotesWidth');
-  const btnNotesWidthLess = document.getElementById('btnNotesWidthLess');
-  const btnNotesWidthMore = document.getElementById('btnNotesWidthMore');
-  const badgeNotesWidth = document.getElementById('badgeNotesWidth');
-
-  // Quick Preset Buttons
-  const presetSplitBalanced = document.getElementById('presetSplitBalanced');
-  const presetSplitCinema = document.getElementById('presetSplitCinema');
-  const presetSplitNotes = document.getElementById('presetSplitNotes');
-  const presetSplitTimer = document.getElementById('presetSplitTimer');
-  const presetSplitReset = document.getElementById('presetSplitReset');
-
-  function openTabSizeDrawer(focusTabGroup) {
-    if (!confTabSizeDrawer) return;
-    confTabSizeDrawer.style.display = 'block';
-    if (btnEditTabSizes) {
-      btnEditTabSizes.classList.add('active');
-    }
-    syncDrawerControlsFromState();
-    if (focusTabGroup) {
-      const card = document.querySelector(`.drawer-tab-card[data-tab-group="${focusTabGroup}"]`);
-      if (card) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        card.classList.add('card-highlight');
-        setTimeout(() => card.classList.remove('card-highlight'), 1200);
-      }
+      btnLockDashboard.textContent = dashboardLocked ? '🔒 Locked' : '🔓 Unlock';
     }
   }
 
-  function closeTabSizeDrawer() {
-    if (!confTabSizeDrawer) return;
-    confTabSizeDrawer.style.display = 'none';
-    if (btnEditTabSizes) {
-      btnEditTabSizes.classList.remove('active');
-    }
+  function resetDashboardLayout() {
+    dashboardState = {
+      order: ['timer', 'clock', 'counter', 'current', 'next', 'notes', 'cue'],
+      hidden: [],
+      collapsed: [],
+      spans: {
+        timer: 'span-1',
+        clock: 'span-1',
+        counter: 'span-1',
+        current: 'span-2',
+        next: 'span-2',
+        notes: 'span-2',
+        cue: 'span-full'
+      },
+      rowSpans: {
+        timer: 'row-span-1',
+        clock: 'row-span-1',
+        counter: 'row-span-1',
+        current: 'row-span-1',
+        next: 'row-span-1',
+        notes: 'row-span-1',
+        cue: 'row-span-1'
+      },
+      flexibleSpans: {},
+      flexibleRows: {},
+      activePreset: 'balanced'
+    };
+    saveDashboardState();
+    renderDashboardOrder();
+    syncWidgetCheckboxes();
+    setPreset('balanced');
   }
 
-  function toggleTabSizeDrawer() {
-    if (!confTabSizeDrawer) return;
-    if (confTabSizeDrawer.style.display === 'none' || !confTabSizeDrawer.style.display) {
-      openTabSizeDrawer();
+  function applyDockPreset(presetName) {
+    if (!confContainer) return;
+
+    if (presetName === 'cockpit' || presetName === 'edit') {
+      confContainer.classList.add('studio-edit-mode');
+      confContainer.classList.remove('mode-seamless');
+      if (confTopBar) confTopBar.classList.remove('hud-dimmed');
     } else {
-      closeTabSizeDrawer();
+      confContainer.classList.remove('studio-edit-mode');
+      confContainer.classList.add('mode-seamless');
+      resetHudDimmer();
+    }
+
+    if (presetName === 'balanced') {
+      setPreset('balanced');
+    } else if (presetName === 'notes') {
+      setPreset('notes');
+    } else if (presetName === 'timer') {
+      setPreset('timer');
+    } else if (presetName === 'slides') {
+      setPreset('slides');
     }
   }
 
-  function setSlidesSplit(percentCurrent, save = true) {
-    const curPercent = Math.max(15, Math.min(85, Math.round(Number(percentCurrent) || 50)));
-    const nextPercent = 100 - curPercent;
-    const spanCur = Math.max(15, Math.min(105, Math.round((curPercent / 100) * 120)));
-    const spanNext = 120 - spanCur;
+  // Preset button clicks
+  if (btnPresetBalanced) btnPresetBalanced.addEventListener('click', () => applyDockPreset('balanced'));
+  if (btnPresetNotes) btnPresetNotes.addEventListener('click', () => applyDockPreset('notes'));
+  if (btnPresetTimer) btnPresetTimer.addEventListener('click', () => applyDockPreset('timer'));
+  if (btnPresetSlides) btnPresetSlides.addEventListener('click', () => applyDockPreset('slides'));
+  if (btnPresetCockpit) btnPresetCockpit.addEventListener('click', () => applyDockPreset('cockpit'));
 
-    const curWin = getDockWindowEl('current');
-    const nextWin = getDockWindowEl('next');
-    if (curWin) curWin.style.gridColumn = `span ${spanCur}`;
-    if (nextWin) nextWin.style.gridColumn = `span ${spanNext}`;
+  if (btnLockDashboard) btnLockDashboard.addEventListener('click', toggleDashboardLock);
+  if (btnResetLayout) btnResetLayout.addEventListener('click', resetDashboardLayout);
 
-    if (sliderSlidesSplit) sliderSlidesSplit.value = curPercent;
-    if (valSlidesSplit) valSlidesSplit.textContent = `${curPercent}% / ${nextPercent}%`;
-    if (badgeSlidesSplit) badgeSlidesSplit.textContent = `${curPercent}% / ${nextPercent}%`;
+  // Drag and Drop reordering
+  let draggedWindowEl = null;
 
-    if (save) saveDashboardState();
-    if (typeof updateSlides === 'function') updateSlides(currentPage);
+  document.querySelectorAll('.conf-dock-window').forEach(win => {
+    win.addEventListener('dragstart', (e) => {
+      if (dashboardLocked || e.target.closest('.conf-dock-resizer') || e.target.closest('.conf-window-hud')) {
+        e.preventDefault();
+        return;
+      }
+      draggedWindowEl = win;
+      win.classList.add('is-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', win.dataset.windowId || '');
+    });
+
+    win.addEventListener('dragover', (e) => {
+      if (dashboardLocked || !draggedWindowEl || draggedWindowEl === win) return;
+      e.preventDefault();
+      const rect = win.getBoundingClientRect();
+      const isBefore = (e.clientX - rect.left) < (rect.width / 2);
+      win.classList.toggle('drop-target-before', isBefore);
+      win.classList.toggle('drop-target-after', !isBefore);
+    });
+
+    win.addEventListener('dragleave', () => {
+      win.classList.remove('drop-target-before', 'drop-target-after');
+    });
+
+    win.addEventListener('drop', (e) => {
+      e.preventDefault();
+      win.classList.remove('drop-target-before', 'drop-target-after');
+      if (dashboardLocked || !draggedWindowEl || draggedWindowEl === win) return;
+
+      const rect = win.getBoundingClientRect();
+      const isBefore = (e.clientX - rect.left) < (rect.width / 2);
+
+      const srcId = draggedWindowEl.dataset.windowId;
+      const targetId = win.dataset.windowId;
+
+      const srcIdx = dashboardState.order.indexOf(srcId);
+      if (srcIdx >= 0) dashboardState.order.splice(srcIdx, 1);
+
+      const targetIdx = dashboardState.order.indexOf(targetId);
+      dashboardState.order.splice(isBefore ? targetIdx : targetIdx + 1, 0, srcId);
+
+      saveDashboardState();
+      renderDashboardOrder();
+    });
+
+    win.addEventListener('dragend', () => {
+      if (draggedWindowEl) {
+        draggedWindowEl.classList.remove('is-dragging');
+        draggedWindowEl = null;
+      }
+      document.querySelectorAll('.conf-dock-window').forEach(w => w.classList.remove('drop-target-before', 'drop-target-after'));
+    });
+  });
+
+  // Window Sizing & HUD Functions
+  function cycleWindowWidth(windowId) {
+    const spans = ['span-1', 'span-2', 'span-3', 'span-full'];
+    const cur = dashboardState.spans[windowId] || 'span-1';
+    const next = spans[(spans.indexOf(cur) + 1) % spans.length];
+    dashboardState.spans[windowId] = next;
+    delete dashboardState.flexibleSpans[windowId];
+    saveDashboardState();
+    renderDashboardOrder();
   }
 
-  function setTopBarHeight(pixels, save = true) {
-    const h = Math.max(60, Math.min(260, Math.round(Number(pixels) || 92)));
-    if (confDashboardGrid) {
-      confDashboardGrid.style.setProperty('--conf-row-top-h', `${h}px`);
-    }
-    if (confTopBar) {
-      confTopBar.style.height = `${h}px`;
-    }
-    const timerFontSize = Math.round(Math.max(36, Math.min(110, h * 0.45)));
-    if (confTimerDisplay) {
-      confTimerDisplay.style.fontSize = `${timerFontSize}px`;
-    }
-
-    if (sliderTopHeight) sliderTopHeight.value = h;
-    if (valTopHeight) valTopHeight.textContent = `${h}px`;
-    if (badgeTopHeight) badgeTopHeight.textContent = `${h}px`;
-
-    if (save) saveDashboardState();
-    if (typeof updateSlides === 'function') updateSlides(currentPage);
+  function cycleWindowHeight(windowId) {
+    const rowSpans = ['row-span-1', 'row-span-2', 'row-span-full'];
+    const cur = dashboardState.rowSpans[windowId] || 'row-span-1';
+    const next = rowSpans[(rowSpans.indexOf(cur) + 1) % rowSpans.length];
+    setWindowRowSpan(windowId, next);
   }
 
-  function setTimerWidth(percent, save = true) {
-    const pct = Math.max(20, Math.min(80, Math.round(Number(percent) || 33)));
-    const colsTimer = Math.max(24, Math.min(96, Math.round((pct / 100) * 120)));
-    const remainingCols = 120 - colsTimer;
-    const colsClock = Math.floor(remainingCols / 2);
-    const colsCounter = remainingCols - colsClock;
-
-    const timerWin = getDockWindowEl('timer');
-    const clockWin = getDockWindowEl('clock');
-    const counterWin = getDockWindowEl('counter');
-
-    if (timerWin) timerWin.style.gridColumn = `span ${colsTimer}`;
-    if (clockWin) clockWin.style.gridColumn = `span ${colsClock}`;
-    if (counterWin) counterWin.style.gridColumn = `span ${colsCounter}`;
-
-    if (sliderTimerWidth) sliderTimerWidth.value = pct;
-    if (badgeTimerWidth) badgeTimerWidth.textContent = `${pct}% (${colsTimer} cols)`;
-
-    if (save) saveDashboardState();
+  function setWindowRowSpan(windowId, rowSpanClass) {
+    dashboardState.rowSpans[windowId] = rowSpanClass;
+    saveDashboardState();
+    renderDashboardOrder();
   }
 
-  function setBottomNotesHeight(pixels, save = true) {
-    const h = Math.max(70, Math.min(450, Math.round(Number(pixels) || 148)));
-    if (confDashboardGrid) {
-      confDashboardGrid.style.setProperty('--conf-row-bottom-h', `${h}px`);
-      confDashboardGrid.style.setProperty('--conf-row-middle-h', '1fr');
+  function toggleWindowMaximize(windowId) {
+    const el = getDockWindowEl(windowId);
+    if (!el) return;
+
+    if (maximizedWindowId === windowId) {
+      el.classList.remove('is-maximized');
+      maximizedWindowId = null;
+    } else {
+      document.querySelectorAll('.conf-dock-window').forEach(w => w.classList.remove('is-maximized'));
+      el.classList.add('is-maximized');
+      maximizedWindowId = windowId;
     }
-
-    if (sliderBottomHeight) sliderBottomHeight.value = h;
-    if (sliderSlidesHeight) sliderSlidesHeight.value = h;
-    if (valBottomHeight) valBottomHeight.textContent = `${h}px`;
-    if (badgeBottomHeight) badgeBottomHeight.textContent = `${h}px`;
-    if (badgeSlidesHeight) badgeSlidesHeight.textContent = `Notes: ${h}px | Slides: 1fr`;
-
-    if (save) saveDashboardState();
-    if (typeof updateSlides === 'function') updateSlides(currentPage);
   }
 
-  function setNotesWidth(percent, save = true) {
-    const pct = Math.max(25, Math.min(100, Math.round(Number(percent) || 67)));
-    const colsNotes = Math.max(30, Math.min(120, Math.round((pct / 100) * 120)));
-    const colsCue = Math.max(0, 120 - colsNotes);
-
-    const notesWin = getDockWindowEl('notes');
-    const cueWin = getDockWindowEl('cue');
-
-    if (notesWin) notesWin.style.gridColumn = `span ${colsNotes}`;
-    if (cueWin) {
-      if (colsCue > 0) {
-        cueWin.style.gridColumn = `span ${colsCue}`;
-      } else {
-        cueWin.style.gridColumn = 'span 120';
+  function setWindowVisibility(windowId, visible) {
+    if (visible) {
+      dashboardState.hidden = dashboardState.hidden.filter(id => id !== windowId);
+    } else {
+      if (!dashboardState.hidden.includes(windowId)) {
+        dashboardState.hidden.push(windowId);
       }
     }
-
-    if (sliderNotesWidth) sliderNotesWidth.value = pct;
-    if (badgeNotesWidth) badgeNotesWidth.textContent = `${pct}% (${colsNotes} cols)`;
-
-    if (save) saveDashboardState();
+    saveDashboardState();
+    renderDashboardOrder();
+    syncWidgetCheckboxes();
   }
 
-  function syncDrawerControlsFromState() {
-    // 1. Slides Split
-    const curWin = getDockWindowEl('current');
-    let splitPct = 50;
-    if (curWin && curWin.style.gridColumn) {
-      const match = curWin.style.gridColumn.match(/span\s+(\d+)/);
-      if (match) {
-        splitPct = Math.round((parseInt(match[1], 10) / 120) * 100);
+  function syncWidgetCheckboxes() {
+    const windows = ['timer', 'clock', 'counter', 'current', 'next', 'notes', 'cue'];
+    windows.forEach(wid => {
+      const cap = wid.charAt(0).toUpperCase() + wid.slice(1);
+      const chk = document.getElementById(`chkWin${cap}`);
+      if (chk) {
+        chk.checked = !dashboardState.hidden.includes(wid);
       }
-    }
-    if (sliderSlidesSplit) sliderSlidesSplit.value = splitPct;
-    if (valSlidesSplit) valSlidesSplit.textContent = `${splitPct}% / ${100 - splitPct}%`;
-    if (badgeSlidesSplit) badgeSlidesSplit.textContent = `${splitPct}% / ${100 - splitPct}%`;
-
-    // 2. Top Height
-    let topPx = 92;
-    if (confDashboardGrid) {
-      const topHVal = confDashboardGrid.style.getPropertyValue('--conf-row-top-h');
-      if (topHVal) {
-        const px = parseInt(topHVal, 10);
-        if (!isNaN(px)) topPx = px;
+      const item = document.querySelector(`.widget-toggle-item[data-window-id="${wid}"]`);
+      if (item) {
+        const badge = item.querySelector('.widget-toggle-badge');
+        const isVis = !dashboardState.hidden.includes(wid);
+        item.classList.toggle('is-hidden', !isVis);
+        if (badge) badge.textContent = isVis ? 'ON' : 'OFF';
       }
-    }
-    if (sliderTopHeight) sliderTopHeight.value = topPx;
-    if (valTopHeight) valTopHeight.textContent = `${topPx}px`;
-    if (badgeTopHeight) badgeTopHeight.textContent = `${topPx}px`;
-
-    // 3. Bottom Height
-    let btmPx = 148;
-    if (confDashboardGrid) {
-      const btmHVal = confDashboardGrid.style.getPropertyValue('--conf-row-bottom-h');
-      if (btmHVal) {
-        const px = parseInt(btmHVal, 10);
-        if (!isNaN(px)) btmPx = px;
-      }
-    }
-    if (sliderBottomHeight) sliderBottomHeight.value = btmPx;
-    if (sliderSlidesHeight) sliderSlidesHeight.value = btmPx;
-    if (valBottomHeight) valBottomHeight.textContent = `${btmPx}px`;
-    if (badgeBottomHeight) badgeBottomHeight.textContent = `${btmPx}px`;
-    if (badgeSlidesHeight) badgeSlidesHeight.textContent = `Notes: ${btmPx}px | Slides: 1fr`;
-
-    // 4. Timer Width
-    let timerPct = 33;
-    let timerCols = 40;
-    const timerWin = getDockWindowEl('timer');
-    if (timerWin && timerWin.style.gridColumn) {
-      const match = timerWin.style.gridColumn.match(/span\s+(\d+)/);
-      if (match) {
-        timerCols = parseInt(match[1], 10);
-        timerPct = Math.round((timerCols / 120) * 100);
-      }
-    }
-    if (sliderTimerWidth) sliderTimerWidth.value = timerPct;
-    if (badgeTimerWidth) badgeTimerWidth.textContent = `${timerPct}% (${timerCols} cols)`;
-
-    // 5. Notes Width
-    let notesPct = 67;
-    let notesCols = 80;
-    const notesWin = getDockWindowEl('notes');
-    if (notesWin && notesWin.style.gridColumn) {
-      const match = notesWin.style.gridColumn.match(/span\s+(\d+)/);
-      if (match) {
-        notesCols = parseInt(match[1], 10);
-        notesPct = Math.round((notesCols / 120) * 100);
-      }
-    }
-    if (sliderNotesWidth) sliderNotesWidth.value = notesPct;
-    if (badgeNotesWidth) badgeNotesWidth.textContent = `${notesPct}% (${notesCols} cols)`;
+    });
   }
 
+  // Wire Window action buttons
+  document.querySelectorAll('.conf-dock-window').forEach(win => {
+    const wid = win.dataset.windowId;
+
+    // Header buttons
+    const btnCollapse = win.querySelector('.btn-dock-collapse');
+    if (btnCollapse) {
+      btnCollapse.addEventListener('click', () => {
+        const idx = dashboardState.collapsed.indexOf(wid);
+        if (idx >= 0) dashboardState.collapsed.splice(idx, 1);
+        else dashboardState.collapsed.push(wid);
+        saveDashboardState();
+        renderDashboardOrder();
+      });
+    }
+
+    const btnSpan = win.querySelector('.btn-dock-span');
+    if (btnSpan) btnSpan.addEventListener('click', () => cycleWindowWidth(wid));
+
+    const btnHeight = win.querySelector('.btn-dock-height');
+    if (btnHeight) btnHeight.addEventListener('click', () => cycleWindowHeight(wid));
+
+    const btnMax = win.querySelector('.btn-dock-max');
+    if (btnMax) btnMax.addEventListener('click', () => toggleWindowMaximize(wid));
+
+    const btnClose = win.querySelector('.btn-dock-close');
+    if (btnClose) btnClose.addEventListener('click', () => setWindowVisibility(wid, false));
+
+    const btnEditor = win.querySelector('.btn-dock-editor');
+    if (btnEditor) btnEditor.addEventListener('click', () => openTabSizeDrawer());
+
+    // Floating HUD buttons
+    const btnHudWidth = win.querySelector('.btn-hud-width');
+    if (btnHudWidth) btnHudWidth.addEventListener('click', () => cycleWindowWidth(wid));
+
+    const btnHudHeight = win.querySelector('.btn-hud-height');
+    if (btnHudHeight) btnHudHeight.addEventListener('click', () => cycleWindowHeight(wid));
+
+    const btnHudMax = win.querySelector('.btn-hud-max');
+    if (btnHudMax) btnHudMax.addEventListener('click', () => toggleWindowMaximize(wid));
+
+    const btnHudEditor = win.querySelector('.btn-hud-editor');
+    if (btnHudEditor) btnHudEditor.addEventListener('click', () => openTabSizeDrawer());
+
+    // Double click header to maximize
+    const header = win.querySelector('.conf-dock-header');
+    if (header) {
+      header.addEventListener('dblclick', () => toggleWindowMaximize(wid));
+    }
+  });
+
+  // Widget dropdown toggle
+  if (btnWidgetsMenu && confWidgetsDropdown) {
+    btnWidgetsMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      confWidgetsDropdown.style.display = confWidgetsDropdown.style.display === 'none' ? 'flex' : 'none';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!confWidgetsDropdown.contains(e.target) && e.target !== btnWidgetsMenu) {
+        confWidgetsDropdown.style.display = 'none';
+      }
+    });
+
+    document.querySelectorAll('.widget-toggle-item').forEach(item => {
+      const wid = item.dataset.windowId;
+      const toggleAction = () => {
+        const isHidden = dashboardState.hidden.includes(wid);
+        setWindowVisibility(wid, isHidden);
+      };
+
+      item.addEventListener('click', toggleAction);
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleAction();
+        }
+      });
+    });
+  }
+
+  // =========================================================================
+  // 6. CONTINUOUS WINDOW RESIZERS & TAB SIZE DRAWER
+  // =========================================================================
+  function initWindowResizers() {
+    document.querySelectorAll('.conf-dock-resizer').forEach(resizer => {
+      resizer.addEventListener('pointerdown', (e) => {
+        if (dashboardLocked) return;
+        e.preventDefault();
+        e.stopPropagation();
+        resizer.setPointerCapture(e.pointerId);
+
+        const win = resizer.closest('.conf-dock-window');
+        const wid = win.dataset.windowId;
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startW = win.offsetWidth;
+        const startH = win.offsetHeight;
+        const gridW = confDashboardGrid.offsetWidth || 1200;
+
+        const isRight = resizer.classList.contains('conf-dock-resizer-r');
+        const isBottom = resizer.classList.contains('conf-dock-resizer-b');
+        const isCorner = resizer.classList.contains('conf-dock-resizer-se');
+
+        if (isRight) document.body.classList.add('conf-resizing-col');
+        if (isBottom) document.body.classList.add('conf-resizing-row');
+        if (isCorner) document.body.classList.add('conf-resizing-se');
+
+        function onPointerMove(ev) {
+          if (isRight || isCorner) {
+            const deltaX = ev.clientX - startX;
+            const newW = Math.max(80, startW + deltaX);
+            const span = Math.max(15, Math.min(105, Math.round((newW / gridW) * 120)));
+            win.style.gridColumn = `span ${span}`;
+            dashboardState.flexibleSpans[wid] = span;
+          }
+          if (isBottom || isCorner) {
+            const deltaY = ev.clientY - startY;
+            const newH = Math.max(60, startH + deltaY);
+            win.style.height = `${newH}px`;
+            dashboardState.flexibleRows[wid] = newH;
+          }
+        }
+
+        function onPointerUp(ev) {
+          resizer.releasePointerCapture(ev.pointerId);
+          document.body.classList.remove('conf-resizing-col', 'conf-resizing-row', 'conf-resizing-se');
+          window.removeEventListener('pointermove', onPointerMove);
+          window.removeEventListener('pointerup', onPointerUp);
+          saveDashboardState();
+          if (typeof updateSlides === 'function') updateSlides(currentPage);
+        }
+
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+      });
+
+      resizer.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        const win = resizer.closest('.conf-dock-window');
+        const wid = win.dataset.windowId;
+        win.style.gridColumn = '';
+        win.style.height = '';
+        delete dashboardState.flexibleSpans[wid];
+        delete dashboardState.flexibleRows[wid];
+        saveDashboardState();
+        renderDashboardOrder();
+      });
+    });
+  }
+
+  initWindowResizers();
+
+  // Unified Horizontal Splitter (#confResizerH)
+  if (confResizerH) {
+    confResizerH.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      confResizerH.setPointerCapture(e.pointerId);
+      document.body.classList.add('conf-resizing-row');
+
+      const startY = e.clientY;
+      const gridH = confDashboardGrid ? confDashboardGrid.offsetHeight : 800;
+
+      function onHMove(ev) {
+        const bottomH = Math.max(70, Math.min(Math.round(gridH * 0.65), gridH - ev.clientY + 40));
+        setBottomNotesHeight(bottomH);
+      }
+
+      function onHUp(ev) {
+        confResizerH.releasePointerCapture(ev.pointerId);
+        document.body.classList.remove('conf-resizing-row');
+        window.removeEventListener('pointermove', onHMove);
+        window.removeEventListener('pointerup', onHUp);
+      }
+
+      window.addEventListener('pointermove', onHMove);
+      window.addEventListener('pointerup', onHUp);
+    });
+
+    confResizerH.addEventListener('dblclick', () => {
+      setBottomNotesHeight(148);
+    });
+  }
+
+  // Unified Vertical Splitter (#confResizerV)
+  if (confResizerV) {
+    confResizerV.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      confResizerV.setPointerCapture(e.pointerId);
+      document.body.classList.add('conf-resizing-col');
+
+      const gridW = confDashboardGrid ? confDashboardGrid.offsetWidth : 1200;
+
+      function onVMove(ev) {
+        const curPct = Math.max(15, Math.min(85, Math.round((ev.clientX / gridW) * 100)));
+        setSlidesSplit(curPct);
+      }
+
+      function onVUp(ev) {
+        confResizerV.releasePointerCapture(ev.pointerId);
+        document.body.classList.remove('conf-resizing-col');
+        window.removeEventListener('pointermove', onVMove);
+        window.removeEventListener('pointerup', onVUp);
+      }
+
+      window.addEventListener('pointermove', onVMove);
+      window.addEventListener('pointerup', onVUp);
+    });
+
+    confResizerV.addEventListener('dblclick', () => {
+      setSlidesSplit(50);
+    });
+  }
+
+  // Tab Size Drawer Controller
   function initTabSizeDrawer() {
-    if (btnEditTabSizes) {
-      btnEditTabSizes.addEventListener('click', () => toggleTabSizeDrawer());
+    if (btnEditTabSizes && confTabSizeDrawer) {
+      btnEditTabSizes.addEventListener('click', toggleTabSizeDrawer);
     }
     if (btnCloseTabSizeDrawer) {
-      btnCloseTabSizeDrawer.addEventListener('click', () => closeTabSizeDrawer());
+      btnCloseTabSizeDrawer.addEventListener('click', closeTabSizeDrawer);
     }
 
-    // Slides Split Slider & Step Buttons
-    if (sliderSlidesSplit) {
-      sliderSlidesSplit.addEventListener('input', (e) => setSlidesSplit(e.target.value, false));
-      sliderSlidesSplit.addEventListener('change', (e) => setSlidesSplit(e.target.value, true));
-    }
-    if (btnSlideCurrentLess) {
-      btnSlideCurrentLess.addEventListener('click', () => {
-        const cur = Number(sliderSlidesSplit?.value || 50);
-        setSlidesSplit(cur - 5, true);
-      });
-    }
-    if (btnSlideCurrentMore) {
-      btnSlideCurrentMore.addEventListener('click', () => {
-        const cur = Number(sliderSlidesSplit?.value || 50);
-        setSlidesSplit(cur + 5, true);
-      });
-    }
+    // Sliders
+    const sSplit = document.getElementById('sliderSlidesSplit');
+    if (sSplit) sSplit.addEventListener('input', (e) => setSlidesSplit(Number(e.target.value)));
 
-    // Slides vs Notes Height Slider & Step Buttons
-    if (sliderSlidesHeight) {
-      sliderSlidesHeight.addEventListener('input', (e) => setBottomNotesHeight(e.target.value, false));
-      sliderSlidesHeight.addEventListener('change', (e) => setBottomNotesHeight(e.target.value, true));
-    }
-    if (btnSlidesHeightLess) {
-      btnSlidesHeightLess.addEventListener('click', () => {
-        const cur = Number(sliderBottomHeight?.value || 148);
-        setBottomNotesHeight(cur + 20, true);
-      });
-    }
-    if (btnSlidesHeightMore) {
-      btnSlidesHeightMore.addEventListener('click', () => {
-        const cur = Number(sliderBottomHeight?.value || 148);
-        setBottomNotesHeight(cur - 20, true);
-      });
-    }
+    const sTopH = document.getElementById('sliderTopHeight');
+    if (sTopH) sTopH.addEventListener('input', (e) => setTopBarHeight(Number(e.target.value)));
 
-    // Top Row Height Slider & Step Buttons
-    if (sliderTopHeight) {
-      sliderTopHeight.addEventListener('input', (e) => setTopBarHeight(e.target.value, false));
-      sliderTopHeight.addEventListener('change', (e) => setTopBarHeight(e.target.value, true));
-    }
-    if (btnTopHeightLess) {
-      btnTopHeightLess.addEventListener('click', () => {
-        const cur = Number(sliderTopHeight?.value || 92);
-        setTopBarHeight(cur - 10, true);
-      });
-    }
-    if (btnTopHeightMore) {
-      btnTopHeightMore.addEventListener('click', () => {
-        const cur = Number(sliderTopHeight?.value || 92);
-        setTopBarHeight(cur + 10, true);
-      });
-    }
+    const sBotH = document.getElementById('sliderBottomHeight');
+    if (sBotH) sBotH.addEventListener('input', (e) => setBottomNotesHeight(Number(e.target.value)));
 
-    // Timer Width Slider & Step Buttons
-    if (sliderTimerWidth) {
-      sliderTimerWidth.addEventListener('input', (e) => setTimerWidth(e.target.value, false));
-      sliderTimerWidth.addEventListener('change', (e) => setTimerWidth(e.target.value, true));
-    }
-    if (btnTimerWidthLess) {
-      btnTimerWidthLess.addEventListener('click', () => {
-        const cur = Number(sliderTimerWidth?.value || 33);
-        setTimerWidth(cur - 5, true);
-      });
-    }
-    if (btnTimerWidthMore) {
-      btnTimerWidthMore.addEventListener('click', () => {
-        const cur = Number(sliderTimerWidth?.value || 33);
-        setTimerWidth(cur + 5, true);
-      });
-    }
+    const sTimerW = document.getElementById('sliderTimerWidth');
+    if (sTimerW) sTimerW.addEventListener('input', (e) => setTimerWidth(Number(e.target.value)));
 
-    // Bottom Notes Height Slider & Step Buttons
-    if (sliderBottomHeight) {
-      sliderBottomHeight.addEventListener('input', (e) => setBottomNotesHeight(e.target.value, false));
-      sliderBottomHeight.addEventListener('change', (e) => setBottomNotesHeight(e.target.value, true));
-    }
-    if (btnBottomHeightLess) {
-      btnBottomHeightLess.addEventListener('click', () => {
-        const cur = Number(sliderBottomHeight?.value || 148);
-        setBottomNotesHeight(cur - 15, true);
-      });
-    }
-    if (btnBottomHeightMore) {
-      btnBottomHeightMore.addEventListener('click', () => {
-        const cur = Number(sliderBottomHeight?.value || 148);
-        setBottomNotesHeight(cur + 15, true);
-      });
-    }
+    const sNotesW = document.getElementById('sliderNotesWidth');
+    if (sNotesW) sNotesW.addEventListener('input', (e) => setNotesWidth(Number(e.target.value)));
 
-    // Notes Width Slider & Step Buttons
-    if (sliderNotesWidth) {
-      sliderNotesWidth.addEventListener('input', (e) => setNotesWidth(e.target.value, false));
-      sliderNotesWidth.addEventListener('change', (e) => setNotesWidth(e.target.value, true));
-    }
-    if (btnNotesWidthLess) {
-      btnNotesWidthLess.addEventListener('click', () => {
-        const cur = Number(sliderNotesWidth?.value || 67);
-        setNotesWidth(cur - 5, true);
-      });
-    }
-    if (btnNotesWidthMore) {
-      btnNotesWidthMore.addEventListener('click', () => {
-        const cur = Number(sliderNotesWidth?.value || 67);
-        setNotesWidth(cur + 5, true);
-      });
-    }
+    // Step buttons
+    const wireStep = (id, fn, delta) => {
+      const btn = document.getElementById(id);
+      if (btn) btn.addEventListener('click', () => fn(delta));
+    };
 
-    // Quick Presets
-    if (presetSplitBalanced) {
-      presetSplitBalanced.addEventListener('click', () => {
-        setSlidesSplit(50, false);
-        setTopBarHeight(92, false);
-        setBottomNotesHeight(148, false);
-        setTimerWidth(33, false);
-        setNotesWidth(67, true);
-      });
-    }
+    wireStep('btnSlideCurrentLess', (d) => setSlidesSplit((currentLayout.slidesWidthPercent || 50) + d), -5);
+    wireStep('btnSlideCurrentMore', (d) => setSlidesSplit((currentLayout.slidesWidthPercent || 50) + d), 5);
+    wireStep('btnTopHeightLess', (d) => setTopBarHeight((currentLayout.topHeight || 92) + d), -10);
+    wireStep('btnTopHeightMore', (d) => setTopBarHeight((currentLayout.topHeight || 92) + d), 10);
+    wireStep('btnBottomHeightLess', (d) => setBottomNotesHeight(148 + d), -15);
+    wireStep('btnBottomHeightMore', (d) => setBottomNotesHeight(148 + d), 15);
+    wireStep('btnTimerWidthLess', (d) => setTimerWidth(33 + d), -5);
+    wireStep('btnTimerWidthMore', (d) => setTimerWidth(33 + d), 5);
+    wireStep('btnNotesWidthLess', (d) => setNotesWidth(67 + d), -5);
+    wireStep('btnNotesWidthMore', (d) => setNotesWidth(67 + d), 5);
 
-    if (presetSplitCinema) {
-      presetSplitCinema.addEventListener('click', () => {
-        setSlidesSplit(70, false);
-        setTopBarHeight(80, false);
-        setBottomNotesHeight(120, false);
-        setTimerWidth(30, false);
-        setNotesWidth(70, true);
+    // Presets
+    const wirePreset = (id, p) => {
+      const b = document.getElementById(id);
+      if (b) b.addEventListener('click', () => {
+        if (p === 'reset') resetDashboardLayout();
+        else setPreset(p);
       });
-    }
+    };
+    wirePreset('presetSplitBalanced', 'balanced');
+    wirePreset('presetSplitCinema', 'slides');
+    wirePreset('presetSplitNotes', 'notes');
+    wirePreset('presetSplitTimer', 'timer');
+    wirePreset('presetSplitReset', 'reset');
 
-    if (presetSplitNotes) {
-      presetSplitNotes.addEventListener('click', () => {
-        setSlidesSplit(40, false);
-        setTopBarHeight(80, false);
-        setBottomNotesHeight(280, false);
-        setTimerWidth(30, false);
-        setNotesWidth(80, true);
-      });
-    }
-
-    if (presetSplitTimer) {
-      presetSplitTimer.addEventListener('click', () => {
-        setSlidesSplit(50, false);
-        setTopBarHeight(180, false);
-        setBottomNotesHeight(110, false);
-        setTimerWidth(60, false);
-        setNotesWidth(67, true);
-      });
-    }
-
-    if (presetSplitReset) {
-      presetSplitReset.addEventListener('click', () => {
-        resetDashboardLayout();
-      });
-    }
-
-    // Close on Escape
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && confTabSizeDrawer && confTabSizeDrawer.style.display !== 'none') {
         closeTabSizeDrawer();
@@ -1986,15 +960,98 @@
     syncDrawerControlsFromState();
   }
 
+  function openTabSizeDrawer() {
+    if (confTabSizeDrawer) {
+      confTabSizeDrawer.style.display = 'flex';
+      syncDrawerControlsFromState();
+    }
+  }
+
+  function closeTabSizeDrawer() {
+    if (confTabSizeDrawer) {
+      confTabSizeDrawer.style.display = 'none';
+    }
+  }
+
+  function toggleTabSizeDrawer() {
+    if (confTabSizeDrawer) {
+      if (confTabSizeDrawer.style.display === 'none') openTabSizeDrawer();
+      else closeTabSizeDrawer();
+    }
+  }
+
+  function setSlidesSplit(percent) {
+    const val = Math.max(15, Math.min(85, Math.round(percent)));
+    currentLayout.slidesWidthPercent = val;
+    applyLayout(currentLayout);
+    syncDrawerControlsFromState();
+  }
+
+  function setTopBarHeight(heightPx) {
+    const val = Math.max(60, Math.min(260, Math.round(heightPx)));
+    currentLayout.topHeight = val;
+    applyLayout(currentLayout);
+    syncDrawerControlsFromState();
+  }
+
+  function setBottomNotesHeight(heightPx) {
+    const val = Math.max(60, Math.min(450, Math.round(heightPx)));
+    if (confDashboardGrid) {
+      confDashboardGrid.style.setProperty('--conf-row-bottom-h', `${val}px`);
+    }
+    syncDrawerControlsFromState();
+  }
+
+  function setTimerWidth(percent) {
+    const val = Math.max(20, Math.min(80, Math.round(percent)));
+    const span = Math.round((val / 100) * 120);
+    const win = getDockWindowEl('timer');
+    if (win) {
+      win.style.gridColumn = `span ${span}`;
+      dashboardState.flexibleSpans['timer'] = span;
+      saveDashboardState();
+    }
+    syncDrawerControlsFromState();
+  }
+
+  function setNotesWidth(percent) {
+    const val = Math.max(25, Math.min(100, Math.round(percent)));
+    const span = Math.round((val / 100) * 120);
+    const win = getDockWindowEl('notes');
+    if (win) {
+      win.style.gridColumn = `span ${span}`;
+      dashboardState.flexibleSpans['notes'] = span;
+      saveDashboardState();
+    }
+    syncDrawerControlsFromState();
+  }
+
+  function syncDrawerControlsFromState() {
+    const sSplit = document.getElementById('sliderSlidesSplit');
+    const valSlides = document.getElementById('valSlidesSplit');
+    const bSlides = document.getElementById('badgeSlidesSplit');
+    const curSplit = currentLayout.slidesWidthPercent || 50;
+    if (sSplit) sSplit.value = curSplit;
+    if (valSlides) valSlides.textContent = `${curSplit}% / ${100 - curSplit}%`;
+    if (bSlides) bSlides.textContent = `${curSplit}% / ${100 - curSplit}%`;
+
+    const sTop = document.getElementById('sliderTopHeight');
+    const valTop = document.getElementById('valTopHeight');
+    const bTop = document.getElementById('badgeTopHeight');
+    const curTop = currentLayout.topHeight || 92;
+    if (sTop) sTop.value = curTop;
+    if (valTop) valTop.textContent = `${curTop}px`;
+    if (bTop) bTop.textContent = `${curTop}px`;
+  }
+
   initTabSizeDrawer();
 
   // =========================================================================
-  // 3. HIGH-RESOLUTION SLIDE PREVIEW RENDERING (SIDE-BY-SIDE)
+  // 7. HIGH-RESOLUTION SLIDE PREVIEW RENDERING & RESIZE OBSERVER
   // =========================================================================
   async function renderSlideToCanvas(pageNumber, canvas) {
     if (!canvas || pageNumber < 1 || pageNumber > totalPages) return;
 
-    // Use PDFDocumentEngine if available for unified vector/demo rendering
     if (engine) {
       try {
         const container = canvas.parentElement;
@@ -2011,7 +1068,6 @@
       }
     }
 
-    // Direct PDF.js fallback
     if (pdfDoc) {
       try {
         const page = await pdfDoc.getPage(pageNumber);
@@ -2035,10 +1091,10 @@
       confCurrentSlideNum.textContent = `#${currentPage}`;
     }
 
-    // Render Current Live Audience Slide
+    // Render Live Slide
     await renderSlideToCanvas(currentPage, confCurrentCanvas);
 
-    // Render Upcoming Next Slide Side-by-Side
+    // Render Up Next Slide
     if (currentPage < totalPages) {
       if (confNextSlideNum) confNextSlideNum.textContent = `#${currentPage + 1}`;
       if (confNoNextMsg) confNoNextMsg.style.display = 'none';
@@ -2050,7 +1106,7 @@
       if (confNoNextMsg) confNoNextMsg.style.display = 'flex';
     }
 
-    // Update & Reset Teleprompter Notes
+    // Update Teleprompter Notes
     updateNotes();
     if (confNotesViewport) {
       confNotesViewport.scrollTop = 0;
@@ -2062,7 +1118,6 @@
 
     let note = currentNotes[currentPage];
     if (note === undefined && engine) {
-      // Check localStorage for presenter custom notes or fallback to engine
       const docTitle = engine.documentTitle || 'Presentation.pdf';
       const saved = localStorage.getItem(`pdf_notes_${docTitle}_p${currentPage}`);
       note = saved !== null ? saved : (engine.getSpeakerNotes(currentPage) || '');
@@ -2079,8 +1134,22 @@
     }
   }
 
+  // Automatic canvas re-render on container resize
+  let resizeDebounceTimer = null;
+  if (window.ResizeObserver && confDashboardGrid) {
+    const ro = new ResizeObserver(() => {
+      clearTimeout(resizeDebounceTimer);
+      resizeDebounceTimer = setTimeout(() => {
+        if (typeof updateSlides === 'function') {
+          updateSlides(currentPage);
+        }
+      }, 60);
+    });
+    ro.observe(confDashboardGrid);
+  }
+
   // =========================================================================
-  // 4. GIANT TIMER TELEMETRY (CYAN / AMBER / RED / OVERTIME)
+  // 8. TIMER & STAGE CUE TELEMETRY
   // =========================================================================
   function updateTimerUI(data) {
     if (!confTimerDisplay || !data) return;
@@ -2093,113 +1162,95 @@
     confTimerDisplay.classList.add(`phase-${phase}`);
   }
 
-  // =========================================================================
-  // 5. ANIMATED SILENT STAGE CUE BANNER (TECH -> SPEAKER)
-  // =========================================================================
   let stageCueTimeout = null;
   function handleStageCue(message, duration = 10000) {
-    if (!confStageCueBanner || !confStageCueText) return;
+    if (!confStageCueBanner) return;
 
     if (stageCueTimeout) {
       clearTimeout(stageCueTimeout);
       stageCueTimeout = null;
     }
 
-    if (!message || !String(message).trim()) {
+    if (message && String(message).trim()) {
+      if (confStageCueText) confStageCueText.textContent = String(message).trim();
+      confStageCueBanner.style.display = 'flex';
+      if (confCueIdleMsg) confCueIdleMsg.style.display = 'none';
+
+      const dur = Number(duration || 10000);
+      if (dur > 0) {
+        stageCueTimeout = setTimeout(() => {
+          confStageCueBanner.style.display = 'none';
+          if (confCueIdleMsg) confCueIdleMsg.style.display = 'flex';
+          stageCueTimeout = null;
+        }, dur);
+      }
+    } else {
       confStageCueBanner.style.display = 'none';
-      return;
-    }
-
-    confStageCueText.textContent = String(message).toUpperCase();
-    confStageCueBanner.style.display = 'flex';
-
-    if (duration > 0) {
-      stageCueTimeout = setTimeout(() => {
-        confStageCueBanner.style.display = 'none';
-      }, duration);
+      if (confCueIdleMsg) confCueIdleMsg.style.display = 'flex';
     }
   }
 
   // =========================================================================
-  // 6. SYNC BUS & ELECTRON IPC SYNCHRONIZATION
+  // 9. CROSS-WINDOW SYNC LISTENERS
   // =========================================================================
-  const syncBus = window.PresentationSyncBus ? new window.PresentationSyncBus('confidence') : null;
+  function setupSyncListeners() {
+    const handleSync = (data) => {
+      if (!data || !data.type) return;
 
-  function handleIncomingSync(data) {
-    if (!data || !data.type) return;
+      switch (data.type) {
+        case 'PAGE_CHANGED':
+        case 'GOTO_PAGE':
+          if (data.page && Number(data.page) !== currentPage) {
+            updateSlides(Number(data.page));
+          }
+          break;
 
-    switch (data.type) {
-      case 'SYNC_STATE':
-        if (data.currentPage) currentPage = Number(data.currentPage);
-        if (data.totalPages) totalPages = Number(data.totalPages);
-        if (data.notes) currentNotes = data.notes;
-        if (data.timer) updateTimerUI(data.timer);
-        updateSlides(currentPage);
-        break;
+        case 'TIMER_TICK':
+        case 'TIMER_UPDATE':
+        case 'TIMER_CONTROL':
+          updateTimerUI(data);
+          break;
 
-      case 'PAGE_CHANGED':
-      case 'GOTO_PAGE':
-        if (data.page) updateSlides(data.page);
-        break;
+        case 'STAGE_CUE':
+          handleStageCue(data.message, data.duration);
+          break;
 
-      case 'TIMER_TICK':
-        updateTimerUI(data);
-        break;
+        case 'SHOW_BANNER':
+          if (data.target === 'stage' || data.target === 'confidence' || data.target === 'all') {
+            handleStageCue(data.message, data.duration);
+          }
+          break;
 
-      case 'UPDATE_NOTES':
-        if (data.notes) {
-          currentNotes = data.notes;
-          updateNotes();
-        } else if (data.currentPage && data.currentNote !== undefined) {
-          currentNotes[data.currentPage] = data.currentNote;
-          if (data.currentPage === currentPage) updateNotes();
-        }
-        break;
+        case 'LOAD_DOCUMENT':
+          if (data.isDemo) {
+            loadDemoDeck();
+          } else {
+            loadDocumentData(data.pdfData || data.pdfBuffer, data.streamUrl, data.title);
+          }
+          break;
+      }
+    };
 
-      case 'STAGE_CUE':
-        handleStageCue(data.message, data.duration);
-        break;
+    if (typeof syncBus !== 'undefined' && syncBus && syncBus.on) {
+      syncBus.on('PAGE_CHANGED', handleSync);
+      syncBus.on('GOTO_PAGE', handleSync);
+      syncBus.on('TIMER_TICK', handleSync);
+      syncBus.on('TIMER_UPDATE', handleSync);
+      syncBus.on('TIMER_CONTROL', handleSync);
+      syncBus.on('STAGE_CUE', handleSync);
+      syncBus.on('SHOW_BANNER', handleSync);
+      syncBus.on('LOAD_DOCUMENT', handleSync);
+    }
 
-      case 'CLEAR_STAGE_CUE':
-        handleStageCue(null);
-        break;
-
-      case 'LOAD_DOCUMENT':
-        if (data.isDemo) {
-          loadDemoDeck();
-        } else if (data.pdfData || data.streamUrl) {
-          loadDocumentData(data.pdfData, data.streamUrl, data.title);
-        }
-        break;
+    if (window.electronAPI && window.electronAPI.onSync) {
+      window.electronAPI.onSync(handleSync);
     }
   }
 
-  if (syncBus) {
-    syncBus.on('SYNC_STATE', handleIncomingSync);
-    syncBus.on('PAGE_CHANGED', handleIncomingSync);
-    syncBus.on('GOTO_PAGE', handleIncomingSync);
-    syncBus.on('TIMER_TICK', handleIncomingSync);
-    syncBus.on('UPDATE_NOTES', handleIncomingSync);
-    syncBus.on('STAGE_CUE', handleIncomingSync);
-    syncBus.on('CLEAR_STAGE_CUE', handleIncomingSync);
-    syncBus.on('LOAD_DOCUMENT', handleIncomingSync);
-  }
-
-  if (window.electronAPI && window.electronAPI.onSync) {
-    window.electronAPI.onSync(handleIncomingSync);
-  }
-
-  // Window resize handler for crisp canvas previews
-  let resizeTimer = null;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      updateSlides(currentPage);
-    }, 150);
-  });
+  setupSyncListeners();
 
   // =========================================================================
-  // 7. INITIAL DOCUMENT LOADING
+  // 10. DOCUMENT INGESTION & BOOTSTRAP
   // =========================================================================
   async function loadDemoDeck() {
     if (engine) {
@@ -2214,7 +1265,8 @@
     if (engine) {
       try {
         let info;
-        if (pdfData) {
+        const hasValidBuffer = pdfData && (pdfData.byteLength > 0 || pdfData.length > 0);
+        if (hasValidBuffer) {
           info = await engine.loadPDFData(pdfData, title);
         } else if (streamUrl) {
           info = await engine.loadPDFFromUrl(streamUrl, title);
@@ -2231,6 +1283,8 @@
   }
 
   async function initConfidenceMonitor() {
+    loadDashboardState();
+
     if (window.electronAPI && window.electronAPI.getPresentationData) {
       try {
         const data = await window.electronAPI.getPresentationData();
@@ -2242,7 +1296,8 @@
               updateTimerUI({ timerDisplay: data.state.timerFormatted, timerPhase: 'normal' });
             }
           }
-          if (data.config.isDemo || (!data.pdfData && !data.streamUrl)) {
+          const hasData = data.pdfData && (data.pdfData.byteLength > 0 || data.pdfData.length > 0);
+          if (data.config.isDemo || (!hasData && !data.streamUrl)) {
             await loadDemoDeck();
           } else {
             await loadDocumentData(data.pdfData, data.streamUrl, data.config.title);
@@ -2255,11 +1310,9 @@
       }
     }
 
-    // Default: Load built-in keynote presentation deck
     await loadDemoDeck();
   }
 
-  // Load PDF Document Externally
   window.loadConfidenceDocument = async function(pdfData, initialPage = 1, notes = {}) {
     currentNotes = notes || {};
     if (engine) {
@@ -2273,7 +1326,7 @@
     }
   };
 
-  // Expose Stage Cue & Monitor API on window
+  // Expose ConfidenceMonitor API on window
   window.ConfidenceMonitor = {
     setStageCue: handleStageCue,
     updateTimer: updateTimerUI,
@@ -2299,7 +1352,6 @@
     loadConfidenceDocument: window.loadConfidenceDocument
   };
 
-  // Boot up
   initConfidenceMonitor();
 
 })();

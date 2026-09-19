@@ -1,14 +1,14 @@
 /* css/confidence.css - Stage Confidence Multiviewer & Teleprompter Styles */
 
 :root {
-  --conf-bg: #030509;
+  --conf-bg: #020408;
   --conf-surface-1: rgba(13, 19, 33, 0.75);
   --conf-surface-2: rgba(18, 26, 46, 0.85);
   --conf-surface-glass: rgba(15, 23, 42, 0.65);
   --conf-border: rgba(255, 255, 255, 0.08);
   --conf-border-subtle: rgba(255, 255, 255, 0.04);
   --conf-border-highlight: rgba(255, 255, 255, 0.14);
-  --conf-card-bg: rgba(15, 23, 42, 0.8);
+  --conf-card-bg: rgba(15, 23, 42, 0.7);
   --conf-text-primary: #f8fafc;
   --conf-text-muted: #94a3b8;
   --conf-text-dim: #64748b;
@@ -18,17 +18,22 @@
   --conf-accent-blue: #00f2fe;
   --conf-accent-purple: #c084fc;
 
-  /* Resizable Variables for Backward-Compatibility */
+  /* Resizable Variables */
   --conf-top-height: auto;
-  --conf-timer-font-size: 46px;
+  --conf-timer-font-size: 52px;
   --conf-slides-width: 58%;
   --conf-scale: 1;
+
+  /* Dynamic Grid Row Heights */
+  --conf-row-top-h: 92px;
+  --conf-row-middle-h: 1fr;
+  --conf-row-bottom-h: 148px;
 }
 
 body.confidence-body {
   margin: 0;
   padding: 0;
-  background: radial-gradient(circle at 50% -20%, #0e172a 0%, #030509 65%, #010204 100%);
+  background: radial-gradient(circle at 50% -20%, #0c1527 0%, #030509 60%, #010204 100%);
   color: var(--conf-text-primary);
   font-family: var(--font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
   overflow: hidden;
@@ -44,44 +49,51 @@ body.confidence-body {
   height: 100vh;
   width: 100vw;
   box-sizing: border-box;
-  padding: 10px 14px;
-  gap: 10px;
+  padding: 8px 12px;
+  gap: 8px;
   position: relative;
   overflow: hidden;
 }
 
 /* ==========================================================================
-   1. TOP STAGE STATUS BAR & WATCHOUT 7 WORKSPACE TOOLBAR
+   1. TOP STAGE STATUS BAR & WORKSPACE TOOLBAR
    ========================================================================== */
 .conf-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(10, 16, 30, 0.8);
+  background: rgba(10, 16, 30, 0.85);
   border: 1px solid var(--conf-border);
-  border-radius: 12px;
-  padding: 6px 14px;
+  border-radius: 10px;
+  padding: 6px 12px;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   flex-shrink: 0;
   height: var(--conf-top-height, auto);
-  min-height: 48px;
+  min-height: 44px;
   box-sizing: border-box;
-  transition: height 0.15s ease, border-color 0.2s ease;
-  gap: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   position: relative;
   z-index: 100;
+}
+
+/* Auto-Dimming HUD for zero distraction during keynote delivery */
+.conf-top-bar.hud-dimmed {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
 }
 
 .conf-brand-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .conf-app-icon {
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
 }
 
@@ -92,7 +104,7 @@ body.confidence-body {
 }
 
 .conf-brand-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -102,103 +114,61 @@ body.confidence-body {
 .conf-badge-dockable {
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.8px;
-  color: #00f2fe;
-  background: rgba(0, 242, 254, 0.12);
-  padding: 1px 6px;
-  border-radius: 4px;
-  display: inline-block;
-  width: fit-content;
-  border: 1px solid rgba(0, 242, 254, 0.3);
+  letter-spacing: 0.5px;
+  color: var(--conf-accent-blue);
   text-transform: uppercase;
 }
 
-/* Preset Buttons - Broadcast Matrix Switcher Style */
+/* Quick Layout Presets */
 .conf-layout-presets {
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 3px 6px;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--conf-border-subtle);
 }
 
 .btn-conf-preset {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: #94a3b8;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 5px 12px;
+  background: transparent;
+  border: none;
+  color: var(--conf-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
+  transition: all 0.18s ease;
+  white-space: nowrap;
 }
 
 .btn-conf-preset:hover {
+  color: #fff;
   background: rgba(255, 255, 255, 0.08);
-  color: #f8fafc;
-  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .btn-conf-preset.active {
-  background: linear-gradient(180deg, rgba(6, 182, 212, 0.22) 0%, rgba(6, 182, 212, 0.08) 100%);
-  border-color: #06b6d4;
-  color: #00f2fe;
-  box-shadow: 0 0 14px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.25) 0%, rgba(79, 172, 254, 0.15) 100%);
+  color: #fff;
+  border: 1px solid rgba(0, 242, 254, 0.4);
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
 }
 
 .preset-led {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #64748b;
-  transition: background 0.2s, box-shadow 0.2s;
+  display: inline-block;
 }
 
 .btn-conf-preset.active .preset-led {
-  background: #00f2fe;
-  box-shadow: 0 0 6px #00f2fe;
-}
-
-.conf-top-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-conf-tool {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--conf-border);
-  color: #cbd5e1;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-conf-tool:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.btn-conf-tool.active-locked {
-  background: rgba(239, 68, 68, 0.18);
-  border-color: #ef4444;
-  color: #fca5a5;
-  box-shadow: 0 0 14px rgba(239, 68, 68, 0.35);
+  background: var(--conf-accent-blue);
+  box-shadow: 0 0 8px var(--conf-accent-blue);
 }
 
 /* Stage Scale Zoom Controller */
@@ -206,53 +176,72 @@ body.confidence-body {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 3px 8px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px 6px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--conf-border-subtle);
 }
 
 .conf-scale-icon {
-  font-size: 11px;
+  font-size: 13px;
   opacity: 0.7;
   margin-right: 2px;
 }
 
 .btn-conf-scale {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--conf-border-subtle);
+  color: var(--conf-text-primary);
   font-size: 11px;
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 5px;
   cursor: pointer;
   transition: all 0.15s ease;
-  min-width: 24px;
-  text-align: center;
 }
 
 .btn-conf-scale:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .btn-conf-scale.scale-badge {
-  font-variant-numeric: tabular-nums;
   min-width: 44px;
-  background: rgba(0, 242, 254, 0.08);
-  border-color: rgba(0, 242, 254, 0.25);
-  color: #00f2fe;
+  text-align: center;
+  background: rgba(0, 242, 254, 0.1);
+  color: var(--conf-accent-blue);
+  border-color: rgba(0, 242, 254, 0.3);
 }
 
-.btn-conf-scale.scale-badge.scale-modified {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.4);
-  color: #fbbf24;
+/* Top Actions */
+.conf-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-/* Widgets Dropdown Drawer */
+.btn-conf-tool {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--conf-border);
+  color: var(--conf-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn-conf-tool:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--conf-border-highlight);
+}
+
+/* Widgets Menu Dropdown */
 .conf-widgets-menu-wrapper {
   position: relative;
 }
@@ -261,1395 +250,816 @@ body.confidence-body {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: rgba(11, 17, 32, 0.98);
+  background: rgba(13, 19, 33, 0.96);
+  border: 1px solid var(--conf-border-highlight);
+  border-radius: 10px;
+  padding: 8px;
+  min-width: 220px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(0, 242, 254, 0.25);
-  border-radius: 10px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 242, 254, 0.15);
-  padding: 10px 12px;
-  min-width: 240px;
-  z-index: 1000;
+  z-index: 200;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px 6px;
+  border-bottom: 1px solid var(--conf-border-subtle);
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 1px;
-  color: #64748b;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  letter-spacing: 0.8px;
+  color: var(--conf-text-dim);
 }
 
 .dropdown-tip {
-  font-size: 8.5px;
-  color: #475569;
-  letter-spacing: 0.5px;
+  font-size: 9px;
+  color: var(--conf-accent-blue);
 }
 
 .widget-toggle-item {
-  font-size: 12px;
-  color: #e2e8f0;
   display: flex;
   align-items: center;
   gap: 8px;
-  cursor: pointer;
-  padding: 6px 10px;
+  padding: 6px 8px;
   border-radius: 6px;
-  transition: all 0.15s ease;
-  user-select: none;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 12px;
+  color: var(--conf-text-primary);
+  outline: none;
 }
 
-.widget-toggle-item:hover {
+.widget-toggle-item:hover,
+.widget-toggle-item:focus {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.widget-toggle-item.is-disabled {
-  opacity: 0.5;
-  background: rgba(0, 0, 0, 0.2);
 }
 
 .widget-toggle-icon {
-  font-size: 13px;
-  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1;
 }
 
 .widget-toggle-label {
   flex: 1;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .widget-toggle-badge {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
+  font-size: 10px;
+  font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
   background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  transition: all 0.15s ease;
+  color: var(--conf-accent-green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-.widget-toggle-item.is-disabled .widget-toggle-badge,
-.widget-toggle-badge.status-off {
+.widget-toggle-item.is-hidden .widget-toggle-badge {
   background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  color: #ef4444;
   border-color: rgba(239, 68, 68, 0.3);
 }
 
-.widget-toggle-item input[type="checkbox"] {
-  accent-color: #00f2fe;
-  cursor: pointer;
-  width: 14px;
-  height: 14px;
-}
-
-/* Splitters (Backwards-compatible) */
-.conf-resizer-h {
-  height: 8px;
-  margin: -4px 0;
-  cursor: row-resize;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 20;
-  border-radius: 4px;
-  transition: background 0.15s ease;
-  user-select: none;
-}
-
-.conf-resizer-h:hover,
-.conf-resizer-h.dragging {
-  background: rgba(0, 242, 254, 0.2);
-}
-
-.resizer-handle-bar {
-  width: 44px;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 2px;
-  transition: background 0.15s ease, width 0.15s ease;
-}
-
-.conf-resizer-h:hover .resizer-handle-bar,
-.conf-resizer-h.dragging .resizer-handle-bar {
-  background: #00f2fe;
-  width: 70px;
-}
-
-.conf-resizer-v {
-  width: 10px;
-  margin: 0 2px;
-  cursor: col-resize;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 20;
-  border-radius: 4px;
-  flex-shrink: 0;
-  transition: background 0.15s ease;
-  user-select: none;
-}
-
-.conf-resizer-v:hover,
-.conf-resizer-v.dragging {
-  background: rgba(0, 242, 254, 0.2);
-}
-
-.resizer-handle-bar-v {
-  width: 3px;
-  height: 44px;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 2px;
-  transition: background 0.15s ease, height 0.15s ease;
-}
-
-.conf-resizer-v:hover .resizer-handle-bar-v,
-.conf-resizer-v.dragging .resizer-handle-bar-v {
-  background: #00f2fe;
-  height: 70px;
-}
-
-/* ==========================================================================
-   3. MAIN CONTENT & WATCHOUT 7 DOCKABLE DASHBOARD GRID
-   ========================================================================== */
-.conf-main-content {
-  display: flex;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-/* 6-Column, 3-Row Zero-Scroll Responsive Multiviewer Grid */
-.conf-dashboard-grid,
-.conf-dock-grid {
-  display: grid;
-  grid-template-columns: repeat(120, minmax(0, 1fr));
-  grid-template-rows: var(--conf-row-top-h, calc(92px * var(--conf-scale, 1))) var(--conf-row-middle-h, 1fr) var(--conf-row-bottom-h, calc(148px * var(--conf-scale, 1)));
-  grid-auto-flow: dense;
-  grid-auto-rows: minmax(80px, 1fr);
-  gap: 10px;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  box-sizing: border-box;
-  overflow: hidden; /* ZERO SCROLLING ON STAGE! */
-  position: relative;
-}
-
-/* Dockable Window Tiles */
-.conf-dock-window {
-  background: linear-gradient(180deg, rgba(14, 20, 36, 0.8) 0%, rgba(8, 12, 22, 0.9) 100%);
-  border: 1px solid var(--conf-border);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
-  user-select: none;
-}
-
-/* Grid Column Spanning (120-Column Precision System) */
-.conf-dock-window.span-1 {
-  grid-column: span 40; /* 40/120 = 1/3 = 33.3% */
-}
-
-.conf-dock-window.span-2 {
-  grid-column: span 60; /* 60/120 = 1/2 = 50.0% */
-}
-
-.conf-dock-window.span-3 {
-  grid-column: span 80; /* 80/120 = 2/3 = 66.7% */
-}
-
-.conf-dock-window.span-full {
-  grid-column: 1 / -1;
-}
-
-/* Interactive Dock Window Click-and-Drag Resizers (Flexible Edge & Corner Handles) */
-.conf-dock-resizer {
-  position: absolute;
-  z-index: 50;
-  transition: background 0.15s ease, opacity 0.15s ease;
-  user-select: none;
-  touch-action: none;
-}
-
-/* Right Edge Handle: Click & Drag Width */
-.conf-dock-resizer-r {
-  top: 0;
-  right: -2px;
-  width: 14px;
-  height: 100%;
-  cursor: col-resize;
-}
-
-.conf-dock-resizer-r::after {
-  content: '';
-  position: absolute;
-  top: 15%;
-  right: 4px;
-  width: 3px;
-  height: 70%;
-  border-radius: 2px;
-  background: rgba(0, 242, 254, 0.3);
-  transition: all 0.2s ease;
-}
-
-.conf-dock-resizer-r:hover::after,
-.conf-dock-resizer-r.is-resizing::after {
-  background: #00f2fe;
-  box-shadow: 0 0 12px #00f2fe, 0 0 24px rgba(0, 242, 254, 0.8);
-  width: 5px;
-}
-
-/* Bottom Edge Handle: Click & Drag Height */
-.conf-dock-resizer-b {
-  bottom: -2px;
-  left: 0;
-  width: 100%;
-  height: 14px;
-  cursor: row-resize;
-}
-
-.conf-dock-resizer-b::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  left: 15%;
-  height: 3px;
-  width: 70%;
-  border-radius: 2px;
-  background: rgba(0, 242, 254, 0.3);
-  transition: all 0.2s ease;
-}
-
-.conf-dock-resizer-b:hover::after,
-.conf-dock-resizer-b.is-resizing::after {
-  background: #00f2fe;
-  box-shadow: 0 0 12px #00f2fe, 0 0 24px rgba(0, 242, 254, 0.8);
-  height: 5px;
-}
-
-/* Corner Grip Handle: Click & Drag Width + Height Simultaneously */
-.conf-dock-resizer-se {
-  bottom: 0;
-  right: 0;
-  width: 20px;
-  height: 20px;
-  cursor: nwse-resize;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.7;
-  z-index: 55;
-  transition: opacity 0.2s ease, transform 0.15s ease;
-}
-
-.conf-dock-resizer-se::before {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-  width: 9px;
-  height: 9px;
-  border-right: 2px solid rgba(0, 242, 254, 0.6);
-  border-bottom: 2px solid rgba(0, 242, 254, 0.6);
-  border-bottom-right-radius: 2px;
-  transition: all 0.2s ease;
-}
-
-.conf-dock-window:hover .conf-dock-resizer-se {
-  opacity: 0.95;
-}
-
-.conf-dock-resizer-se:hover,
-.conf-dock-resizer-se.is-resizing {
-  opacity: 1;
-  transform: scale(1.2);
-}
-
-.conf-dock-resizer-se:hover::before,
-.conf-dock-resizer-se.is-resizing::before {
-  border-color: #00f2fe;
-  box-shadow: 2px 2px 10px rgba(0, 242, 254, 0.9);
-}
-
-/* Document Resizing Modes */
-body.conf-resizing-col,
-body.conf-resizing-col * {
-  cursor: col-resize !important;
-  user-select: none !important;
-}
-
-body.conf-resizing-row,
-body.conf-resizing-row * {
-  cursor: row-resize !important;
-  user-select: none !important;
-}
-
-body.conf-resizing-se,
-body.conf-resizing-se * {
-  cursor: nwse-resize !important;
-  user-select: none !important;
-}
-
-/* Grid Row Spanning */
-.conf-dock-window.row-span-1 {
-  grid-row: span 1;
-}
-
-.conf-dock-window.row-span-2 {
-  grid-row: span 2;
-}
-
-.conf-dock-window.row-span-full {
-  grid-row: 1 / -1;
-}
-
-/* Maximized Window Mode (Fill Entire Stage Multiviewer) */
-.conf-dock-window.is-maximized {
-  grid-column: 1 / -1 !important;
-  grid-row: 1 / -1 !important;
-  z-index: 60 !important;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.95), 0 0 30px rgba(0, 242, 254, 0.35) !important;
-}
-
-/* Window Floating Sizing HUD (Width, Height, Maximize, Edit Size) */
-.conf-window-hud {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 45;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(5, 8, 16, 0.88);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  padding: 3px 5px;
-  border-radius: 6px;
-  border: 1px solid rgba(0, 242, 254, 0.3);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-  opacity: 0.75;
-  transform: translateY(0);
-  transition: opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-  pointer-events: auto;
-}
-
-.conf-dock-window:hover .conf-window-hud,
-.conf-dock-window:focus-within .conf-window-hud,
-.conf-window-hud:hover {
-  opacity: 1;
-  border-color: #00f2fe;
-  box-shadow: 0 0 16px rgba(0, 242, 254, 0.4);
-}
-
-.btn-hud-size {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #cbd5e1;
-  font-size: 11.5px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  transition: all 0.15s ease;
-  user-select: none;
-}
-
-.btn-hud-size:hover {
-  background: rgba(0, 242, 254, 0.25);
-  border-color: #00f2fe;
-  color: #00f2fe;
-  box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
-  transform: scale(1.1);
-}
-
-.btn-hud-size:active {
-  transform: scale(0.95);
-}
-
-.btn-hud-size.is-active {
-  background: rgba(0, 242, 254, 0.35);
-  border-color: #00f2fe;
-  color: #00f2fe;
-}
-
-/* Drag-and-Drop Visual States */
-.conf-dock-window.is-dragging {
-  opacity: 0.45;
-  transform: scale(0.98);
-  border: 2px dashed #00f2fe !important;
-  box-shadow: 0 0 28px rgba(0, 242, 254, 0.5) !important;
-}
-
-.conf-dock-window.drop-target-before {
-  border-left: 4px solid #00f2fe !important;
-  box-shadow: -6px 0 20px rgba(0, 242, 254, 0.6) !important;
-}
-
-.conf-dock-window.drop-target-after {
-  border-right: 4px solid #00f2fe !important;
-  box-shadow: 6px 0 20px rgba(0, 242, 254, 0.6) !important;
-}
-
-/* Collapsed Window State */
-.conf-dock-window.is-collapsed {
-  min-height: 38px !important;
-  height: 38px !important;
-  grid-row-end: span 1;
-}
-
-.conf-dock-window.is-collapsed .conf-dock-body {
-  display: none !important;
-}
-
-/* Window Titlebar / Header */
-.conf-dock-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 12px;
-  background: rgba(5, 8, 16, 0.55);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  flex-shrink: 0;
-  gap: 8px;
-  min-height: 32px;
-  box-sizing: border-box;
-}
-
-.dock-drag-handle {
-  cursor: grab;
-  color: #475569;
-  font-size: 13px;
-  padding: 2px 4px;
-  border-radius: 4px;
-  line-height: 1;
-  transition: all 0.15s ease;
-}
-
-.dock-drag-handle:hover {
-  color: #00f2fe;
-  background: rgba(0, 242, 254, 0.12);
-}
-
-.dock-drag-handle:active {
-  cursor: grabbing;
-}
-
-.dock-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: #cbd5e1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-}
-
-.dock-icon {
-  font-size: 13px;
-}
-
-.dock-actions {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.btn-dock-action {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: #94a3b8;
-  font-size: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  line-height: 1;
-  transition: all 0.15s ease;
-}
-
-.btn-dock-action:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
-  transform: scale(1.08);
-}
-
-.btn-dock-close:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.4);
-}
-
-/* Window Content Body */
-.conf-dock-body {
-  flex: 1;
-  padding: 8px 12px;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-}
-
-/* ==========================================================================
-   3. INDIVIDUAL WINDOW MODULES (BROADCAST QUALITY)
-   ========================================================================== */
-
-/* 1. Timer Window */
-#dockWindowTimer {
-  border-color: rgba(0, 242, 254, 0.2);
-}
-
-.conf-timer-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 4px;
-}
-
-.conf-timer-icon {
-  display: none;
-}
-
-.conf-timer-display {
-  font-family: 'Consolas', 'Roboto Mono', 'SF Pro Display', monospace;
-  font-size: var(--conf-timer-font-size, 46px);
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 2px;
-  line-height: 1;
-  min-width: 130px;
-  text-align: center;
-  transition: color 0.25s ease, text-shadow 0.25s ease, font-size 0.15s ease;
-}
-
-.conf-timer-display.phase-normal,
-.conf-timer-display.phase-cyan {
-  color: #00f2fe;
-  text-shadow: 0 0 20px rgba(0, 242, 254, 0.5), 0 0 40px rgba(0, 242, 254, 0.25);
-}
-
-.conf-timer-display.phase-green {
-  color: var(--conf-accent-green);
-  text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
-}
-
-.conf-timer-display.phase-warning,
-.conf-timer-display.phase-amber {
-  color: var(--conf-accent-amber);
-  text-shadow: 0 0 20px rgba(245, 158, 11, 0.6), 0 0 35px rgba(245, 158, 11, 0.3);
-  animation: pulseWarning 1.5s infinite ease-in-out;
-}
-
-.conf-timer-display.phase-critical,
-.conf-timer-display.phase-red {
-  color: var(--conf-accent-red);
-  text-shadow: 0 0 24px rgba(239, 68, 68, 0.8), 0 0 45px rgba(239, 68, 68, 0.4);
-  animation: pulseCritical 0.8s infinite ease-in-out;
-}
-
-.conf-timer-display.phase-overtime {
-  color: #ff1e42;
-  animation: flashOvertime 0.5s infinite ease-in-out;
-}
-
-@keyframes pulseWarning {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.65; }
-}
-
-@keyframes pulseCritical {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-@keyframes flashOvertime {
-  0%, 100% { opacity: 1; text-shadow: 0 0 24px rgba(255, 30, 66, 1); }
-  50% { opacity: 0.2; text-shadow: none; }
-}
-
-/* 2. Clock Window */
-.conf-clock-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 2px;
-}
-
-.conf-clock-label {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.conf-clock-display {
-  font-family: 'Consolas', 'Roboto Mono', monospace;
-  font-size: 30px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: #e2e8f0;
-  line-height: 1;
-}
-
-/* 3. Slide Progress Window */
-.conf-slide-counter-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.conf-counter-badge {
-  background: rgba(0, 242, 254, 0.1);
-  border: 1px solid rgba(0, 242, 254, 0.35);
-  color: #00f2fe;
-  font-size: 18px;
-  font-weight: 800;
-  padding: 6px 18px;
-  border-radius: 9999px;
-  letter-spacing: 0.8px;
-  text-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
-}
-
-/* 4. Live Audience Slide Monitor Window (ON AIR RED TALLY) */
-#dockWindowCurrent {
-  border-color: rgba(239, 68, 68, 0.45);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 24px rgba(239, 68, 68, 0.12), inset 0 1px 0 rgba(239, 68, 68, 0.2);
-}
-
-.current-tag {
-  background: rgba(239, 68, 68, 0.18);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.45);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-/* 5. Up Next Slide Preview Window (PREVIEW PURPLE TALLY) */
-#dockWindowNext {
-  border-color: rgba(168, 85, 247, 0.4);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 24px rgba(168, 85, 247, 0.12), inset 0 1px 0 rgba(168, 85, 247, 0.2);
-}
-
-.next-tag {
-  background: rgba(168, 85, 247, 0.18);
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.45);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.card-tag {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-}
-
-.conf-slide-num {
-  font-family: 'Consolas', monospace;
-  font-size: 13px;
-  font-weight: 800;
-  color: #94a3b8;
-  background: rgba(0, 0, 0, 0.35);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.conf-canvas-container {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #020306;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  overflow: hidden;
-  position: relative;
-  height: 100%;
-  width: 100%;
-}
-
-.conf-canvas-container canvas {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
-}
-
-.conf-no-next {
-  color: #64748b;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-}
-
-/* 6. Teleprompter Notes Window */
-#dockWindowNotes {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.conf-notes-viewport {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 18px;
-  background: rgba(4, 7, 14, 0.7);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  scroll-behavior: smooth;
-}
-
-.conf-notes-viewport::-webkit-scrollbar {
-  width: 6px;
-}
-.conf-notes-viewport::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
-}
-.conf-notes-viewport::-webkit-scrollbar-thumb {
-  background: rgba(0, 242, 254, 0.25);
-  border-radius: 3px;
-}
-.conf-notes-viewport::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 242, 254, 0.5);
-}
-
-.conf-notes-text {
-  font-size: 24px;
-  line-height: 1.55;
-  color: #f1f5f9;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  transition: font-size 0.2s ease;
-  font-weight: 500;
-  letter-spacing: 0.2px;
-}
-
-.conf-font-controls {
-  display: flex;
-  gap: 4px;
-}
-
-.btn-font-scale {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--conf-border);
-  color: #94a3b8;
-  font-weight: 700;
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.btn-font-scale:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.btn-font-scale.active {
-  background: rgba(0, 242, 254, 0.2);
-  border-color: #00f2fe;
-  color: #00f2fe;
-}
-
-/* 7. Stage Cue Window */
-#dockWindowCue {
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.conf-cue-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 8px;
-  position: relative;
-  padding: 6px 12px;
-  box-sizing: border-box;
-}
-
-.conf-cue-idle {
-  color: #475569;
-  font-size: 11.5px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-}
-
-.cue-idle-dot {
-  color: #10b981;
-  font-size: 10px;
-  animation: pulseCueDot 2s infinite ease-in-out;
-}
-
-@keyframes pulseCueDot {
-  0%, 100% { opacity: 1; text-shadow: 0 0 6px #10b981; }
-  50% { opacity: 0.3; text-shadow: none; }
-}
-
-.conf-stage-cue-banner {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(245, 158, 11, 0.95));
-  border: 1px solid #fca5a5;
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
-  border-radius: 8px;
-  padding: 10px 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  box-sizing: border-box;
-  animation: cueAlertPulse 1.5s infinite ease-in-out;
-}
-
-@keyframes cueAlertPulse {
-  0%, 100% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.6); }
-  50% { box-shadow: 0 0 45px rgba(239, 68, 68, 0.9); }
-}
-
-.stage-cue-icon {
-  font-size: 22px;
-}
-
-.stage-cue-text {
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  color: #ffffff;
-  text-transform: uppercase;
-}
-
-/* ==========================================================================
-   4. SHOW SAFETY LOCKED STATE (CLEAN STAGE PRESENTATION)
-   ========================================================================== */
-.confidence-container.dashboard-locked .dock-drag-handle,
-.confidence-container.dashboard-locked .dock-actions {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transform: scale(0.9);
-}
-
-.confidence-container.dashboard-locked .conf-dock-window {
-  cursor: default !important;
-}
-
-/* Backward-compatible classes for tests */
-.conf-slides-section {
-  display: none;
-  width: var(--conf-slides-width, 58%);
-}
-.conf-notes-section {
-  display: none;
-}
-.conf-notes-header, .conf-notes-title, .conf-slide-card, .conf-card-header {
-  display: none;
-}
-
-/* ==========================================================================
-   5. SEAMLESS CINEMA STAGE DISPLAY MODE (BORDERLESS, ZERO CLUMSINESS)
-   ========================================================================== */
-.confidence-container.mode-seamless {
-  background: #000000 !important;
-  padding: 8px 14px !important;
-}
-
-/* In Seamless mode: Eliminate all clumsy individual box outlines & card backgrounds */
-.confidence-container.mode-seamless .conf-dock-window {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-}
-
-/* Hide clumsy drag handles and action buttons in seamless presentation mode */
-.confidence-container.mode-seamless .dock-drag-handle,
-.confidence-container.mode-seamless .dock-actions {
-  display: none !important;
-}
-
-/* Hide headers for pure status widgets (Timer, Clock, Counter, Cue) */
-.confidence-container.mode-seamless #dockWindowTimer .conf-dock-header,
-.confidence-container.mode-seamless #dockWindowClock .conf-dock-header,
-.confidence-container.mode-seamless #dockWindowCounter .conf-dock-header,
-.confidence-container.mode-seamless #dockWindowCue .conf-dock-header {
-  display: none !important;
-}
-
-/* For Slides in seamless mode: Clean, borderless floating header with pure tally badge */
-.confidence-container.mode-seamless #dockWindowCurrent .conf-dock-header,
-.confidence-container.mode-seamless #dockWindowNext .conf-dock-header {
-  background: transparent !important;
-  border: none !important;
-  padding: 0 4px 6px 4px !important;
-  min-height: 24px !important;
-}
-
-.confidence-container.mode-seamless #dockWindowCurrent .dock-title,
-.confidence-container.mode-seamless #dockWindowNext .dock-title {
-  display: none !important;
-}
-
-/* Slides Cinema Bezels with glowing tally lights */
-.confidence-container.mode-seamless #dockWindowCurrent .conf-canvas-container {
-  border: 1px solid rgba(239, 68, 68, 0.45) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.95), 0 0 20px rgba(239, 68, 68, 0.2) !important;
-  border-radius: 10px !important;
-  background: #000000 !important;
-}
-
-.confidence-container.mode-seamless #dockWindowNext .conf-canvas-container {
-  border: 1px solid rgba(168, 85, 247, 0.4) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.95), 0 0 20px rgba(168, 85, 247, 0.18) !important;
-  border-radius: 10px !important;
-  background: #000000 !important;
-}
-
-/* Teleprompter Notes in Seamless Mode: Floating, crystal-clear velvet stage */
-.confidence-container.mode-seamless #dockWindowNotes .conf-dock-header {
-  background: transparent !important;
-  border: none !important;
-  padding: 0 4px 6px 4px !important;
-  min-height: 24px !important;
-}
-
-.confidence-container.mode-seamless #dockWindowNotes .dock-title {
-  font-size: 11px !important;
-  font-weight: 800 !important;
-  color: #64748b !important;
-  letter-spacing: 1px !important;
-}
-
-.confidence-container.mode-seamless #dockWindowNotes .conf-notes-viewport {
-  background: rgba(8, 12, 22, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  border-radius: 10px !important;
-  box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.6) !important;
-  padding: 14px 20px !important;
-}
-
-.confidence-container.mode-seamless .conf-notes-text {
-  font-size: calc(26px * var(--conf-scale, 1)) !important;
-  line-height: 1.6 !important;
-  color: #f8fafc !important;
-  font-weight: 500 !important;
-}
-
-/* Timer in Seamless Mode: Floating, razor-sharp chrono */
-.confidence-container.mode-seamless .conf-timer-display {
-  font-size: calc(58px * var(--conf-scale, 1)) !important;
-  letter-spacing: 3px !important;
-}
-
-.confidence-container.mode-seamless .conf-clock-display {
-  font-size: calc(32px * var(--conf-scale, 1)) !important;
-}
-
-.confidence-container.mode-seamless .conf-counter-badge {
-  font-size: calc(19px * var(--conf-scale, 1)) !important;
-  padding: 6px 20px !important;
-}
-
-/* Stage Cue in Seamless Mode: Hidden when idle, floating lower-third alert when active */
-.confidence-container.mode-seamless #dockWindowCue .conf-cue-body {
-  background: transparent !important;
-  border: none !important;
-}
-
-.confidence-container.mode-seamless #dockWindowCue .conf-cue-idle {
-  opacity: 0.5;
-  font-size: 10.5px !important;
-}
-
-/* ==========================================================================
-   6. INTERACTIVE TAB SIZE EDITOR DRAWER (WIDTH & HEIGHT CONTROLS)
-   ========================================================================== */
+/* Tab Size Drawer */
 .conf-tab-size-drawer {
-  position: absolute;
-  top: 52px;
-  right: 14px;
-  width: min(520px, calc(100vw - 28px));
-  max-height: calc(100vh - 70px);
-  background: rgba(11, 17, 32, 0.96);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 242, 254, 0.4);
-  border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 242, 254, 0.2);
-  z-index: 1200;
+  background: rgba(13, 19, 33, 0.95);
+  border: 1px solid var(--conf-border-highlight);
+  border-radius: 10px;
+  padding: 12px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
+  z-index: 150;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  animation: slideInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  gap: 10px;
 }
 
 .drawer-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 12px 18px;
-  background: rgba(15, 23, 42, 0.8);
-  border-bottom: 1px solid rgba(0, 242, 254, 0.2);
+  align-items: center;
 }
 
 .drawer-title-group {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.drawer-icon {
-  font-size: 16px;
-}
-
-.drawer-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.8px;
-  color: #00f2fe;
+  color: #fff;
 }
 
 .btn-drawer-close {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #94a3b8;
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--conf-text-dim);
+  font-size: 16px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .btn-drawer-close:hover {
-  background: rgba(239, 68, 68, 0.25);
-  border-color: #ef4444;
-  color: #ef4444;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .drawer-quick-presets {
-  padding: 10px 18px;
-  background: rgba(5, 8, 16, 0.6);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .drawer-section-label {
   font-size: 10px;
-  font-weight: 800;
-  color: #64748b;
-  letter-spacing: 1px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--conf-text-dim);
 }
 
 .drawer-preset-buttons {
   display: flex;
+  gap: 4px;
   flex-wrap: wrap;
-  gap: 6px;
 }
 
 .btn-drawer-preset {
-  padding: 4px 10px;
-  border-radius: 6px;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #cbd5e1;
+  border: 1px solid var(--conf-border-subtle);
+  color: var(--conf-text-primary);
   font-size: 11px;
   font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 5px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-drawer-preset:hover {
-  background: rgba(0, 242, 254, 0.2);
-  border-color: #00f2fe;
-  color: #00f2fe;
-}
-
-.btn-drawer-preset.btn-preset-reset {
-  color: #f59e0b;
-  border-color: rgba(245, 158, 11, 0.3);
-}
-
-.btn-drawer-preset.btn-preset-reset:hover {
-  background: rgba(245, 158, 11, 0.2);
-  border-color: #f59e0b;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
 }
 
 .drawer-tabs-list {
-  padding: 14px 18px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 8px;
 }
 
 .drawer-tab-card {
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--conf-border-subtle);
+  border-radius: 8px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  transition: border-color 0.2s ease;
-}
-
-.drawer-tab-card:hover {
-  border-color: rgba(0, 242, 254, 0.3);
+  gap: 6px;
 }
 
 .drawer-tab-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-}
-
-.drawer-tab-name {
-  font-size: 11.5px;
-  font-weight: 800;
-  color: #f1f5f9;
-  letter-spacing: 0.5px;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--conf-text-primary);
 }
 
 .drawer-tab-val {
+  color: var(--conf-accent-blue);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
-  font-weight: 700;
-  color: #00f2fe;
-  font-family: monospace;
 }
 
 .drawer-control-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .control-label {
-  font-size: 11px;
-  color: #94a3b8;
-  min-width: 120px;
-  font-weight: 600;
-}
-
-.btn-size-step {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #cbd5e1;
-  font-size: 11px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  user-select: none;
-}
-
-.btn-size-step:hover {
-  background: rgba(0, 242, 254, 0.25);
-  border-color: #00f2fe;
-  color: #00f2fe;
+  font-size: 10px;
+  color: var(--conf-text-muted);
+  width: 90px;
+  flex-shrink: 0;
 }
 
 .range-slider {
   flex: 1;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.12);
-  outline: none;
+  accent-color: var(--conf-accent-blue);
   cursor: pointer;
-  -webkit-appearance: none;
-  accent-color: #00f2fe;
 }
 
-.range-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #00f2fe;
-  box-shadow: 0 0 10px #00f2fe;
+.btn-size-step {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--conf-border-subtle);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
   cursor: pointer;
+}
+
+.btn-size-step:hover {
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .control-badge {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  padding: 2px 6px;
-  border-radius: 4px;
-  min-width: 75px;
-  text-align: center;
-  font-family: monospace;
-}
-
-/* Seamless mode tab hover guides */
-.confidence-container.mode-seamless .conf-dock-window:hover {
-  outline: 1px dashed rgba(0, 242, 254, 0.4) !important;
-  outline-offset: -2px;
+  color: var(--conf-accent-blue);
+  min-width: 60px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ==========================================================================
-   4. PRO STUDIO BROADCAST TALLIES & STAGE DISPLAY STYLING
+   2. MAIN DASHBOARD CONTENT & 120-COLUMN PRECISION GRID
    ========================================================================== */
-.conf-studio-tally {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 25;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+.conf-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  gap: 6px;
+}
+
+.conf-dashboard-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(120, minmax(0, 1fr));
+  grid-template-rows: var(--conf-row-top-h, calc(92px * var(--conf-scale, 1))) var(--conf-row-middle-h, 1fr) var(--conf-row-bottom-h, calc(148px * var(--conf-scale, 1)));
+  gap: 8px;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Column Spans across 120-column precision system */
+.span-1 { grid-column: span 40; }
+.span-2 { grid-column: span 60; }
+.span-3 { grid-column: span 80; }
+.span-full { grid-column: 1 / -1; }
+
+/* Row Spans */
+.conf-dock-window.row-span-1, .row-span-1 { grid-row: span 1; }
+.conf-dock-window.row-span-2, .row-span-2 { grid-row: span 2; }
+.conf-dock-window.row-span-full, .row-span-full { grid-row: 1 / -1; }
+
+/* Window Cards */
+.conf-dock-window {
+  background: var(--conf-card-bg);
+  border: 1px solid var(--conf-border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  pointer-events: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-height: 0;
+  min-width: 0;
+}
+
+.conf-dock-window:hover {
+  border-color: var(--conf-border-highlight);
+}
+
+.conf-dock-window.is-dragging {
+  opacity: 0.45;
+  border: 2px dashed var(--conf-accent-blue);
+  box-shadow: 0 0 30px rgba(0, 242, 254, 0.3);
+}
+
+.conf-dock-window.drop-target-before {
+  border-left: 4px solid var(--conf-accent-blue);
+}
+
+.conf-dock-window.drop-target-after {
+  border-right: 4px solid var(--conf-accent-blue);
+}
+
+.conf-dock-window.is-collapsed .conf-dock-body {
+  display: none !important;
+}
+
+.conf-dock-window.is-maximized {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 120 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Dock Window Header */
+.conf-dock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid var(--conf-border-subtle);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--conf-text-muted);
+  flex-shrink: 0;
   user-select: none;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+
+.dock-drag-handle {
+  cursor: grab;
+  padding: 0 4px;
+  color: var(--conf-text-dim);
+  font-size: 13px;
+  letter-spacing: -2px;
+}
+
+.dock-drag-handle:active {
+  cursor: grabbing;
+}
+
+.dashboard-locked .dock-drag-handle {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.dock-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.dock-icon {
+  font-size: 13px;
+}
+
+.card-tag {
+  display: none;
+}
+
+.conf-slide-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--conf-accent-blue);
+  margin-right: 8px;
+}
+
+.dock-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-dock-action {
+  background: transparent;
+  border: none;
+  color: var(--conf-text-dim);
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-dock-action:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.btn-dock-action.btn-dock-close:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Floating Window HUD */
+.conf-window-hud {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  background: rgba(13, 19, 33, 0.85);
+  border: 1px solid var(--conf-border-subtle);
+  border-radius: 6px;
+  padding: 2px;
+  backdrop-filter: blur(12px);
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.conf-dock-window:hover .conf-window-hud {
+  opacity: 1;
+}
+
+.btn-hud-size {
+  background: transparent;
+  border: none;
+  color: var(--conf-text-muted);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-hud-size:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Resizer Handles for individual windows */
+.conf-dock-resizer {
+  position: absolute;
+  z-index: 20;
+}
+
+.conf-dock-resizer-r {
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+.conf-dock-resizer-b {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  cursor: row-resize;
+}
+
+.conf-dock-resizer-se {
+  bottom: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+}
+
+body.conf-resizing-col, body.conf-resizing-col * { cursor: col-resize !important; user-select: none !important; }
+body.conf-resizing-row, body.conf-resizing-row * { cursor: row-resize !important; user-select: none !important; }
+body.conf-resizing-se, body.conf-resizing-se * { cursor: nwse-resize !important; user-select: none !important; }
+
+/* Broadcast Studio Tallies */
+.conf-studio-tally {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 5;
+  text-transform: uppercase;
+  pointer-events: none;
 }
 
 .tally-live {
-  background: rgba(220, 38, 38, 0.25);
-  border: 1px solid rgba(239, 68, 68, 0.6);
-  color: #fca5a5;
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
 }
 
 .tally-live .tally-dot {
   color: #ef4444;
-  font-size: 12px;
-  animation: pulseTallyDot 1.4s infinite ease-in-out;
+  animation: pulse-live 1.5s infinite;
+}
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
 }
 
 .tally-next {
-  background: rgba(14, 165, 233, 0.2);
-  border: 1px solid rgba(14, 165, 233, 0.5);
-  color: #7dd3fc;
-  box-shadow: 0 0 16px rgba(14, 165, 233, 0.3);
-}
-
-.tally-next .tally-dot {
-  color: #38bdf8;
-  font-size: 11px;
+  background: rgba(0, 242, 254, 0.2);
+  color: var(--conf-accent-blue);
+  border: 1px solid rgba(0, 242, 254, 0.35);
 }
 
 .tally-notes {
-  background: rgba(100, 116, 139, 0.2);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--conf-text-muted);
+  border: 1px solid var(--conf-border);
 }
 
-@keyframes pulseTallyDot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(0.85); }
+/* Window Bodies */
+.conf-dock-body {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  min-width: 0;
 }
 
-/* Auto-Dimming Studio HUD (Zero Distraction for Keynote Speakers) */
-.conf-top-bar {
-  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s ease, background 0.2s ease;
+/* 1. Timer Window */
+.conf-timer-wrapper {
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
 }
 
-.conf-top-bar.hud-dimmed {
-  opacity: 0.15;
+.conf-timer-display {
+  font-size: var(--conf-timer-font-size, 52px);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+  text-align: center;
+  line-height: 1;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
-.conf-top-bar.hud-dimmed:hover,
-.confidence-container:hover .conf-top-bar.hud-dimmed {
-  opacity: 1;
+.conf-timer-display.phase-normal {
+  color: #00f2fe;
+  text-shadow: 0 0 24px rgba(0, 242, 254, 0.4);
 }
 
-/* Pro Studio Seamless Mode: Eliminates Clumsy Desktop OS Window Chrome */
-.confidence-container.mode-seamless .conf-dock-window {
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  background: rgba(8, 12, 22, 0.92) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7) !important;
-  overflow: hidden !important;
+.conf-timer-display.phase-warning {
+  color: #f59e0b;
+  text-shadow: 0 0 28px rgba(245, 158, 11, 0.5);
+  animation: pulse-warn 1.5s infinite;
 }
 
+.conf-timer-display.phase-critical {
+  color: #ef4444;
+  text-shadow: 0 0 32px rgba(239, 68, 68, 0.6);
+  animation: pulse-crit 0.8s infinite;
+}
+
+.conf-timer-display.phase-overtime {
+  color: #ff2a2a;
+  text-shadow: 0 0 36px rgba(255, 42, 42, 0.8);
+  animation: flash-overtime 0.6s infinite alternate;
+}
+
+@keyframes pulse-warn {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@keyframes pulse-crit {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@keyframes flash-overtime {
+  0% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+/* 2. Clock Window */
+.conf-clock-wrapper {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  gap: 4px;
+}
+
+.conf-clock-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--conf-text-dim);
+  text-transform: uppercase;
+}
+
+.conf-clock-display {
+  font-size: 32px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1.5px;
+  color: #f8fafc;
+  line-height: 1;
+}
+
+/* 3. Slide Counter Window */
+.conf-slide-counter-wrapper {
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.conf-counter-badge {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #e2e8f0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 4 & 5. Canvas Presentation Windows */
+.conf-canvas-container {
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#confCurrentCanvas, #confNextCanvas {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.conf-no-next {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--conf-text-dim);
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* 6. Teleprompter Notes Window */
+.conf-notes-viewport {
+  padding: 14px 18px;
+  overflow-y: auto;
+  flex-direction: column;
+  background: rgba(5, 10, 20, 0.6);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.conf-notes-text {
+  font-size: 28px;
+  line-height: 1.5;
+  color: #f8fafc;
+  font-weight: 500;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding-top: 24px;
+}
+
+.conf-font-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-font-scale {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--conf-border-subtle);
+  color: var(--conf-text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-font-scale:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.btn-font-scale.active {
+  background: rgba(0, 242, 254, 0.2);
+  color: var(--conf-accent-blue);
+  border-color: rgba(0, 242, 254, 0.4);
+}
+
+/* 7. Stage Cue Banner */
+.conf-cue-body {
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 6px 12px;
+}
+
+.conf-stage-cue-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 10px 24px;
+  border-radius: 8px;
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+  animation: pulse-crit 1s infinite;
+  width: 90%;
+  text-align: center;
+}
+
+.stage-cue-icon {
+  font-size: 26px;
+}
+
+.conf-cue-idle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--conf-text-dim);
+}
+
+.cue-idle-dot {
+  color: #10b981;
+  font-size: 8px;
+}
+
+/* ==========================================================================
+   3. BROADCAST STAGE RESIZERS (#confResizerH & #confResizerV)
+   ========================================================================== */
+.conf-resizer-h {
+  height: 10px;
+  width: 100%;
+  cursor: row-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 30;
+  margin: -4px 0;
+  touch-action: none;
+}
+
+.resizer-handle-bar {
+  width: 48px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.conf-resizer-h:hover .resizer-handle-bar {
+  background: var(--conf-accent-blue);
+  width: 80px;
+  box-shadow: 0 0 10px var(--conf-accent-blue);
+}
+
+.conf-resizer-v {
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 30;
+  touch-action: none;
+}
+
+.resizer-handle-bar-v {
+  width: 4px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.conf-resizer-v:hover .resizer-handle-bar-v {
+  background: var(--conf-accent-blue);
+  height: 80px;
+  box-shadow: 0 0 10px var(--conf-accent-blue);
+}
+
+/* ==========================================================================
+   4. SEAMLESS BROADCAST STAGE MODE (DEFAULT ZERO-DISTRACTION METAPHOR)
+   ========================================================================== */
+/* In seamless stage mode (non-edit), window chrome and per-tile handles are cleanly silenced */
 .confidence-container.mode-seamless:not(.studio-edit-mode) .conf-dock-header {
   display: none !important;
 }
@@ -1659,57 +1069,19 @@ body.conf-resizing-se * {
 }
 
 .confidence-container.mode-seamless:not(.studio-edit-mode) .conf-dock-resizer {
-  opacity: 0.15;
+  display: none !important;
 }
 
-.confidence-container.mode-seamless:not(.studio-edit-mode) .conf-dock-resizer:hover {
-  opacity: 1;
+.confidence-container.mode-seamless:not(.studio-edit-mode) .conf-dock-window {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(13, 19, 33, 0.55);
 }
 
-/* Enhanced Teleprompter Typography */
-.conf-notes-viewport {
-  position: relative;
-  background: rgba(4, 7, 14, 0.9) !important;
-  border-radius: 8px;
-  padding: 16px 24px;
-  overflow-y: auto;
-}
-
-.conf-notes-text {
-  font-family: var(--font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
-  font-size: 28px;
-  line-height: 1.65;
-  color: #f8fafc;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-}
-
-/* Canvas Clean Presentation Aspect */
-.conf-canvas-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #010307;
-  border-radius: 8px;
-  overflow: hidden;
-  padding: 4px;
-}
-
-.conf-canvas-container canvas {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  border-radius: 6px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
-}
-
-/* Studio Edit Mode toggle for technical director */
+/* Studio Edit Mode */
 .confidence-container.studio-edit-mode .conf-dock-header {
   display: flex !important;
 }
 
-.confidence-container.studio-edit-mode .conf-window-hud {
-  display: flex !important;
+.confidence-container.studio-edit-mode .conf-dock-resizer {
+  display: block !important;
 }
-
