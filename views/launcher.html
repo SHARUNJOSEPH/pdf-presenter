@@ -8,6 +8,7 @@
   <title>PDF Presenter Suite - Setup & Display Launcher</title>
   <link rel="stylesheet" href="../css/common.css">
   <link rel="stylesheet" href="../css/launcher.css">
+  <link rel="stylesheet" href="../css/pro-features.css">
   <!-- Internationalization (i18n) Engine & Locales -->
   <script src="../js/locales.js"></script>
   <script src="../js/i18n.js"></script>
@@ -37,6 +38,94 @@
               <span>💎</span> <span data-i18n="pro.proBadge">PRO</span>
             </span>
           </div>
+
+          <!-- Consolidated Pro Tools Dropdown Wrapper -->
+          <div class="pro-tools-dropdown-wrapper" id="proToolsDropdownWrapper">
+            <button class="btn btn-tools-menu" id="btnProToolsMenu" type="button" title="Professional Broadcast & Presentation Tools" aria-haspopup="true" aria-expanded="false">
+              <span>🛠️</span>
+              <span class="tools-menu-text" data-i18n="presenter.toolsMenu">Tools</span>
+              <span class="tools-menu-caret">▾</span>
+            </button>
+
+            <!-- Dropdown Popover Menu -->
+            <div class="pro-tools-popover" id="proToolsMenuPopover" style="display: none;" role="menu" aria-label="Professional Presentation Tools">
+              <div class="pro-tools-popover-header">
+                <span class="popover-title">✨ Professional Suite</span>
+                <span class="pro-badge-mini">PRO</span>
+              </div>
+              
+              <div class="pro-tools-popover-items">
+                <!-- Brand Watermark & Event Branding -->
+                <button class="pro-tools-menu-item" id="btnWatermark" type="button" role="menuitem" title="Brand Watermark & Event Branding Overlay">
+                  <span class="menu-item-icon">🎨</span>
+                  <div class="menu-item-content">
+                    <div class="menu-item-title">Watermark & Branding</div>
+                    <div class="menu-item-desc">Overlay custom logo or text</div>
+                  </div>
+                  <span class="pro-tag-lock">PRO</span>
+                </button>
+
+                <!-- Live Audience Lower-Third Ticker Banner -->
+                <button class="pro-tools-menu-item" id="btnAudienceBanner" type="button" role="menuitem" title="Live Audience Lower-Third Ticker Banner">
+                  <span class="menu-item-icon">📢</span>
+                  <div class="menu-item-content">
+                    <div class="menu-item-title">Audience Banner</div>
+                    <div class="menu-item-desc">Broadcast lower-third ticker</div>
+                  </div>
+                  <span class="pro-tag-lock">PRO</span>
+                </button>
+
+                <!-- Multi-Deck Conference Playlist (Speaker Queue) -->
+                <button class="pro-tools-menu-item" id="btnPlaylist" type="button" role="menuitem" title="Multi-Deck Conference Playlist & Speaker Queue">
+                  <span class="menu-item-icon">📑</span>
+                  <div class="menu-item-content">
+                    <div class="menu-item-title">Multi-Deck Playlist</div>
+                    <div class="menu-item-desc">Speaker queue & deck switcher</div>
+                  </div>
+                  <span class="pro-tag-lock">PRO</span>
+                </button>
+
+                <!-- Rehearsal Metrics & Slide Time Heatmap -->
+                <button class="pro-tools-menu-item" id="btnRehearsalMetrics" type="button" role="menuitem" title="Rehearsal Analytics & Slide Dwell Heatmap">
+                  <span class="menu-item-icon">📊</span>
+                  <div class="menu-item-content">
+                    <div class="menu-item-title">Rehearsal Analytics</div>
+                    <div class="menu-item-desc">Slide dwell heatmap & pacing</div>
+                  </div>
+                  <span class="pro-tag-lock">PRO</span>
+                <!-- NDI IP Video Broadcast -->
+                <button class="pro-tools-menu-item" id="btnNdiBroadcast" type="button" role="menuitem" title="NDI 5/6 & IP Video Network Broadcast">
+                  <span class="menu-item-icon">📡</span>
+                  <div class="menu-item-content">
+                    <div class="menu-item-title">NDI® IP Broadcast</div>
+                    <div class="menu-item-desc">OBS, vMix & Alpha key stream</div>
+                  </div>
+                  <span class="pro-tag-lock">PRO</span>
+                </button>
+
+                <!-- Stage Confidence Monitor -->
+                <button class="pro-tools-menu-item" id="btnConfidenceMonitor" type="button" role="menuitem" title="Stage Floor Confidence Monitor & Teleprompter">
+                  <span class="menu-item-icon">🖥️</span>
+                  <div class="menu-item-content">
+                    <div class="menu-item-title">Confidence Monitor</div>
+                    <div class="menu-item-desc">Floor monitor & teleprompter</div>
+                  </div>
+                  <span class="pro-tag-lock">PRO</span>
+                </button>
+
+                <!-- OBS & vMix Automation Gateway -->
+                <button class="pro-tools-menu-item" id="btnBroadcastAutomation" type="button" role="menuitem" title="OBS Studio & vMix Scene Automation">
+                  <span class="menu-item-icon">🎬</span>
+                  <div class="menu-item-content">
+                    <div class="menu-item-title">OBS & vMix Automation</div>
+                    <div class="menu-item-desc">Auto scene switching rules</div>
+                  </div>
+                  <span class="pro-tag-lock">PRO</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Language Selector -->
           <div class="lang-selector-wrapper">
             <label for="languageSelect" style="font-size: 14px; cursor: pointer;">🌐</label>
@@ -82,7 +171,7 @@
           <div class="dropzone-icon">📂</div>
           <div class="dropzone-text" data-i18n="launcher.dropTitle">Click to Browse or Drag & Drop PDF here</div>
           <div class="dropzone-subtext" data-i18n="launcher.dropSubtitle">Supports all PDF presentations & slide decks</div>
-          <input type="file" id="pdfFileInput" accept="application/pdf" style="display: none;">
+          <input type="file" id="pdfFileInput" accept="application/pdf" multiple style="display: none;">
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 12px;">
@@ -103,6 +192,23 @@
           </div>
         </div>
 
+        <!-- Live Conference Speaker Queue (Multi-Deck Playlist) on Home Screen -->
+        <div class="launcher-playlist-section" id="launcherPlaylistSection" style="display: none;">
+          <div class="launcher-playlist-header">
+            <div class="launcher-playlist-title">
+              <span>📑</span>
+              <span>Speaker Queue (<span id="launcherPlaylistCount">0</span> Decks)</span>
+            </div>
+            <div class="launcher-playlist-header-actions">
+              <button type="button" class="btn-playlist-action" id="btnLauncherAddDeck" title="Queue additional presentation PDF decks">+ Add Deck</button>
+              <button type="button" class="btn-clear-playlist" id="btnLauncherClearPlaylist" title="Clear all queued speaker decks">Clear</button>
+            </div>
+          </div>
+          <div class="launcher-playlist-list" id="launcherPlaylistCards">
+            <!-- Dynamically populated from launcherPlaylistEngine -->
+          </div>
+        </div>
+
         <!-- Recent Presentations Section -->
         <div class="recent-presentations-section" id="recentPresentationsSection" style="display: none;">
           <div class="recent-header">
@@ -119,9 +225,23 @@
 
       <!-- Right Card: Display Topology & Multi-Screen Assignment -->
       <section class="setup-card">
-        <h2 class="card-title">
-          <span>🖥️</span> <span data-i18n="launcher.step2Title">2. Assign Target Displays</span>
-        </h2>
+        <div class="card-title-row">
+          <h2 class="card-title" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
+            <span>🖥️</span> <span data-i18n="launcher.step2Title">2. Assign Target Displays</span>
+          </h2>
+          <div class="display-header-actions">
+            <span id="displayCountBadge" class="display-count-badge">1 Display</span>
+            <button type="button" class="btn-refresh-screens" id="btnRefreshScreens" title="Scan for newly connected HDMI or external projector displays">
+              <span class="refresh-icon">🔄</span> <span data-i18n="launcher.refreshScreens">Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Real-time Hotplug Toast -->
+        <div id="displayHotplugToast" class="display-hotplug-toast" style="display: none;">
+          <span class="hotplug-toast-icon">⚡</span>
+          <span id="displayHotplugToastMsg">External HDMI Display connected & auto-selected!</span>
+        </div>
 
         <!-- Connected Monitors List -->
         <div class="screen-cards-list" id="screenCardsList">
@@ -200,9 +320,9 @@
         <!-- Bottom Left API Settings Trigger Button -->
         <button type="button" class="btn-api-pill" id="btnOpenApiModal" data-i18n-title="launcher.companionApi" title="Configure Bitfocus Companion & Remote Control API">
           <span class="status-indicator-dot online" id="footerApiStatusDot"></span>
-          <span style="font-weight: 600;">Remote API:</span>
+          <span style="font-weight: 600;">🎛️ Companion / Remote API:</span>
           <span class="api-pill-badge" id="footerApiBadge">Port 3000</span>
-          <span style="font-size: 11px; opacity: 0.7;">⚙️</span>
+          <span style="font-size: 11px; opacity: 0.85; margin-left: 2px;">⚙️ Configure</span>
         </button>
       </div>
 
@@ -296,6 +416,40 @@
               <span>📥</span> Export Presets
             </button>
           </div>
+
+          <!-- Stream Deck Live Messaging & Target Screen Control -->
+          <div style="margin-top: 14px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; padding: 12px 14px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <div style="font-size: 12.5px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+                <span>💬</span> Stream Deck Live Message Command
+              </div>
+              <span class="pro-badge-mini" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">PRO / TRIAL</span>
+            </div>
+            <div style="font-size: 11.5px; color: #94a3b8; margin-bottom: 10px; line-height: 1.4;">
+              Broadcast live alerts to the <strong>Presenter Cockpit (default)</strong>, Audience screen, or Stage monitor from an Elgato Stream Deck button or HTTP request.
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 140px;">
+                <label for="selStreamDeckTarget" style="font-size: 11px; color: #cbd5e1; display: block; margin-bottom: 3px;">Target Display:</label>
+                <select id="selStreamDeckTarget" class="select-custom" style="font-size: 11.5px; padding: 5px 8px; width: 100%;">
+                  <option value="presenter" selected>Presenter Cockpit (Default)</option>
+                  <option value="audience">Audience Lower-Third Ticker</option>
+                  <option value="stage">Stage Confidence Monitor</option>
+                  <option value="all">All Connected Displays</option>
+                </select>
+              </div>
+              <div style="flex: 2; min-width: 180px;">
+                <label for="txtStreamDeckSample" style="font-size: 11px; color: #cbd5e1; display: block; margin-bottom: 3px;">Sample Message:</label>
+                <input type="text" id="txtStreamDeckSample" class="input-custom" value="5 MINUTES REMAINING" style="font-size: 11.5px; padding: 5px 8px; width: 100%;">
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.35); padding: 6px 10px; border-radius: 6px; gap: 8px; margin-top: 6px;">
+              <code id="codeStreamDeckUrl" style="font-size: 11px; color: #f59e0b; word-break: break-all; flex: 1;">http://localhost:3000/api/message?text=5+MINUTES+REMAINING&target=presenter&duration=10</code>
+              <button type="button" class="btn-copy" id="btnCopyStreamDeckUrl" style="font-size: 11px; padding: 4px 8px; white-space: nowrap;">📋 Copy URL</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -370,6 +524,54 @@
           <button type="button" class="btn" id="btnCheckUpdates" style="font-size: 11.5px; padding: 6px 12px; white-space: nowrap; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; cursor: pointer;">
             Check for Updates
           </button>
+        </div>
+
+        <!-- Active Edition & Features (Switch between Free and Pro) -->
+        <div class="about-edition-box" id="aboutEditionBox" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 18px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+                <span>⚙️</span> Active Edition & Operating Mode
+              </div>
+              <div id="aboutActiveEditionDesc" style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
+                Choose between Community Free Mode and Enterprise Pro Mode
+              </div>
+            </div>
+            <span class="edition-status-pill" id="aboutEditionPill" style="padding: 2px 8px; border-radius: 9999px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;">FREE</span>
+          </div>
+
+          <!-- Segmented Two-Option Card Selector -->
+          <div class="edition-cards-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <!-- Free Community Option -->
+            <button type="button" class="edition-select-card" id="btnSelectFreeEdition" style="text-align: left; padding: 10px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border-color); background: rgba(0, 0, 0, 0.3); cursor: pointer; transition: all 0.2s ease;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                <strong style="font-size: 12px; color: #34d399;">🟢 Community Free</strong>
+                <span class="edition-check-icon" id="iconFreeCheck" style="display: none; font-size: 12px; color: #34d399;">✓</span>
+              </div>
+              <div style="font-size: 11px; color: #94a3b8; line-height: 1.35;">
+                Standard dual-screen presentation. Clean, prompt-free mode.
+              </div>
+            </button>
+
+            <!-- Enterprise Pro Option -->
+            <button type="button" class="edition-select-card" id="btnSelectProEdition" style="text-align: left; padding: 10px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border-color); background: rgba(0, 0, 0, 0.3); cursor: pointer; transition: all 0.2s ease;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                <strong style="font-size: 12px; color: #a855f7;">💎 Enterprise Pro</strong>
+                <span class="edition-check-icon" id="iconProCheck" style="display: none; font-size: 12px; color: #a855f7;">✓</span>
+              </div>
+              <div style="font-size: 11px; color: #94a3b8; line-height: 1.35;">
+                All 7 Pro AV tools: NDI, Confidence, Automation, Watermark.
+              </div>
+            </button>
+          </div>
+
+          <!-- License Vault Context Footer -->
+          <div id="aboutLicenseVaultRow" style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #64748b; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.06);">
+            <span id="aboutLicenseVaultStatus">Encrypted key saved in vault</span>
+            <button type="button" class="btn-remove-key" id="btnForgetLicense" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: var(--radius-sm); cursor: pointer; display: none;">
+              🗑️ Remove Key
+            </button>
+          </div>
         </div>
 
         <div style="font-size: 12px; color: #64748b; line-height: 1.5; text-align: center;">
@@ -453,10 +655,465 @@
     </div>
   </div>
 
+  <!-- Watermark & Branding Modal -->
+  <div class="modal-backdrop" id="watermarkModal" role="dialog" aria-modal="true" aria-labelledby="watermarkModalTitle">
+    <div class="modal-card" style="max-width: 560px;">
+      <div class="modal-header">
+        <h3 id="watermarkModalTitle">🎨 <span>Brand Watermark & Event Branding</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Watermark dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- Enable Toggle -->
+          <label for="watermarkEnabled" class="watermark-toggle-row" id="watermarkToggleRow">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 700; font-size: 14px; color: #f8fafc;">Enable Brand Watermark</span>
+                <span id="watermarkStatusBadge" class="watermark-status-badge badge-off">Disabled</span>
+              </div>
+              <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Display branding overlay on the audience projector screen</div>
+            </div>
+            <div class="switch-toggle">
+              <input type="checkbox" id="watermarkEnabled">
+              <span class="slider round"></span>
+            </div>
+          </label>
+
+          <!-- Type Selector: Text vs Image -->
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px;">Watermark Type</label>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" class="btn active" id="btnWatermarkTypeText" style="flex: 1;">📝 Custom Text</button>
+              <button type="button" class="btn" id="btnWatermarkTypeImage" style="flex: 1;">🖼️ Logo Image</button>
+            </div>
+          </div>
+
+          <!-- Text Input Container -->
+          <div id="watermarkTextGroup">
+            <label for="watermarkTextInput" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Watermark Text</label>
+            <input type="text" id="watermarkTextInput" class="key-input" style="width: 100%; box-sizing: border-box;" placeholder="e.g. ACME CORP KEYNOTE 2026" value="CONFIDENTIAL">
+          </div>
+
+          <!-- Image Input Container -->
+          <div id="watermarkImageGroup" style="display: none;">
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Upload Logo / Image URL</label>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="file" id="watermarkFileInput" accept="image/*" style="display: none;">
+              <button type="button" class="btn" id="btnUploadWatermarkFile" style="white-space: nowrap;">📁 Browse Image...</button>
+              <input type="text" id="watermarkUrlInput" class="key-input" style="flex: 1;" placeholder="Or paste image URL or data:image...">
+            </div>
+            <div id="watermarkImagePreviewContainer" style="display: none; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border: 1px dashed var(--border-color);">
+              <img id="watermarkImagePreview" style="max-height: 60px; max-width: 100%; object-fit: contain;">
+            </div>
+          </div>
+
+          <!-- Position Selector -->
+          <div>
+            <label for="watermarkPositionSelect" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Corner Position</label>
+            <select id="watermarkPositionSelect" class="lang-select-control" style="width: 100%; box-sizing: border-box; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; color: #f8fafc;">
+              <option value="bottom-right" selected>Bottom-Right (Default)</option>
+              <option value="top-right">Top-Right</option>
+              <option value="bottom-left">Bottom-Left</option>
+              <option value="top-left">Top-Left</option>
+            </select>
+          </div>
+
+          <!-- Sliders: Opacity & Scale -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <label for="watermarkOpacityRange" style="font-size: 12px; font-weight: 700; color: #cbd5e1;">Opacity</label>
+                <span id="watermarkOpacityVal" style="font-size: 12px; color: var(--accent-cyan);">0.80</span>
+              </div>
+              <input type="range" id="watermarkOpacityRange" min="0.1" max="1.0" step="0.05" value="0.8" style="width: 100%;">
+            </div>
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <label for="watermarkScaleRange" style="font-size: 12px; font-weight: 700; color: #cbd5e1;">Scale</label>
+                <span id="watermarkScaleVal" style="font-size: 12px; color: var(--accent-cyan);">1.00x</span>
+              </div>
+              <input type="range" id="watermarkScaleRange" min="0.5" max="1.5" step="0.05" value="1.0" style="width: 100%;">
+            </div>
+          </div>
+
+          <!-- Live Watermark Preview Surface (Audience Mock Slide) -->
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Live Stage Preview</label>
+            <div class="watermark-preview-surface" id="watermarkPreviewSurface" style="position: relative;">
+              <div class="watermark-mock-slide-label">Audience Slide Preview (16:9 Stage)</div>
+              <div class="watermark-preview-corner-element pos-bottom-right" id="watermarkPreviewElement">
+                <span class="watermark-preview-text" id="watermarkPreviewText">CONFIDENTIAL</span>
+                <img class="watermark-preview-img" id="watermarkPreviewImg" style="display: none;" alt="Watermark Logo Preview">
+              </div>
+              <div id="watermarkDisabledBanner" class="watermark-disabled-banner" style="display: none;">
+                <span>🔒 Watermark Inactive</span>
+                <span style="font-size: 11px; color: #64748b;">Turn ON "Enable Brand Watermark" above to display</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="btn btn-secondary" id="btnClearWatermark">Clear / Disable</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn modal-close-btn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="btnApplyWatermark">Apply Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Audience Lower-Third Ticker Banner Modal -->
+  <div class="modal-backdrop" id="audienceBannerModal" role="dialog" aria-modal="true" aria-labelledby="audienceBannerModalTitle">
+    <div class="modal-card" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 id="audienceBannerModalTitle">📢 <span>Live Audience Lower-Third Ticker Banner</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Banner dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- Target Display Selection -->
+          <div>
+            <label for="bannerTargetSelect" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Target Screen / Display</label>
+            <select id="bannerTargetSelect" class="select-custom" style="font-size: 12.5px; padding: 7px 10px; width: 100%; border-radius: var(--radius-sm); background: var(--bg-surface); border: 1px solid var(--border-color); color: #f8fafc;">
+              <option value="presenter" selected>Presenter Cockpit (Default)</option>
+              <option value="audience">Audience Lower-Third Ticker</option>
+              <option value="stage">Stage Confidence Monitor</option>
+              <option value="all">All Connected Displays</option>
+            </select>
+          </div>
+
+          <!-- Banner Message Input -->
+          <div>
+            <label for="bannerMessageInput" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Banner Message Text</label>
+            <textarea id="bannerMessageInput" class="notes-textarea selectable" style="height: 70px; resize: vertical;" placeholder="Type broadcast message... (e.g. 📢 5 Minutes Remaining • Wrap up speech • Q&A Session Starting)"></textarea>
+          </div>
+
+          <!-- Quick Presets -->
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px;">Quick Announcements</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <button type="button" class="btn btn-preset-banner" data-msg="📢 Live Q&A Session is now open! Please submit your questions.">Live Q&A Open</button>
+              <button type="button" class="btn btn-preset-banner" data-msg="☕ We will take a 10-minute coffee break. Session resumes shortly.">10-Min Break</button>
+              <button type="button" class="btn btn-preset-banner" data-msg="📱 Please silence all mobile phones and recording devices.">Silence Phones</button>
+              <button type="button" class="btn btn-preset-banner" data-msg="🌐 Access slides & resources at www.presentation-deck.com">Resource Link</button>
+            </div>
+          </div>
+
+          <!-- Display Duration Mode -->
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Display Duration</label>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-duration active" data-duration="0" style="flex: 1;">📌 Sticky (Until Dismissed)</button>
+              <button type="button" class="btn btn-duration" data-duration="10" style="flex: 1;">⏱️ 10s</button>
+              <button type="button" class="btn btn-duration" data-duration="30" style="flex: 1;">⏱️ 30s</button>
+              <button type="button" class="btn btn-duration" data-duration="60" style="flex: 1;">⏱️ 60s</button>
+            </div>
+          </div>
+
+          <!-- Live Status & Preview -->
+          <div id="bannerActiveStatusBox" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="bannerStatusDot" style="width: 10px; height: 10px; border-radius: 50%; background: #64748b; display: inline-block;"></span>
+              <span id="bannerStatusText" style="font-size: 13px; font-weight: 600; color: #94a3b8;">Banner is currently hidden</span>
+            </div>
+            <button type="button" class="btn btn-danger" id="btnDismissBanner" style="display: none; padding: 4px 12px; font-size: 12px;">Hide Banner Now</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn modal-close-btn">Close</button>
+        <button type="button" class="btn btn-primary" id="btnBroadcastBanner" style="display: flex; align-items: center; gap: 6px;">
+          <span>📢</span> Save Banner
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multi-Deck Conference Playlist (Speaker Queue) Modal -->
+  <div class="modal-backdrop" id="playlistModal" role="dialog" aria-modal="true" aria-labelledby="playlistModalTitle">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 id="playlistModalTitle">📑 <span>Multi-Deck Conference Playlist (Speaker Queue)</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Playlist dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <div style="font-size: 13.5px; font-weight: 700; color: #f8fafc;">Speaker Presentations Queue</div>
+            <div style="font-size: 12px; color: #94a3b8;">Queue speaker decks in advance to switch seamlessly without restarting audience screen</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <input type="file" id="playlistFileInput" accept=".pdf" multiple style="display: none;">
+            <button type="button" class="btn btn-primary" id="btnAddDeck" style="font-size: 12px; padding: 6px 12px;">+ Add PDF Deck</button>
+          </div>
+        </div>
+        <div class="playlist-queue-list" id="playlistQueueList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 12px; color: #64748b;">💎 Pro Feature: Unlimited multi-deck conference playlists</span>
+        <button class="btn modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rehearsal Metrics & Slide Time Heatmap Modal -->
+  <div class="modal-backdrop" id="metricsModal" role="dialog" aria-modal="true" aria-labelledby="metricsModalTitle">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 id="metricsModalTitle">📊 <span>Rehearsal Analytics & Slide Dwell Heatmap</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Analytics dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div class="metrics-summary-cards" id="metricsSummaryCards">
+          <div class="metrics-card">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8;">Total Rehearsal Time</div>
+            <div class="metrics-card-value" id="metricsTotalTime">00:00</div>
+          </div>
+          <div class="metrics-card">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8;">Average / Slide</div>
+            <div class="metrics-card-value" id="metricsAvgTime">00:00</div>
+          </div>
+          <div class="metrics-card">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8;">Longest Slide</div>
+            <div class="metrics-card-value" id="metricsLongestSlide" style="font-size: 16px; margin-top: 10px;">—</div>
+          </div>
+        </div>
+        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px;">Slide Dwell Pacing & Heatmap</div>
+        <div class="metrics-chart-list" id="metricsChartList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn" id="btnExportMetricsCsv">📥 Export CSV</button>
+          <button type="button" class="btn" id="btnExportMetricsMd">📋 Export Markdown</button>
+        </div>
+        <button class="btn modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Speaker Notes Export Modal -->
+  <div class="modal-backdrop" id="notesExportModal" role="dialog" aria-modal="true" aria-labelledby="notesExportModalTitle">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 id="notesExportModalTitle">📝 <span>Speaker Notes Handout Export</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Notes Export dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">
+          Formatted Markdown handout of private speaker notes across all slides:
+        </div>
+        <textarea id="notesExportPreview" class="notes-textarea selectable" style="height: 240px; font-family: var(--font-mono); font-size: 12px;" readonly></textarea>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn" id="btnCopyNotesExport">📋 Copy Notes</button>
+          <button type="button" class="btn btn-primary" id="btnDownloadNotesExport">💾 Download .md</button>
+        </div>
+        <button class="btn modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NDI 5/6 & IP Video Network Broadcast Modal -->
+  <div class="modal-backdrop" id="ndiModal" role="dialog" aria-modal="true" aria-labelledby="ndiModalTitle">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 id="ndiModalTitle">📡 <span>NDI® 5/6 & IP Video Broadcast Studio</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close NDI dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; background: rgba(15, 23, 42, 0.6); padding: 12px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div>
+            <div style="font-size: 14px; font-weight: 700; color: #f8fafc;">Live IP Network Video Broadcast</div>
+            <div style="font-size: 12px; color: #94a3b8;">Stream 1080p/4K audience output to OBS, vMix, TriCaster over LAN</div>
+          </div>
+          <label class="switch-toggle">
+            <input type="checkbox" id="chkNdiToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="ndi-status-row" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+          <span class="status-dot" id="ndiStatusDot" style="background-color: #ef4444;"></span>
+          <span id="ndiStatusText" style="font-size: 13px; font-weight: 600; color: #cbd5e1;">NDI Broadcast: Offline</span>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+          <div style="flex: 1;">
+            <label style="font-size: 11px; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 4px;">BROADCAST RESOLUTION</label>
+            <select id="selNdiResolution" class="lang-select-control" style="width: 100%; padding: 8px; font-size: 13px;">
+              <option value="1080p" selected>1080p Full HD (1920x1080)</option>
+              <option value="720p">720p HD (1280x720)</option>
+              <option value="4k">4K Ultra HD (3840x2160)</option>
+            </select>
+          </div>
+          <div style="flex: 1;">
+            <label style="font-size: 11px; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 4px;">TARGET FRAMERATE</label>
+            <select id="selNdiFramerate" class="lang-select-control" style="width: 100%; padding: 8px; font-size: 13px;">
+              <option value="30" selected>30 FPS (Standard)</option>
+              <option value="60">60 FPS (Ultra-Smooth Broadcast)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Stream Feeds & URLs -->
+        <div style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">Network Video Stream Endpoints (vMix / OBS / TriCaster)</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+          <div style="background: rgba(0, 0, 0, 0.4); padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid rgba(255, 255, 255, 0.06); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong style="color: #38bdf8; font-size: 12px;">📺 Program Feed (Full Screen):</strong>
+              <div id="ndiProgramUrl" style="font-family: var(--font-mono); font-size: 12px; color: #cbd5e1; margin-top: 2px;">http://localhost:3000/api/stream/program.mjpg</div>
+            </div>
+            <button type="button" class="btn btn-copy" id="btnCopyNdiProgram">📋 Copy</button>
+          </div>
+
+          <div style="background: rgba(0, 0, 0, 0.4); padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid rgba(255, 255, 255, 0.06); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong style="color: #c084fc; font-size: 12px;">✨ Alpha Key Overlay (Transparent Lower-Third & Timer):</strong>
+              <div id="ndiAlphaUrl" style="font-family: var(--font-mono); font-size: 12px; color: #cbd5e1; margin-top: 2px;">http://localhost:3000/api/stream/alpha.mjpg</div>
+            </div>
+            <button type="button" class="btn btn-copy" id="btnCopyNdiAlpha">📋 Copy</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 12px; color: #64748b;">💎 Pro Feature: NDI® 5/6 & Local IP Streaming</span>
+        <button class="btn modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage Confidence Monitor & Teleprompter Modal -->
+  <div class="modal-backdrop" id="confidenceModal" role="dialog" aria-modal="true" aria-labelledby="confidenceModalTitle">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 id="confidenceModalTitle">🖥️ <span>Stage Confidence Monitor & Teleprompter</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Confidence dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <p style="font-size: 13px; color: #cbd5e1; margin-top: 0; line-height: 1.5;">
+          Launch a dedicated downstage floor monitor view featuring giant keynote countdown timers, current & next slide previews, teleprompter notes, and silent stage manager cues.
+        </p>
+
+        <!-- Target Stage Display Selection -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label for="selConfidenceDisplay" style="font-size: 12px; font-weight: 700; color: #cbd5e1;">Target Stage Monitor / Output Display</label>
+            <button type="button" class="btn btn-icon" id="btnRefreshConfidenceDisplays" title="Scan and refresh connected displays" style="font-size: 11.5px; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.06); color: #94a3b8; cursor: pointer;">
+              🔄 Refresh
+            </button>
+          </div>
+          <select id="selConfidenceDisplay" class="select-custom" style="width: 100%; font-size: 12.5px; padding: 7px 10px; border-radius: var(--radius-sm); background: var(--bg-surface); border: 1px solid var(--border-color); color: #f8fafc;">
+            <option value="">Auto-Detect Stage Display (External / Secondary)</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+          <button type="button" class="btn btn-primary" id="btnLaunchConfidenceWindow" style="flex: 1; padding: 10px; font-weight: 700;">
+            🚀 Open Stage Window
+          </button>
+          <button type="button" class="btn" id="btnCopyConfidenceWebUrl" style="padding: 10px;">
+            📋 Copy iPad / Tablet URL
+          </button>
+        </div>
+
+        <!-- Silent Stage Cue Dispatcher -->
+        <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 16px;">
+          <div style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">Send Silent Cue to Speaker Monitor</div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="txtStageCueMessage" class="key-input" placeholder="e.g. 2 Mins Left • Speak Closer to Mic • Q&A Time" style="flex: 1;">
+            <button type="button" class="btn btn-secondary" id="btnSendStageCue">📢 Send Cue</button>
+            <button type="button" class="btn" id="btnClearStageCue" title="Clear active stage cue">✕</button>
+          </div>
+          <div style="display: flex; gap: 6px; margin-top: 8px;">
+            <button type="button" class="btn btn-preset-banner cue-preset" data-cue="⏱️ 5 Minutes Remaining">5 Mins</button>
+            <button type="button" class="btn btn-preset-banner cue-preset" data-cue="⚠️ 2 Minutes — Wrap Up">2 Mins</button>
+            <button type="button" class="btn btn-preset-banner cue-preset" data-cue="🎙️ Please Speak into Mic">Mic</button>
+            <button type="button" class="btn btn-preset-banner cue-preset" data-cue="❓ Audience Q&A Starting">Q&A</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 12px; color: #64748b;">💎 Pro Feature: Stage Floor Confidence Monitor</span>
+        <button class="btn modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBS Studio & vMix Automation Gateway Modal -->
+  <div class="modal-backdrop" id="broadcastAutomationModal" role="dialog" aria-modal="true" aria-labelledby="automationModalTitle">
+    <div class="modal-card" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 id="automationModalTitle">🎬 <span>OBS Studio & vMix Broadcast Automation</span></h3>
+        <button class="btn btn-icon modal-close-btn" aria-label="Close Automation dialog">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; background: rgba(15, 23, 42, 0.6); padding: 12px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div>
+            <div style="font-size: 14px; font-weight: 700; color: #f8fafc;">Automatic Scene Switching</div>
+            <div style="font-size: 12px; color: #94a3b8;">Trigger OBS Studio or vMix scenes when slides start, blackout, or end</div>
+          </div>
+          <label class="switch-toggle">
+            <input type="checkbox" id="chkAutomationToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+          <div style="flex: 1;">
+            <label style="font-size: 11px; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 4px;">SWITCHER TYPE</label>
+            <select id="selSwitcherType" class="lang-select-control" style="width: 100%; padding: 8px; font-size: 13px;">
+              <option value="obs" selected>OBS Studio (WebSocket v5)</option>
+              <option value="vmix">vMix Live Production (HTTP API)</option>
+            </select>
+          </div>
+          <div style="flex: 1;">
+            <label style="font-size: 11px; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 4px;">PORT / ADDRESS</label>
+            <input type="text" id="txtSwitcherHost" class="key-input" value="localhost:4455" style="width: 100%; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <div style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin: 12px 0 6px 0;">Automated Scene Triggers</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 140px; font-size: 12px; color: #cbd5e1;">On Presentation Start:</span>
+            <input type="text" id="txtSceneStart" class="key-input" placeholder="e.g. Presentation Full" value="Presentation" style="flex: 1;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 140px; font-size: 12px; color: #cbd5e1;">On Blackout (B):</span>
+            <input type="text" id="txtSceneBlackout" class="key-input" placeholder="e.g. Speaker Camera" value="Speaker Camera" style="flex: 1;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 140px; font-size: 12px; color: #cbd5e1;">On End Presentation:</span>
+            <input type="text" id="txtSceneEnd" class="key-input" placeholder="e.g. Closing Scene" value="Closing Scene" style="flex: 1;">
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="btnTestAutomationConnect" style="width: 100%;">
+          ⚡ Test Connection & Trigger
+        </button>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 12px; color: #64748b;">💎 Pro Feature: OBS & vMix Automation</span>
+        <button class="btn modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
+  <script src="../js/sync-channel.js"></script>
   <script src="../js/demo-deck.js"></script>
   <script src="../js/pdf-loader.js"></script>
   <script src="../js/upgrade-modal.js"></script>
+  <script src="../js/playlist-metrics.js"></script>
+  <script src="../js/watermark-banner.js"></script>
+  <script src="../js/ndi-engine.js"></script>
+  <script src="../js/broadcast-automation.js"></script>
   <script src="../js/launcher.js"></script>
 </body>
 </html>

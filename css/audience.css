@@ -103,6 +103,18 @@ body.audience-view.cursor-hidden {
   z-index: 5;
 }
 
+/* Cinematic Spotlight Overlay Canvas */
+#audienceSpotlightCanvas,
+.audience-spotlight-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 6;
+}
+
 /* Laser Pointer Overlay Dot */
 .laser-dot {
   position: absolute;

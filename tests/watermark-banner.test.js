@@ -247,6 +247,19 @@ describe('DOM & CSS Architecture Verification', () => {
     assert.ok(audienceCss.includes('font-size: 20px;'), 'Banner must have 20px font size');
     assert.ok(audienceCss.includes('linear-gradient(90deg, #06b6d4, #8b5cf6)'), 'Banner must have cyan/violet gradient border-top');
   });
+
+  it('views/presenter.html, views/launcher.html, and css/common.css include interactive watermark-toggle-row, switch-toggle, and badge', () => {
+    const launcherHtml = fs.readFileSync(path.join(__dirname, '../views/launcher.html'), 'utf8');
+    const commonCss = fs.readFileSync(path.join(__dirname, '../css/common.css'), 'utf8');
+
+    assert.ok(presenterHtml.includes('id="watermarkToggleRow"'), 'presenter must contain watermarkToggleRow');
+    assert.ok(presenterHtml.includes('id="watermarkStatusBadge"'), 'presenter must contain watermarkStatusBadge');
+    assert.ok(launcherHtml.includes('id="watermarkToggleRow"'), 'launcher must contain watermarkToggleRow');
+    assert.ok(launcherHtml.includes('id="watermarkStatusBadge"'), 'launcher must contain watermarkStatusBadge');
+    assert.ok(commonCss.includes('.switch-toggle'), 'common.css must define .switch-toggle');
+    assert.ok(commonCss.includes('.watermark-toggle-row'), 'common.css must define .watermark-toggle-row');
+    assert.ok(commonCss.includes('.watermark-status-badge'), 'common.css must define .watermark-status-badge');
+  });
 });
 
 describe('Companion REST API Endpoints (/api/banner)', () => {

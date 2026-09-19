@@ -106,6 +106,24 @@
     "keySuccess": "Recursos Pro desbloqueados com sucesso!",
     "keyInvalid": "Chave de licença inválida. Verifique e tente novamente.",
     "trialBadge": "Teste de 15 Minutos Ativo",
-    "startTrial": "Iniciar Teste de 15 Min"
+    "startTrial": "Iniciar Teste de 15 Min",
+    "ndiTitle": "Transmissão de Vídeo IP NDI®",
+    "ndiDesc": "Transmita vídeo de apresentação e terços inferiores alfa transparentes via IP local para OBS, vMix e switchers.",
+    "ndiBroadcastActive": "Transmissão IP ao Vivo Ativa",
+    "ndiStreamEndpoints": "Endpoints e Fontes de Transmissão",
+    "ndiAlphaKeyStream": "Stream de Sobreposição Alpha Key",
+    "confidenceTitle": "Monitor de Confiança de Palco e Teleprompter",
+    "confidenceDesc": "Monitor dedicado de chão de palco (3ª tela) com cronômetro gigante, notas de prompter e avisos silenciosos.",
+    "confidenceOpenWindow": "Abrir Janela de Palco (3ª Tela)",
+    "confidenceWebUrl": "URL Web Remota de Confiança",
+    "stageCues": "Avisos Silenciosos de Palco",
+    "spotlightTitle": "Modo Foco Holofote Cinemático",
+    "spotlightDesc": "Escureça o slide de fundo e ilumine áreas-chave com um feixe radial suave (S).",
+    "spotlightShortcut": "Modo Holofote (S)",
+    "automationTitle": "Automação para OBS Studio e vMix",
+    "automationDesc": "Dispare automaticamente transições de cena no início da apresentação, blackout e encerramento.",
+    "automationObs": "OBS Studio WebSocket (v5)",
+    "automationVmix": "API HTTP vMix",
+    "automationScenes": "Mapeamento Automatizado de Cenas"
   }
 }

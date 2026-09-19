@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-inline' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: file:; font-src 'self' data: file:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* file:;">
+  <title>PDF Presenter - Stage Confidence Monitor</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/confidence.css">
+  <script src="../js/locales.js"></script>
+  <script src="../js/i18n.js"></script>
+  <script src="../vendor/pdfjs/pdf.min.js"></script>
+</head>
+<body class="confidence-body">
+  <div class="confidence-container mode-seamless" id="confContainer">
+    <!-- Top Bar: WATCHOUT 7 Broadcast Workspace Toolbar -->
+    <header class="conf-top-bar" id="confTopBar">
+      <div class="conf-brand-group">
+        <span class="conf-app-icon">🎭</span>
+        <div class="conf-brand-text">
+          <span class="conf-brand-title">STAGE DISPLAY</span>
+          <span class="conf-badge-dockable">PRO STUDIO MATRIX</span>
+        </div>
+      </div>
+
+      <!-- Quick Layout Scaling Presets -->
+      <div class="conf-layout-presets" id="confLayoutPresets" role="toolbar" aria-label="Layout Presets">
+        <button type="button" class="btn-conf-preset active" id="btnPresetBalanced" title="Dual Cinema Live & Next Stage Display (Default)"><span class="preset-led"></span>🎬 Dual Cinema</button>
+        <button type="button" class="btn-conf-preset" id="btnPresetNotes" title="Teleprompter Script Focus (Large High-Contrast Notes)"><span class="preset-led"></span>📝 Prompter Focus</button>
+        <button type="button" class="btn-conf-preset" id="btnPresetTimer" title="Giant Keynote Countdown & Overtime Focus"><span class="preset-led"></span>⏱️ Timekeeper</button>
+        <button type="button" class="btn-conf-preset" id="btnPresetSlides" title="Single Live Audience Hero Mirror"><span class="preset-led"></span>🖥️ Single Live</button>
+        <button type="button" class="btn-conf-preset" id="btnPresetCockpit" title="Studio Edit Mode (Inspect & Adjust Layout)"><span class="preset-led"></span>🎛️ Studio Edit</button>
+      </div>
+
+      <!-- Stage Scale Zoom Controller (Scale Big or Small) -->
+      <div class="conf-scale-toolbar" id="confScaleToolbar" role="group" aria-label="Display Scale">
+        <span class="conf-scale-icon" title="Stage Display Zoom / Scale">🔍</span>
+        <button type="button" class="btn-conf-scale" id="btnScaleDown" title="Zoom Out / Make Smaller (Ctrl + -)">−</button>
+        <button type="button" class="btn-conf-scale scale-badge" id="btnScaleReset" title="Reset Scale to 100% (Ctrl + 0)">100%</button>
+        <button type="button" class="btn-conf-scale" id="btnScaleUp" title="Zoom In / Make Bigger (Ctrl + +)">+</button>
+      </div>
+
+      <!-- Dashboard Workspace Controls -->
+      <div class="conf-top-actions">
+        <div class="conf-widgets-menu-wrapper">
+          <button type="button" class="btn-conf-tool" id="btnWidgetsMenu" title="Add or Restore Hidden Windows">➕ Windows</button>
+          <div class="conf-widgets-dropdown" id="confWidgetsDropdown" style="display: none;">
+            <div class="dropdown-header">
+              <span>STAGE WINDOWS</span>
+              <span class="dropdown-tip">CLICK TO TOGGLE</span>
+            </div>
+            <div class="widget-toggle-item" role="button" tabindex="0" data-window-id="timer">
+              <input type="checkbox" id="chkWinTimer" checked>
+              <span class="widget-toggle-icon">⏱️</span>
+              <span class="widget-toggle-label">Keynote Timer</span>
+              <span class="widget-toggle-badge">ON</span>
+            </div>
+            <div class="widget-toggle-item" role="button" tabindex="0" data-window-id="clock">
+              <input type="checkbox" id="chkWinClock" checked>
+              <span class="widget-toggle-icon">🕒</span>
+              <span class="widget-toggle-label">Stage Clock</span>
+              <span class="widget-toggle-badge">ON</span>
+            </div>
+            <div class="widget-toggle-item" role="button" tabindex="0" data-window-id="counter">
+              <input type="checkbox" id="chkWinCounter" checked>
+              <span class="widget-toggle-icon">📊</span>
+              <span class="widget-toggle-label">Slide Progress</span>
+              <span class="widget-toggle-badge">ON</span>
+            </div>
+            <div class="widget-toggle-item" role="button" tabindex="0" data-window-id="current">
+              <input type="checkbox" id="chkWinCurrent" checked>
+              <span class="widget-toggle-icon">🔴</span>
+              <span class="widget-toggle-label">Live Audience Slide</span>
+              <span class="widget-toggle-badge">ON</span>
+            </div>
+            <div class="widget-toggle-item" role="button" tabindex="0" data-window-id="next">
+              <input type="checkbox" id="chkWinNext" checked>
+              <span class="widget-toggle-icon">⏭️</span>
+              <span class="widget-toggle-label">Up Next Slide</span>
+              <span class="widget-toggle-badge">ON</span>
+            </div>
+            <div class="widget-toggle-item" role="button" tabindex="0" data-window-id="notes">
+              <input type="checkbox" id="chkWinNotes" checked>
+              <span class="widget-toggle-icon">📝</span>
+              <span class="widget-toggle-label">Teleprompter Notes</span>
+              <span class="widget-toggle-badge">ON</span>
+            </div>
+            <div class="widget-toggle-item" role="button" tabindex="0" data-window-id="cue">
+              <input type="checkbox" id="chkWinCue" checked>
+              <span class="widget-toggle-icon">⚠️</span>
+              <span class="widget-toggle-label">Stage Cue & Alerts</span>
+              <span class="widget-toggle-badge">ON</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-conf-tool" id="btnEditTabSizes" title="Open Interactive Tab Size Editor (Width & Height Sliders)">📐 Tab Sizes</button>
+        <button type="button" class="btn-conf-tool" id="btnLockDashboard" title="Toggle Lock Dashboard (Prevents Accidental Dragging on Stage)">🔓 Unlock</button>
+        <button type="button" class="btn-conf-tool" id="btnResetLayout" title="Reset to Factory Watchout Layout">🔄 Reset Layout</button>
+        <button type="button" class="btn-conf-tool" id="btnFullscreenConf" title="Toggle Fullscreen (F11)">⤢ Fullscreen</button>
+      </div>
+    </header>
+
+    <!-- Dedicated Interactive Tab Size Editor Drawer (Width & Height) -->
+    <div class="conf-tab-size-drawer" id="confTabSizeDrawer" style="display: none;">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <span class="drawer-icon">📐</span>
+          <span class="drawer-title">TAB SIZE EDITOR (WIDTH & HEIGHT)</span>
+        </div>
+        <button type="button" class="btn-drawer-close" id="btnCloseTabSizeDrawer" title="Close Size Editor">✕</button>
+      </div>
+
+      <div class="drawer-quick-presets">
+        <span class="drawer-section-label">QUICK STAGE SPLITS:</span>
+        <div class="drawer-preset-buttons">
+          <button type="button" class="btn-drawer-preset" id="presetSplitBalanced" data-preset="balanced">50/50 Balanced</button>
+          <button type="button" class="btn-drawer-preset" id="presetSplitCinema" data-preset="cinema">70/30 Cinema Live</button>
+          <button type="button" class="btn-drawer-preset" id="presetSplitNotes" data-preset="notes">65% Giant Prompter</button>
+          <button type="button" class="btn-drawer-preset" id="presetSplitTimer" data-preset="timer">Tall Timer Bar</button>
+          <button type="button" class="btn-drawer-preset btn-preset-reset" id="presetSplitReset" data-preset="reset">🔄 Reset All</button>
+        </div>
+      </div>
+
+      <div class="drawer-tabs-list" id="drawerTabsList">
+        <!-- 1. Live Slide & Up Next Row Pair -->
+        <div class="drawer-tab-card" id="cardSizeSlides" data-tab-group="slides">
+          <div class="drawer-tab-header">
+            <span class="drawer-tab-name">🔴 LIVE SLIDE vs ⏭️ UP NEXT SLIDE</span>
+            <span class="drawer-tab-val" id="valSlidesSplit">50% / 50%</span>
+          </div>
+          <div class="drawer-control-row">
+            <label class="control-label">Width Split:</label>
+            <button type="button" class="btn-size-step" id="btnSlideCurrentLess" title="Live Slide Narrower (Next Wider)">◀</button>
+            <input type="range" class="range-slider" id="sliderSlidesSplit" min="15" max="85" value="50" step="1">
+            <button type="button" class="btn-size-step" id="btnSlideCurrentMore" title="Live Slide Wider (Next Narrower)">▶</button>
+            <span class="control-badge" id="badgeSlidesSplit">50% / 50%</span>
+          </div>
+          <div class="drawer-control-row">
+            <label class="control-label">Slides vs Notes Height:</label>
+            <button type="button" class="btn-size-step" id="btnSlidesHeightLess" title="Slides Shorter (Notes Taller)">▼</button>
+            <input type="range" class="range-slider" id="sliderSlidesHeight" min="80" max="400" value="148" step="5">
+            <button type="button" class="btn-size-step" id="btnSlidesHeightMore" title="Slides Taller (Notes Shorter)">▲</button>
+            <span class="control-badge" id="badgeSlidesHeight">Slides: 1fr</span>
+          </div>
+        </div>
+
+        <!-- 2. Top Row (Timer, Clock, Progress) -->
+        <div class="drawer-tab-card" id="cardSizeTop" data-tab-group="top">
+          <div class="drawer-tab-header">
+            <span class="drawer-tab-name">⏱️ TOP BAR (TIMER, CLOCK, PROGRESS)</span>
+            <span class="drawer-tab-val" id="valTopHeight">92px</span>
+          </div>
+          <div class="drawer-control-row">
+            <label class="control-label">Top Bar Height:</label>
+            <button type="button" class="btn-size-step" id="btnTopHeightLess" title="Decrease Top Bar Height">−</button>
+            <input type="range" class="range-slider" id="sliderTopHeight" min="60" max="260" value="92" step="4">
+            <button type="button" class="btn-size-step" id="btnTopHeightMore" title="Increase Top Bar Height">+</button>
+            <span class="control-badge" id="badgeTopHeight">92px</span>
+          </div>
+          <div class="drawer-control-row">
+            <label class="control-label">Timer Width:</label>
+            <button type="button" class="btn-size-step" id="btnTimerWidthLess" title="Decrease Timer Width">◀</button>
+            <input type="range" class="range-slider" id="sliderTimerWidth" min="20" max="80" value="33" step="1">
+            <button type="button" class="btn-size-step" id="btnTimerWidthMore" title="Increase Timer Width">▶</button>
+            <span class="control-badge" id="badgeTimerWidth">33% (40 cols)</span>
+          </div>
+        </div>
+
+        <!-- 3. Bottom Row (Notes & Cue) -->
+        <div class="drawer-tab-card" id="cardSizeBottom" data-tab-group="bottom">
+          <div class="drawer-tab-header">
+            <span class="drawer-tab-name">📝 TELEPROMPTER NOTES & ⚠️ STAGE CUE</span>
+            <span class="drawer-tab-val" id="valBottomHeight">148px</span>
+          </div>
+          <div class="drawer-control-row">
+            <label class="control-label">Notes Bar Height:</label>
+            <button type="button" class="btn-size-step" id="btnBottomHeightLess" title="Decrease Notes Bar Height">−</button>
+            <input type="range" class="range-slider" id="sliderBottomHeight" min="70" max="450" value="148" step="5">
+            <button type="button" class="btn-size-step" id="btnBottomHeightMore" title="Increase Notes Bar Height">+</button>
+            <span class="control-badge" id="badgeBottomHeight">148px</span>
+          </div>
+          <div class="drawer-control-row">
+            <label class="control-label">Notes Width:</label>
+            <button type="button" class="btn-size-step" id="btnNotesWidthLess" title="Decrease Notes Width">◀</button>
+            <input type="range" class="range-slider" id="sliderNotesWidth" min="25" max="100" value="67" step="1">
+            <button type="button" class="btn-size-step" id="btnNotesWidthMore" title="Increase Notes Width">▶</button>
+            <span class="control-badge" id="badgeNotesWidth">67% (80 cols)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Horizontal Draggable Splitter (Resize Timer vs Slides & Notes) -->
+    <div class="conf-resizer-h" id="confResizerH" title="Drag up/down to resize Timer vs Slides/Notes (Double-click to reset)">
+      <div class="resizer-handle-bar"></div>
+    </div>
+
+    <!-- Main Section: WATCHOUT 7 Dockable Dashboard Grid -->
+    <main class="conf-main-content" id="confMainContent">
+      <div class="conf-dashboard-grid conf-dock-grid" id="confDashboardGrid">
+        <!-- 1. Keynote Countdown & Overtime Timer Window -->
+        <article class="conf-dock-window span-1 row-span-1" id="dockWindowTimer" data-window-id="timer" draggable="true">
+          <div class="conf-dock-resizer conf-dock-resizer-r" title="Click and drag to resize width (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-b" title="Click and drag to resize height (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-se" title="Click and drag to resize width and height (Double-click to reset)"></div>
+          <div class="conf-window-hud">
+            <button type="button" class="btn-hud-size btn-hud-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+            <button type="button" class="btn-hud-size btn-hud-width" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+            <button type="button" class="btn-hud-size btn-hud-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+            <button type="button" class="btn-hud-size btn-hud-max" title="Maximize Window (⤢ / Double-click header)">⤢</button>
+          </div>
+          <div class="conf-dock-header">
+            <span class="dock-drag-handle" title="Drag to reorder window">⠿</span>
+            <div class="dock-title"><span class="dock-icon">⏱️</span> <span>KEYNOTE TIMER</span></div>
+            <div class="dock-actions">
+              <button type="button" class="btn-dock-action btn-dock-collapse" title="Collapse / Expand">▾</button>
+              <button type="button" class="btn-dock-action btn-dock-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+              <button type="button" class="btn-dock-action btn-dock-span" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+              <button type="button" class="btn-dock-action btn-dock-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+              <button type="button" class="btn-dock-action btn-dock-max" title="Maximize Window (⤢)">⤢</button>
+              <button type="button" class="btn-dock-action btn-dock-close" title="Hide Window">✕</button>
+            </div>
+          </div>
+          <div class="conf-dock-body conf-timer-wrapper">
+            <div class="conf-timer-display phase-normal" id="confTimerDisplay">00:00</div>
+          </div>
+        </article>
+
+        <!-- 2. Real-Time Stage Wall Clock Window -->
+        <article class="conf-dock-window span-1 row-span-1" id="dockWindowClock" data-window-id="clock" draggable="true">
+          <div class="conf-dock-resizer conf-dock-resizer-r" title="Click and drag to resize width (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-b" title="Click and drag to resize height (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-se" title="Click and drag to resize width and height (Double-click to reset)"></div>
+          <div class="conf-window-hud">
+            <button type="button" class="btn-hud-size btn-hud-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+            <button type="button" class="btn-hud-size btn-hud-width" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+            <button type="button" class="btn-hud-size btn-hud-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+            <button type="button" class="btn-hud-size btn-hud-max" title="Maximize Window (⤢ / Double-click header)">⤢</button>
+          </div>
+          <div class="conf-dock-header">
+            <span class="dock-drag-handle" title="Drag to reorder window">⠿</span>
+            <div class="dock-title"><span class="dock-icon">🕒</span> <span>STAGE CLOCK</span></div>
+            <div class="dock-actions">
+              <button type="button" class="btn-dock-action btn-dock-collapse" title="Collapse / Expand">▾</button>
+              <button type="button" class="btn-dock-action btn-dock-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+              <button type="button" class="btn-dock-action btn-dock-span" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+              <button type="button" class="btn-dock-action btn-dock-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+              <button type="button" class="btn-dock-action btn-dock-max" title="Maximize Window (⤢)">⤢</button>
+              <button type="button" class="btn-dock-action btn-dock-close" title="Hide Window">✕</button>
+            </div>
+          </div>
+          <div class="conf-dock-body conf-clock-wrapper">
+            <span class="conf-clock-label">LOCAL TIME</span>
+            <div class="conf-clock-display" id="confClockDisplay">12:00:00</div>
+          </div>
+        </article>
+
+        <!-- 3. Slide Progress & Deck Indicator Window -->
+        <article class="conf-dock-window span-1 row-span-1" id="dockWindowCounter" data-window-id="counter" draggable="true">
+          <div class="conf-dock-resizer conf-dock-resizer-r" title="Click and drag to resize width (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-b" title="Click and drag to resize height (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-se" title="Click and drag to resize width and height (Double-click to reset)"></div>
+          <div class="conf-window-hud">
+            <button type="button" class="btn-hud-size btn-hud-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+            <button type="button" class="btn-hud-size btn-hud-width" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+            <button type="button" class="btn-hud-size btn-hud-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+            <button type="button" class="btn-hud-size btn-hud-max" title="Maximize Window (⤢ / Double-click header)">⤢</button>
+          </div>
+          <div class="conf-dock-header">
+            <span class="dock-drag-handle" title="Drag to reorder window">⠿</span>
+            <div class="dock-title"><span class="dock-icon">📊</span> <span>SLIDE PROGRESS</span></div>
+            <div class="dock-actions">
+              <button type="button" class="btn-dock-action btn-dock-collapse" title="Collapse / Expand">▾</button>
+              <button type="button" class="btn-dock-action btn-dock-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+              <button type="button" class="btn-dock-action btn-dock-span" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+              <button type="button" class="btn-dock-action btn-dock-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+              <button type="button" class="btn-dock-action btn-dock-max" title="Maximize Window (⤢)">⤢</button>
+              <button type="button" class="btn-dock-action btn-dock-close" title="Hide Window">✕</button>
+            </div>
+          </div>
+          <div class="conf-dock-body conf-slide-counter-wrapper">
+            <span class="conf-counter-badge" id="confSlideCounter">Slide 1 of 1</span>
+          </div>
+        </article>
+
+        <!-- 4. Live Audience Slide Monitor Window -->
+        <article class="conf-dock-window span-2 row-span-1" id="dockWindowCurrent" data-window-id="current" draggable="true">
+          <div class="conf-dock-resizer conf-dock-resizer-r" title="Click and drag to resize width (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-b" title="Click and drag to resize height (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-se" title="Click and drag to resize width and height (Double-click to reset)"></div>
+          <div class="conf-window-hud">
+            <button type="button" class="btn-hud-size btn-hud-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+            <button type="button" class="btn-hud-size btn-hud-width" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+            <button type="button" class="btn-hud-size btn-hud-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+            <button type="button" class="btn-hud-size btn-hud-max" title="Maximize Window (⤢ / Double-click header)">⤢</button>
+          </div>
+          <div class="conf-dock-header">
+            <span class="dock-drag-handle" title="Drag to reorder window">⠿</span>
+            <div class="dock-title"><span class="dock-icon">🔴</span> <span>LIVE AUDIENCE SLIDE</span></div>
+            <span class="card-tag current-tag">LIVE AUDIENCE SLIDE</span>
+            <span class="conf-slide-num" id="confCurrentSlideNum">#1</span>
+            <div class="dock-actions">
+              <button type="button" class="btn-dock-action btn-dock-collapse" title="Collapse / Expand">▾</button>
+              <button type="button" class="btn-dock-action btn-dock-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+              <button type="button" class="btn-dock-action btn-dock-span" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+              <button type="button" class="btn-dock-action btn-dock-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+              <button type="button" class="btn-dock-action btn-dock-max" title="Maximize Window (⤢)">⤢</button>
+              <button type="button" class="btn-dock-action btn-dock-close" title="Hide Window">✕</button>
+            </div>
+          </div>
+          <div class="conf-dock-body conf-canvas-container">
+            <div class="conf-studio-tally tally-live"><span class="tally-dot">●</span> LIVE AUDIENCE</div>
+            <canvas id="confCurrentCanvas"></canvas>
+          </div>
+        </article>
+
+        <!-- 5. Up Next Slide Preview Window -->
+        <article class="conf-dock-window span-2 row-span-1" id="dockWindowNext" data-window-id="next" draggable="true">
+          <div class="conf-dock-resizer conf-dock-resizer-r" title="Click and drag to resize width (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-b" title="Click and drag to resize height (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-se" title="Click and drag to resize width and height (Double-click to reset)"></div>
+          <div class="conf-window-hud">
+            <button type="button" class="btn-hud-size btn-hud-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+            <button type="button" class="btn-hud-size btn-hud-width" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+            <button type="button" class="btn-hud-size btn-hud-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+            <button type="button" class="btn-hud-size btn-hud-max" title="Maximize Window (⤢ / Double-click header)">⤢</button>
+          </div>
+          <div class="conf-dock-header">
+            <span class="dock-drag-handle" title="Drag to reorder window">⠿</span>
+            <div class="dock-title"><span class="dock-icon">⏭️</span> <span>UP NEXT</span></div>
+            <span class="card-tag next-tag">UP NEXT</span>
+            <span class="conf-slide-num" id="confNextSlideNum">#2</span>
+            <div class="dock-actions">
+              <button type="button" class="btn-dock-action btn-dock-collapse" title="Collapse / Expand">▾</button>
+              <button type="button" class="btn-dock-action btn-dock-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+              <button type="button" class="btn-dock-action btn-dock-span" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+              <button type="button" class="btn-dock-action btn-dock-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+              <button type="button" class="btn-dock-action btn-dock-max" title="Maximize Window (⤢)">⤢</button>
+              <button type="button" class="btn-dock-action btn-dock-close" title="Hide Window">✕</button>
+            </div>
+          </div>
+          <div class="conf-dock-body conf-canvas-container">
+            <div class="conf-studio-tally tally-next"><span class="tally-dot">⏭</span> UP NEXT</div>
+            <canvas id="confNextCanvas"></canvas>
+            <div class="conf-no-next" id="confNoNextMsg" style="display: none;">END OF PRESENTATION</div>
+          </div>
+        </article>
+
+        <!-- 6. Giant Teleprompter Speaker Notes Window -->
+        <article class="conf-dock-window span-2 row-span-1" id="dockWindowNotes" data-window-id="notes" draggable="true">
+          <div class="conf-dock-resizer conf-dock-resizer-r" title="Click and drag to resize width (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-b" title="Click and drag to resize height (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-se" title="Click and drag to resize width and height (Double-click to reset)"></div>
+          <div class="conf-window-hud">
+            <button type="button" class="btn-hud-size btn-hud-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+            <button type="button" class="btn-hud-size btn-hud-width" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+            <button type="button" class="btn-hud-size btn-hud-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+            <button type="button" class="btn-hud-size btn-hud-max" title="Maximize Window (⤢ / Double-click header)">⤢</button>
+          </div>
+          <div class="conf-dock-header">
+            <span class="dock-drag-handle" title="Drag to reorder window">⠿</span>
+            <div class="dock-title"><span class="dock-icon">📝</span> <span>SPEAKER TELEPROMPTER</span></div>
+            <div class="conf-font-controls">
+              <button type="button" class="btn-font-scale" id="btnToggleAutoScroll" title="Toggle Auto-Scroll (Key: S)">▶ Auto-Scroll</button>
+              <button type="button" class="btn-font-scale" id="btnScrollSpeed" title="Cycle Scroll Speed">1x</button>
+              <button type="button" class="btn-font-scale" id="btnFontDecrease" title="Decrease Font Size">A-</button>
+              <button type="button" class="btn-font-scale" id="btnFontIncrease" title="Increase Font Size">A+</button>
+            </div>
+            <div class="dock-actions">
+              <button type="button" class="btn-dock-action btn-dock-collapse" title="Collapse / Expand">▾</button>
+              <button type="button" class="btn-dock-action btn-dock-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+              <button type="button" class="btn-dock-action btn-dock-span" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+              <button type="button" class="btn-dock-action btn-dock-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+              <button type="button" class="btn-dock-action btn-dock-max" title="Maximize Window (⤢)">⤢</button>
+              <button type="button" class="btn-dock-action btn-dock-close" title="Hide Window">✕</button>
+            </div>
+          </div>
+          <div class="conf-dock-body conf-notes-viewport" id="confNotesViewport">
+            <div class="conf-studio-tally tally-notes"><span class="tally-dot">📝</span> TELEPROMPTER SCRIPT</div>
+            <div class="conf-notes-text" id="confNotesText">No speaker notes for this slide.</div>
+          </div>
+        </article>
+
+        <!-- 7. Silent Stage Cue & Alert Banner Window -->
+        <article class="conf-dock-window span-full row-span-1" id="dockWindowCue" data-window-id="cue" draggable="true">
+          <div class="conf-dock-resizer conf-dock-resizer-r" title="Click and drag to resize width (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-b" title="Click and drag to resize height (Double-click to reset)"></div>
+          <div class="conf-dock-resizer conf-dock-resizer-se" title="Click and drag to resize width and height (Double-click to reset)"></div>
+          <div class="conf-window-hud">
+            <button type="button" class="btn-hud-size btn-hud-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+            <button type="button" class="btn-hud-size btn-hud-width" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+            <button type="button" class="btn-hud-size btn-hud-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+            <button type="button" class="btn-hud-size btn-hud-max" title="Maximize Window (⤢ / Double-click header)">⤢</button>
+          </div>
+          <div class="conf-dock-header">
+            <span class="dock-drag-handle" title="Drag to reorder window">⠿</span>
+            <div class="dock-title"><span class="dock-icon">⚠️</span> <span>STAGE CUE & LIVE ALERTS</span></div>
+            <div class="dock-actions">
+              <button type="button" class="btn-dock-action btn-dock-collapse" title="Collapse / Expand">▾</button>
+              <button type="button" class="btn-dock-action btn-dock-editor" title="Edit Tab Size (Width & Height Sliders)">📐</button>
+              <button type="button" class="btn-dock-action btn-dock-span" title="Cycle Width (⇄ 1/3, 1/2, 2/3, Full)">⇄</button>
+              <button type="button" class="btn-dock-action btn-dock-height" title="Cycle Height (⇅ 1 row, 2 rows, Full)">⇅</button>
+              <button type="button" class="btn-dock-action btn-dock-max" title="Maximize Window (⤢)">⤢</button>
+              <button type="button" class="btn-dock-action btn-dock-close" title="Hide Window">✕</button>
+            </div>
+          </div>
+          <div class="conf-dock-body conf-cue-body">
+            <div class="conf-stage-cue-banner" id="confStageCueBanner" style="display: none;">
+              <span class="stage-cue-icon">⚠️</span>
+              <span class="stage-cue-text" id="confStageCueText">STAGE CUE</span>
+            </div>
+            <div class="conf-cue-idle" id="confCueIdleMsg">
+              <span class="cue-idle-dot">●</span> <span>Standing by for live technical director stage cues & alerts</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Backward-compatible wrappers for splitter testing -->
+      <section class="conf-slides-section" id="confSlidesSection" style="display: none;"></section>
+      <div class="conf-resizer-v" id="confResizerV" style="display: none;" title="Drag left/right to resize Slides vs Teleprompter Notes (Double-click to reset)"><div class="resizer-handle-bar-v"></div></div>
+      <section class="conf-notes-section" id="confNotesSection" style="display: none;"></section>
+    </main>
+  </div>
+
+  <script src="../js/sync-channel.js"></script>
+  <script src="../js/demo-deck.js"></script>
+  <script src="../js/pdf-loader.js"></script>
+  <script src="../js/confidence.js"></script>
+</body>
+</html>

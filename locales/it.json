@@ -106,6 +106,24 @@
     "keySuccess": "Funzionalità Pro sbloccate con successo!",
     "keyInvalid": "Codice di licenza non valido. Verifica e riprova.",
     "trialBadge": "Prova di 15 Minuti Attiva",
-    "startTrial": "Avvia Prova di 15 Min"
+    "startTrial": "Avvia Prova di 15 Min",
+    "ndiTitle": "Trasmissione Video IP NDI®",
+    "ndiDesc": "Trasmetti video di presentazione e sottopancia alpha trasparenti su IP locale a OBS, vMix e mixer video.",
+    "ndiBroadcastActive": "Trasmissione IP dal Vivo Attiva",
+    "ndiStreamEndpoints": "Endpoint e Feed di Trasmissione",
+    "ndiAlphaKeyStream": "Flusso Sovrapposizione Alpha Key",
+    "confidenceTitle": "Monitor di Fiducia da Palco e Teleprompter",
+    "confidenceDesc": "Monitor dedicato da pavimento palco (terzo schermo) con timer gigante, note teleprompter e segnali silenziosi.",
+    "confidenceOpenWindow": "Avvia Finestra Palco (Terzo Schermo)",
+    "confidenceWebUrl": "URL Web Remoto Monitor Palco",
+    "stageCues": "Segnali di Palco Silenziosi",
+    "spotlightTitle": "Modalità Riflettore Cinematografico",
+    "spotlightDesc": "Scurisci la diapositiva di sfondo ed evidenzia le aree chiave con un fascio radiale fluido (S).",
+    "spotlightShortcut": "Modalità Riflettore (S)",
+    "automationTitle": "Automazione OBS Studio e vMix",
+    "automationDesc": "Attiva automaticamente cambi scena all'avvio della presentazione, oscuramento ed uscita.",
+    "automationObs": "OBS Studio WebSocket (v5)",
+    "automationVmix": "API HTTP vMix",
+    "automationScenes": "Mappatura Scene Automatizzata"
   }
 }

@@ -106,6 +106,24 @@
     "keySuccess": "Pro-Funktionen erfolgreich freigeschaltet!",
     "keyInvalid": "Ungültiger Lizenzschlüssel. Bitte überprüfen und erneut versuchen.",
     "trialBadge": "15-Minuten-Testversion aktiv",
-    "startTrial": "15-Min.-Testversion starten"
+    "startTrial": "15-Min.-Testversion starten",
+    "ndiTitle": "NDI® IP-Videoübertragung",
+    "ndiDesc": "Übertragen Sie Präsentationsvideo und transparente Alpha-Bauchbinden über lokales IP an OBS, vMix und Mischpulte.",
+    "ndiBroadcastActive": "Live-IP-Stream aktiv",
+    "ndiStreamEndpoints": "Stream-Endpunkte & Feeds",
+    "ndiAlphaKeyStream": "Transparenter Alpha-Key-Stream",
+    "confidenceTitle": "Bühnen-Vorschaumonitor & Teleprompter",
+    "confidenceDesc": "Dedizierter Bühnenboden-Monitor (3. Bildschirm) mit riesigem Keynote-Timer, Prompternotizen und stillen Regieanweisungen.",
+    "confidenceOpenWindow": "Bühnenfenster öffnen (3. Display)",
+    "confidenceWebUrl": "Remote-Web-URL für Vorschaumonitor",
+    "stageCues": "Stille Regieanweisungen",
+    "spotlightTitle": "Kinematischer Scheinwerfer-Fokusmodus",
+    "spotlightDesc": "Dunkeln Sie die Folie ab und lenken Sie die Aufmerksamkeit mit einem weichen radialen Lichtkegel (S).",
+    "spotlightShortcut": "Scheinwerfer-Modus (S)",
+    "automationTitle": "OBS Studio & vMix Automatisierung",
+    "automationDesc": "Lösen Sie automatisch Szenenwechsel bei Präsentationsstart, Blackout und Beenden aus.",
+    "automationObs": "OBS Studio WebSocket (v5)",
+    "automationVmix": "vMix HTTP-API",
+    "automationScenes": "Automatische Szenenzuweisung"
   }
 }

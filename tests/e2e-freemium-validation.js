@@ -185,6 +185,18 @@ function setupMockIPC() {
     return licenseManager.startCompanionTrial();
   });
 
+  ipcMain.handle('set-edition', (event, ed) => {
+    return licenseManager.setEdition(ed);
+  });
+
+  ipcMain.handle('toggle-edition', () => {
+    return licenseManager.toggleEdition();
+  });
+
+  ipcMain.handle('forget-license', () => {
+    return licenseManager.forgetStoredLicense();
+  });
+
   // Broadcast license changes to active windows
   licenseManager.onChange((licenseStatus) => {
     const wins = [launcherWindow, presenterWindow];

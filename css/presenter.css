@@ -991,9 +991,26 @@ body.resizing-vertical * {
 }
 
 /* Responsive Top Bar Layout Guards */
+@media (max-width: 1400px) {
+  .doc-info {
+    max-width: 180px;
+  }
+  .top-bar-left,
+  .top-bar-center,
+  .top-bar-right {
+    gap: 8px;
+  }
+}
+
 @media (max-width: 1200px) {
   .doc-info {
-    max-width: 140px;
+    max-width: 130px;
+  }
+  #btnEndPresentation span {
+    display: none;
+  }
+  #btnEndPresentation {
+    padding: 6px 10px;
   }
 }
 
@@ -1001,16 +1018,210 @@ body.resizing-vertical * {
   #audienceStatusText {
     display: none;
   }
-}
-
-@media (max-width: 980px) {
-  #btnCompanion span:not(.pro-tag-lock),
-  #btnGrid span:not(.pro-tag-lock),
-  #btnWatermark span:not(.pro-tag-lock),
-  #btnAudienceBanner span:not(.pro-tag-lock),
-  #btnEndPresentation span {
+  .doc-info {
+    max-width: 100px;
+  }
+  #btnGrid span:not(.pro-tag-lock) {
     display: none;
   }
+  .tools-menu-text {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .brand span {
+    display: none;
+  }
+  .doc-info {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Consolidated Pro Tools Dropdown Popover Menu Styles
+   ========================================================================== */
+.pro-tools-dropdown-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.btn-tools-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.14), rgba(168, 85, 247, 0.18));
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  color: #f1f5f9;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.btn-tools-menu:hover,
+.btn-tools-menu.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.28), rgba(168, 85, 247, 0.36));
+  border-color: rgba(168, 85, 247, 0.75);
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.4);
+  color: #ffffff;
+}
+
+.tools-menu-caret {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+  color: #cbd5e1;
+}
+
+.btn-tools-menu.active .tools-menu-caret {
+  transform: rotate(180deg);
+}
+
+.pro-tools-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 295px;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 8px;
+  z-index: 1000;
+  animation: proToolsPopoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes proToolsPopoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pro-tools-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px 10px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 6px;
+}
+
+.pro-tools-popover-header .popover-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #94a3b8;
+}
+
+.pro-badge-mini {
+  font-size: 9px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ec4899, #8b5cf6);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.pro-tools-popover-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Individual Item in Tools Popover */
+.pro-tools-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  padding: 8px 10px !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--radius-md) !important;
+  color: #e2e8f0 !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  transition: all 0.15s ease !important;
+  box-sizing: border-box !important;
+}
+
+.pro-tools-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  transform: translateX(2px);
+}
+
+.pro-tools-menu-item:active {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.menu-item-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+  line-height: 1.3;
+}
+
+.menu-item-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.pro-tools-menu-item .pro-tag-lock {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* RTL Layout for Pro Tools Dropdown */
+[dir="rtl"] .pro-tools-popover {
+  right: auto;
+  left: 0;
+}
+
+[dir="rtl"] .pro-tools-menu-item {
+  text-align: right !important;
+}
+
+[dir="rtl"] .pro-tools-menu-item:hover {
+  transform: translateX(-2px);
+}
+
+[dir="rtl"] .pro-tools-menu-item .pro-tag-lock {
+  margin-left: 0;
+  margin-right: auto;
 }
 
 /* ==========================================================================
@@ -1092,6 +1303,152 @@ body.resizing-vertical * {
   border-color: #818cf8;
   color: #ffffff;
   box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+}
+
+/* Cinematic Spotlight Overlay Canvas */
+#presenterSpotlightCanvas,
+.presenter-spotlight-canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 6;
+}
+
+#btnSpotlight.active {
+  background: rgba(234, 179, 8, 0.2);
+  border-color: #eab308;
+  color: #fef08a;
+  box-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
+}
+
+/* NDI & Broadcast Badges */
+.broadcast-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.broadcast-badge.standby {
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.broadcast-badge.live {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  animation: pulseBroadcast 1.5s infinite;
+}
+
+@keyframes pulseBroadcast {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
+  50% { opacity: 0.6; box-shadow: 0 0 2px rgba(239, 68, 68, 0.2); }
+}
+
+/* Presenter Cockpit Live Message Toast Banner */
+.presenter-cockpit-cue-banner {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  max-width: 800px;
+  width: 90%;
+  animation: slideDownCockpitCue 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideDownCockpitCue {
+  from { opacity: 0; transform: translate(-50%, -24px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.presenter-cockpit-cue-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.98) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid #f59e0b;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), 0 0 24px rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  padding: 12px 18px;
+  color: #f8fafc;
+}
+
+.cue-banner-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+}
+
+.cue-banner-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cue-banner-tag {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #fbbf24;
+}
+
+.cue-banner-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.cue-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.cue-banner-timer {
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fef3c7;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cue-banner-close {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cue-banner-close:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 

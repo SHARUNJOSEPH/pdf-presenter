@@ -99,12 +99,69 @@
         }
       }
     }
+
+    // 4. About Modal Edition Switcher Component
+    const aboutEditionPill = document.getElementById('aboutEditionPill');
+    const btnSelectFree = document.getElementById('btnSelectFreeEdition');
+    const btnSelectPro = document.getElementById('btnSelectProEdition');
+    const iconFreeCheck = document.getElementById('iconFreeCheck');
+    const iconProCheck = document.getElementById('iconProCheck');
+    const aboutDesc = document.getElementById('aboutActiveEditionDesc');
+    const vaultStatus = document.getElementById('aboutLicenseVaultStatus');
+    const btnForget = document.getElementById('btnForgetLicense');
+
+    if (aboutEditionPill) {
+      if (isPro) {
+        aboutEditionPill.textContent = 'PRO EDITION';
+        aboutEditionPill.className = 'edition-status-pill pill-pro';
+        if (btnSelectPro) btnSelectPro.classList.add('active-pro');
+        if (btnSelectFree) btnSelectFree.classList.remove('active-free');
+        if (iconProCheck) iconProCheck.style.display = 'inline';
+        if (iconFreeCheck) iconFreeCheck.style.display = 'none';
+        if (aboutDesc) aboutDesc.textContent = 'Enterprise Pro Edition is currently active with full AV features.';
+      } else {
+        aboutEditionPill.textContent = 'FREE COMMUNITY';
+        aboutEditionPill.className = 'edition-status-pill pill-free';
+        if (btnSelectFree) btnSelectFree.classList.add('active-free');
+        if (btnSelectPro) btnSelectPro.classList.remove('active-pro');
+        if (iconFreeCheck) iconFreeCheck.style.display = 'inline';
+        if (iconProCheck) iconProCheck.style.display = 'none';
+        if (aboutDesc) aboutDesc.textContent = 'Community Free Edition is active. Clean, prompt-free presentation.';
+      }
+
+      if (vaultStatus) {
+        if (status.hasStoredKey) {
+          vaultStatus.textContent = isPro
+            ? '🔑 Enterprise Pro license active on this device'
+            : '🔑 License key saved in vault (Click Enterprise Pro to restore)';
+          if (btnForget) {
+            btnForget.style.display = 'inline-block';
+            btnForget.textContent = '🗑️ Remove Key';
+          }
+        } else {
+          vaultStatus.textContent = '🔒 No Pro license key stored on this device.';
+          if (btnForget) btnForget.style.display = 'none';
+        }
+      }
+    }
   }
 
   /**
    * Open the Upgrade to Pro modal
    */
-  function openModal(highlightReason = '') {
+  function openModal(highlightReason = '', force = false) {
+    // If user explicitly switched to Free Community mode, suppress automatic sales prompts
+    if (!force && currentLicenseStatus.suppressProPrompts && highlightReason) {
+      console.log(`[Pro Feature] ${highlightReason} requested in Free Community Clean Mode.`);
+      return;
+    }
+
+    // Ensure any open About dialog is closed so Upgrade Pro modal is completely unobstructed
+    const aboutModal = document.getElementById('aboutModal');
+    if (aboutModal && aboutModal.classList.contains('open')) {
+      aboutModal.classList.remove('open');
+    }
+
     const modal = document.getElementById('upgradeProModal');
     if (!modal) return;
 
@@ -248,8 +305,69 @@
 
     // Global Header Upgrade Buttons
     document.querySelectorAll('.btn-upgrade-pro').forEach(btn => {
-      btn.addEventListener('click', () => openModal());
+      btn.addEventListener('click', () => openModal('', true));
     });
+
+    // About Modal Edition Switcher Listeners
+    const btnSelectFree = document.getElementById('btnSelectFreeEdition');
+    const btnSelectPro = document.getElementById('btnSelectProEdition');
+    const btnForget = document.getElementById('btnForgetLicense');
+
+    if (btnSelectFree) {
+      btnSelectFree.addEventListener('click', async () => {
+        if (window.electronAPI && window.electronAPI.setEdition) {
+          const res = await window.electronAPI.setEdition('free');
+          if (res && res.state) {
+            applyLicenseStatus(res.state);
+          }
+        }
+      });
+    }
+
+    if (btnSelectPro) {
+      btnSelectPro.addEventListener('click', async () => {
+        // If there is no active Pro license and no key stored in the vault,
+        // strictly prevent switching and immediately prompt to buy Pro with the popping window!
+        const hasKey = Boolean(
+          currentLicenseStatus.isPro ||
+          currentLicenseStatus.hasStoredKey
+        );
+
+        if (!hasKey) {
+          const aboutModal = document.getElementById('aboutModal');
+          if (aboutModal) aboutModal.classList.remove('open');
+          openModal('edition_switch', true);
+          return;
+        }
+
+        if (window.electronAPI && window.electronAPI.setEdition) {
+          const res = await window.electronAPI.setEdition('pro');
+          if (res && res.state) {
+            applyLicenseStatus(res.state);
+            if (!res.state.isPro) {
+              const aboutModal = document.getElementById('aboutModal');
+              if (aboutModal) aboutModal.classList.remove('open');
+              openModal('edition_switch', true);
+            }
+          } else if (res && !res.success) {
+            const aboutModal = document.getElementById('aboutModal');
+            if (aboutModal) aboutModal.classList.remove('open');
+            openModal('edition_switch', true);
+          }
+        }
+      });
+    }
+
+    if (btnForget) {
+      btnForget.addEventListener('click', async () => {
+        if (window.electronAPI && window.electronAPI.forgetLicense) {
+          const res = await window.electronAPI.forgetLicense();
+          if (res && res.state) {
+            applyLicenseStatus(res.state);
+          }
+        }
+      });
+    }
 
     // Fetch initial license status
     if (window.electronAPI && window.electronAPI.getLicenseStatus) {
@@ -278,9 +396,19 @@
     init: init,
     open: openModal,
     close: closeModal,
-    getStatus: () => currentLicenseStatus,
+    getStatus: () => ({ ...currentLicenseStatus }),
     isPro: () => Boolean(currentLicenseStatus.isPro)
   };
+
+  // Deeply freeze and lock window.UpgradeModal against runtime console tampering
+  try {
+    Object.freeze(window.UpgradeModal);
+    Object.defineProperty(window, 'UpgradeModal', {
+      value: window.UpgradeModal,
+      writable: false,
+      configurable: false
+    });
+  } catch (e) {}
 
   // Auto-init on DOMContentLoaded
   if (document.readyState === 'loading') {

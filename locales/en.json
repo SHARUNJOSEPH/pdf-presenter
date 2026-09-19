@@ -106,6 +106,24 @@
     "keySuccess": "Pro features unlocked successfully!",
     "keyInvalid": "Invalid license key. Please check and try again.",
     "trialBadge": "15-Min Trial Active",
-    "startTrial": "Start 15-Min Trial"
+    "startTrial": "Start 15-Min Trial",
+    "ndiTitle": "NDI® IP Video Broadcast",
+    "ndiDesc": "Stream presentation video & transparent alpha lower-thirds over local IP to OBS, vMix & broadcast switchers.",
+    "ndiBroadcastActive": "Live IP Stream Broadcasting",
+    "ndiStreamEndpoints": "Stream Endpoints & Feeds",
+    "ndiAlphaKeyStream": "Alpha Key Overlay Stream",
+    "confidenceTitle": "Stage Confidence Monitor & Teleprompter",
+    "confidenceDesc": "Dedicated 3rd-screen stage floor monitor with giant keynote timer, teleprompter notes, and silent stage cues.",
+    "confidenceOpenWindow": "Launch Stage Window (3rd Display)",
+    "confidenceWebUrl": "Confidence Remote Web URL",
+    "stageCues": "Silent Stage Cues",
+    "spotlightTitle": "Cinematic Spotlight Focus Mode",
+    "spotlightDesc": "Darken background slide and highlight key focus areas with smooth radial beam (S).",
+    "spotlightShortcut": "Spotlight Mode (S)",
+    "automationTitle": "OBS Studio & vMix Automation",
+    "automationDesc": "Automatically trigger broadcast switcher scene transitions on presentation start, blackout, and exit.",
+    "automationObs": "OBS Studio WebSocket (v5)",
+    "automationVmix": "vMix HTTP API",
+    "automationScenes": "Automated Scene Mapping"
   }
 }

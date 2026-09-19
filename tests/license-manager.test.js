@@ -116,5 +116,82 @@ describe('LicenseManager & In-App Purchase Entitlements', () => {
     assert.equal(activation.success, true);
     assert.equal(manager.getPublicStatus().isPro, true);
   });
+
+  it('allows rolling back to Free Community edition while safely preserving license key', () => {
+    // 1. Activate a valid Pro license
+    const validKey = 'PRO-STORE-VERIFIED-LIFETIME';
+    manager.activateLicenseKey(validKey);
+    let status = manager.getPublicStatus();
+    assert.equal(status.isPro, true);
+    assert.equal(status.activeEdition, 'pro');
+    assert.equal(status.hasStoredKey, true);
+
+    // 2. User rolls back to Free Community edition from About tab
+    const freeRes = manager.setEdition('free');
+    assert.equal(freeRes.success, true);
+    assert.equal(freeRes.edition, 'free');
+
+    status = manager.getPublicStatus();
+    assert.equal(status.isPro, false, 'isPro should be false in Free edition');
+    assert.equal(status.tier, 'free');
+    assert.equal(status.activeEdition, 'free');
+    assert.equal(status.suppressProPrompts, true, 'Sales prompts should be suppressed in Clean Free Mode');
+    assert.equal(status.hasStoredKey, true, 'License key must remain safely stored in vault');
+
+    // 3. User switches back to Pro edition from About tab
+    const proRes = manager.setEdition('pro');
+    assert.equal(proRes.success, true);
+    assert.equal(proRes.edition, 'pro');
+
+    status = manager.getPublicStatus();
+    assert.equal(status.isPro, true, 'isPro should restore without re-entering key');
+    assert.equal(status.tier, 'pro');
+    assert.equal(status.activeEdition, 'pro');
+    assert.equal(status.suppressProPrompts, false);
+  });
+
+  it('toggles between Free and Pro editions via toggleEdition()', () => {
+    manager.activateLicenseKey('PRO-DEMO-TEST-2026-KEY1');
+    assert.equal(manager.getPublicStatus().activeEdition, 'pro');
+
+    manager.toggleEdition();
+    assert.equal(manager.getPublicStatus().activeEdition, 'free');
+    assert.equal(manager.getPublicStatus().isPro, false);
+
+    manager.toggleEdition();
+    assert.equal(manager.getPublicStatus().activeEdition, 'pro');
+    assert.equal(manager.getPublicStatus().isPro, true);
+  });
+
+  it('forgets stored license key permanently when forgetStoredLicense is called', () => {
+    manager.activateLicenseKey('PRO-STORE-VERIFIED-LIFETIME');
+    assert.equal(manager.getPublicStatus().hasStoredKey, true);
+
+    const forgetRes = manager.forgetStoredLicense();
+    assert.equal(forgetRes.success, true);
+
+    const status = manager.getPublicStatus();
+    assert.equal(status.isPro, false);
+    assert.equal(status.hasStoredKey, false);
+    assert.equal(status.activeEdition, 'free');
+  });
+
+  it('strictly rejects switching to Pro edition when key is removed/missing (prevents keyless Pro bypass)', () => {
+    // Ensure manager has no stored license key
+    manager.forgetStoredLicense();
+    assert.equal(manager.getPublicStatus().hasStoredKey, false);
+    assert.equal(manager.getPublicStatus().isPro, false);
+
+    // User attempts to select Enterprise Pro from About modal without a key
+    const proRes = manager.setEdition('pro');
+    assert.equal(proRes.success, false, 'setEdition(pro) must fail without a key');
+    assert.equal(proRes.error, 'KEY_REQUIRED');
+
+    // Verify state remains strictly Free
+    const status = manager.getPublicStatus();
+    assert.equal(status.isPro, false, 'isPro must remain false');
+    assert.equal(status.tier, 'free');
+    assert.equal(status.activeEdition, 'free');
+  });
 });
 

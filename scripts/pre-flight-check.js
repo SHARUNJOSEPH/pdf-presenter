@@ -39,7 +39,15 @@ runCheck('Syntax validation across all JavaScript source files', () => {
     'js/audience.js',
     'js/launcher.js',
     'js/sync-channel.js',
-    'js/playlist-metrics.js'
+    'js/license-manager.js',
+    'js/upgrade-modal.js',
+    'js/watermark-banner.js',
+    'js/timer-annotation.js',
+    'js/playlist-metrics.js',
+    'js/ndi-engine.js',
+    'js/spotlight.js',
+    'js/broadcast-automation.js',
+    'js/confidence.js'
   ];
 
   for (const file of jsFiles) {
@@ -53,7 +61,7 @@ runCheck('Syntax validation across all JavaScript source files', () => {
 
 // 2. Automated Test Suite
 runCheck('Unit & Integration Test Suite execution (node:test)', () => {
-  const output = execSync('node --test tests/**/*.test.js', {
+  const output = execSync('node --test --test-concurrency=1 tests/**/*.test.js', {
     cwd: path.join(__dirname, '..'),
     encoding: 'utf8',
     stdio: 'pipe'
@@ -68,7 +76,8 @@ runCheck('Content Security Policy (CSP) headers in all views', () => {
   const htmlFiles = [
     'views/launcher.html',
     'views/presenter.html',
-    'views/audience.html'
+    'views/audience.html',
+    'views/confidence.html'
   ];
 
   for (const html of htmlFiles) {

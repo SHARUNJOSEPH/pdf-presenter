@@ -106,6 +106,24 @@
     "keySuccess": "Pro版機能が正常に解放されました！",
     "keyInvalid": "無効なライセンスキーです。確認して再試行してください。",
     "trialBadge": "15分間トライアル実行中",
-    "startTrial": "15分間トライアルを開始"
+    "startTrial": "15分間トライアルを開始",
+    "ndiTitle": "NDI® IPビデオネットワーク配信",
+    "ndiDesc": "ローカルネットワーク経由でOBS、vMix、スイッチャーにスライド映像と透過テロップを配信します。",
+    "ndiBroadcastActive": "ライブIPストリーム配信中",
+    "ndiStreamEndpoints": "配信エンドポイントとフィード",
+    "ndiAlphaKeyStream": "アルファキー透過オーバーレイ配信",
+    "confidenceTitle": "ステージ返りモニター＆テレプロンプター",
+    "confidenceDesc": "巨大タイマー、プロンプター原稿、サイレント指示を備えた第3画面ステージ返りモニター。",
+    "confidenceOpenWindow": "ステージ返り画面を起動（第3画面）",
+    "confidenceWebUrl": "リモート返りモニター接続URL",
+    "stageCues": "サイレントステージ指示",
+    "spotlightTitle": "シネマティックスポットライト注目モード",
+    "spotlightDesc": "背景スライドを減光し、滑らかな円形ビームで重要部分を強調します (S)。",
+    "spotlightShortcut": "スポットライトモード (S)",
+    "automationTitle": "OBS Studio ＆ vMix 自動連携",
+    "automationDesc": "スライド開始、暗転、終了に合わせてスイッチャーのシーン切替を自動実行します。",
+    "automationObs": "OBS Studio WebSocket (v5)",
+    "automationVmix": "vMix HTTP API",
+    "automationScenes": "自動シーンマッピング設定"
   }
 }

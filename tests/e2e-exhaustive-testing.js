@@ -110,6 +110,39 @@ function setupMockIPC() {
     isFullScreen: false
   }));
 
+  ipcMain.handle('get-license-status', () => ({
+    isPro: false,
+    tier: 'free',
+    activeEdition: 'free',
+    suppressProPrompts: false,
+    hasStoredKey: false,
+    companionAuthorized: false,
+    trialActive: false,
+    trialRemainingSeconds: 0
+  }));
+
+  ipcMain.handle('validate-license-key', () => ({
+    valid: false,
+    error: 'INVALID_KEY'
+  }));
+
+  ipcMain.handle('set-edition', (event, ed) => ({
+    success: true,
+    edition: ed,
+    state: { isPro: ed === 'pro', tier: ed, activeEdition: ed }
+  }));
+
+  ipcMain.handle('toggle-edition', () => ({
+    success: true,
+    edition: 'pro',
+    state: { isPro: true, tier: 'pro', activeEdition: 'pro' }
+  }));
+
+  ipcMain.handle('forget-license', () => ({
+    success: true,
+    state: { isPro: false, tier: 'free', activeEdition: 'free', hasStoredKey: false }
+  }));
+
   ipcMain.on('sync-event', (event, data) => {
     if (audienceWindow && !audienceWindow.isDestroyed()) {
       audienceWindow.webContents.send('sync-event', data);

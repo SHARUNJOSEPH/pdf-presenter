@@ -106,6 +106,24 @@
     "keySuccess": "¡Funciones Pro desbloqueadas con éxito!",
     "keyInvalid": "Clave de licencia inválida. Por favor verifica e intenta de nuevo.",
     "trialBadge": "Prueba de 15 Minutos Activa",
-    "startTrial": "Iniciar Prueba de 15 Min"
+    "startTrial": "Iniciar Prueba de 15 Min",
+    "ndiTitle": "Transmisión de Video IP NDI®",
+    "ndiDesc": "Transmita video de presentación y tercios inferiores alfa transparentes por IP local a OBS, vMix y mezcladores de emisión.",
+    "ndiBroadcastActive": "Transmisión IP en Vivo Activa",
+    "ndiStreamEndpoints": "Puntos Finales y Fuentes de Transmisión",
+    "ndiAlphaKeyStream": "Flujo de Superposición Clave Alfa",
+    "confidenceTitle": "Monitor de Confianza de Escenario y Teleprompter",
+    "confidenceDesc": "Monitor dedicado para el suelo del escenario con temporizador gigante, notas de teleprompter y avisos silenciosos.",
+    "confidenceOpenWindow": "Abrir Ventana de Escenario (3ª Pantalla)",
+    "confidenceWebUrl": "URL Web Remota de Confianza",
+    "stageCues": "Avisos Silenciosos de Escenario",
+    "spotlightTitle": "Modo de Enfoque con Foco Cinemático",
+    "spotlightDesc": "Oscurece la diapositiva de fondo e ilumina áreas clave con un haz radial suave (S).",
+    "spotlightShortcut": "Modo de Foco (S)",
+    "automationTitle": "Automatización de OBS Studio y vMix",
+    "automationDesc": "Dispara automáticamente transiciones de escena en inicio de presentación, pantalla en negro y salida.",
+    "automationObs": "OBS Studio WebSocket (v5)",
+    "automationVmix": "API HTTP de vMix",
+    "automationScenes": "Mapeo Automatizado de Escenas"
   }
 }

@@ -92,6 +92,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }) : null;
 
+  // NDI IP Video Broadcast Engine
+  const NdiClass = window.NdiBroadcastEngine || (typeof NdiBroadcastEngine !== 'undefined' ? NdiBroadcastEngine : null);
+  const ndiEngine = NdiClass ? new NdiClass({
+    syncBus: syncBus,
+    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : false),
+    onProRequired: () => {
+      if (window.UpgradeModal && window.UpgradeModal.open) window.UpgradeModal.open('ndi');
+    }
+  }) : null;
+
+  // Cinematic Spotlight Engine
+  const SpotlightClass = window.SpotlightEngine || (typeof SpotlightEngine !== 'undefined' ? SpotlightEngine : null);
+  const spotlightEngine = SpotlightClass ? new SpotlightClass({
+    syncBus: syncBus,
+    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : false),
+    onProRequired: () => {
+      if (window.UpgradeModal && window.UpgradeModal.open) window.UpgradeModal.open('spotlight');
+    }
+  }) : null;
+
+  // OBS & vMix Broadcast Automation Engine
+  const AutomationClass = window.BroadcastAutomationEngine || (typeof BroadcastAutomationEngine !== 'undefined' ? BroadcastAutomationEngine : null);
+  const automationEngine = AutomationClass ? new AutomationClass({
+    syncBus: syncBus,
+    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : false),
+    onProRequired: () => {
+      if (window.UpgradeModal && window.UpgradeModal.open) window.UpgradeModal.open('automation');
+    }
+  }) : null;
+
   // Multi-Deck Conference Playlist, Rehearsal Metrics & Notes Export Engine
   const PlaylistMetricsClass = window.PlaylistMetricsEngine || (typeof PlaylistMetricsEngine !== 'undefined' ? PlaylistMetricsEngine : null);
   const playlistEngine = PlaylistMetricsClass ? new PlaylistMetricsClass({
@@ -202,6 +232,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       currentPage = 1;
       updateDocumentHeader();
       await renderAllSlidesUI();
+      if (config.playlist && Array.isArray(config.playlist) && config.playlist.length > 0 && playlistEngine) {
+        playlistEngine.playlist = config.playlist;
+        const active = config.playlist.find(d => d.active) || config.playlist[0];
+        if (active) {
+          playlistEngine.activeDeckId = active.id;
+        }
+        if (typeof renderPlaylistQueue === 'function') {
+          renderPlaylistQueue();
+        }
+      }
       syncActiveDeckToPlaylist();
     } catch (err) {
       console.error('Error loading passed PDF in presenter:', err);
@@ -458,6 +498,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (playlistEngine) {
       playlistEngine.setSpeakerNotes(currentPage, notesTextarea.value);
     }
+    emitSync({
+      type: 'UPDATE_NOTES',
+      currentPage: currentPage,
+      currentNote: notesTextarea.value
+    });
   }
 
   let notesSaveTimeout = null;
@@ -470,6 +515,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (playlistEngine) {
         playlistEngine.setSpeakerNotes(currentPage, notesTextarea.value);
       }
+      emitSync({
+        type: 'UPDATE_NOTES',
+        currentPage: currentPage,
+        currentNote: notesTextarea.value
+      });
     }, 500);
   });
 
@@ -498,6 +548,55 @@ document.addEventListener('DOMContentLoaded', async () => {
     drawCanvas.style.left = '50%';
     drawCanvas.style.top = '50%';
     drawCanvas.style.transform = 'translate(-50%, -50%)';
+
+    const presenterSpotlightCanvas = document.getElementById('presenterSpotlightCanvas');
+    if (presenterSpotlightCanvas) {
+      presenterSpotlightCanvas.width = w;
+      presenterSpotlightCanvas.height = h;
+      presenterSpotlightCanvas.style.width = `${w}px`;
+      presenterSpotlightCanvas.style.height = `${h}px`;
+      presenterSpotlightCanvas.style.left = '50%';
+      presenterSpotlightCanvas.style.top = '50%';
+      presenterSpotlightCanvas.style.transform = 'translate(-50%, -50%)';
+      renderPresenterSpotlight();
+    }
+  }
+
+  function renderPresenterSpotlight() {
+    const presenterSpotlightCanvas = document.getElementById('presenterSpotlightCanvas');
+    if (!presenterSpotlightCanvas || !spotlightEngine) return;
+    const ctx = presenterSpotlightCanvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, presenterSpotlightCanvas.width, presenterSpotlightCanvas.height);
+    if (spotlightEngine.state && spotlightEngine.state.enabled) {
+      spotlightEngine.render(ctx, presenterSpotlightCanvas.width, presenterSpotlightCanvas.height);
+    }
+  }
+
+  function toggleSpotlightMode() {
+    if (!spotlightEngine) return;
+    if (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && !window.UpgradeModal.isPro()) {
+      window.UpgradeModal.open('spotlight');
+      return;
+    }
+    spotlightEngine.toggle();
+    const isEnabled = spotlightEngine.state.enabled;
+    const btnSpotlight = document.getElementById('btnSpotlight');
+    if (btnSpotlight) btnSpotlight.classList.toggle('active', isEnabled);
+    emitSync({
+      type: 'SPOTLIGHT_TOGGLE',
+      enabled: isEnabled
+    });
+    renderPresenterSpotlight();
+    announceA11y(isEnabled ? 'Cinematic Spotlight active' : 'Spotlight mode off');
+  }
+
+  function broadcastCurrentFrameToNdi() {
+    if (!ndiEngine || !ndiEngine.state.isBroadcasting || !activeSlideCanvas) return;
+    try {
+      const dataUrl = activeSlideCanvas.toDataURL('image/jpeg', 0.85);
+      ndiEngine.sendFrame(dataUrl, 'program');
+    } catch (e) {}
   }
 
   function setTool(toolName) {
@@ -728,10 +827,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       timerDisplay.className = `timer-display phase-${st.phase}`;
       btnTimerToggle.textContent = st.timerRunning ? '⏸️' : '▶️';
       btnTimerToggle.title = st.timerRunning ? 'Pause Timer' : 'Start Timer';
+      emitSync({
+        type: 'TIMER_TICK',
+        timerDisplay: st.formatted,
+        timerPhase: st.phase,
+        timerSeconds: st.timerSeconds,
+        timerRunning: st.timerRunning
+      });
     } else {
       const m = Math.floor((timerSeconds % 3600) / 60).toString().padStart(2, '0');
       const s = (timerSeconds % 60).toString().padStart(2, '0');
       timerDisplay.textContent = `${m}:${s}`;
+      emitSync({
+        type: 'TIMER_TICK',
+        timerDisplay: `${m}:${s}`,
+        timerPhase: 'normal',
+        timerSeconds: timerSeconds,
+        timerRunning: timerRunning
+      });
     }
   }
 
@@ -753,8 +866,65 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // =========================================================================
-  // 9. IPC & COMPANION SYNC LISTENERS
+  // 9. IPC & COMPANION SYNC LISTENERS & COCKPIT LIVE MESSAGES
   // =========================================================================
+  let presenterCueTimerId = null;
+  let presenterCueCountdownInterval = null;
+
+  function showPresenterCockpitAlert(message, durationMs = 10000, tag = 'STREAM DECK') {
+    const banner = document.getElementById('presenterStageCueBanner');
+    const textEl = document.getElementById('presenterStageCueText');
+    const tagEl = document.getElementById('presenterStageCueTag');
+    const timerEl = document.getElementById('presenterStageCueTimer');
+    if (!banner || !textEl) return;
+
+    if (presenterCueTimerId) clearTimeout(presenterCueTimerId);
+    if (presenterCueCountdownInterval) clearInterval(presenterCueCountdownInterval);
+
+    textEl.textContent = message;
+    if (tagEl) tagEl.textContent = tag;
+
+    let remainingSec = Math.ceil(durationMs / 1000);
+    if (timerEl) {
+      timerEl.style.display = durationMs > 0 ? 'inline-block' : 'none';
+      timerEl.textContent = `${remainingSec}s`;
+    }
+
+    banner.style.display = 'block';
+
+    if (durationMs > 0) {
+      presenterCueCountdownInterval = setInterval(() => {
+        remainingSec--;
+        if (timerEl) timerEl.textContent = `${Math.max(0, remainingSec)}s`;
+        if (remainingSec <= 0) {
+          clearInterval(presenterCueCountdownInterval);
+        }
+      }, 1000);
+
+      presenterCueTimerId = setTimeout(() => {
+        dismissPresenterCockpitAlert();
+      }, durationMs);
+    }
+  }
+
+  function dismissPresenterCockpitAlert() {
+    const banner = document.getElementById('presenterStageCueBanner');
+    if (banner) banner.style.display = 'none';
+    if (presenterCueTimerId) {
+      clearTimeout(presenterCueTimerId);
+      presenterCueTimerId = null;
+    }
+    if (presenterCueCountdownInterval) {
+      clearInterval(presenterCueCountdownInterval);
+      presenterCueCountdownInterval = null;
+    }
+  }
+
+  const btnDismissPresenterCue = document.getElementById('btnDismissPresenterCue');
+  if (btnDismissPresenterCue) {
+    btnDismissPresenterCue.addEventListener('click', dismissPresenterCockpitAlert);
+  }
+
   function setupIpcListeners() {
     const handleRemoteEvent = (data) => {
       if (!data) return;
@@ -772,17 +942,45 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof i18n !== 'undefined' && data.language && i18n.getCurrentLanguage() !== data.language) {
           i18n.setLanguage(data.language);
         }
+      } else if (data.type === 'PRESENTER_ALERT') {
+        const dur = data.duration !== undefined ? Number(data.duration) : 10000;
+        showPresenterCockpitAlert(data.message, dur, data.source === 'companion_api' ? 'STREAM DECK' : 'LIVE MESSAGE');
+      } else if (data.type === 'CLEAR_PRESENTER_ALERT') {
+        dismissPresenterCockpitAlert();
+      } else if (data.type === 'STAGE_CUE') {
+        if (!data.message) {
+          dismissPresenterCockpitAlert();
+        } else if (data.target === 'presenter' || data.target === 'cockpit' || data.target === 'all') {
+          const dur = data.duration !== undefined ? Number(data.duration) : 10000;
+          showPresenterCockpitAlert(data.message, dur, 'STAGE ALERT');
+        }
       }
     };
 
     if (window.electronAPI && window.electronAPI.onSync) {
       window.electronAPI.onSync(handleRemoteEvent);
     }
+    if (window.electronAPI && window.electronAPI.onDisplaysChanged) {
+      window.electronAPI.onDisplaysChanged((data) => {
+        console.log('[Presenter] Displays changed event received:', data);
+        if (data && data.changeType === 'display-added' && audienceStatusBadge) {
+          audienceStatusBadge.textContent = 'HDMI Screen Connected';
+          audienceStatusBadge.style.color = '#38bdf8';
+          setTimeout(() => {
+            audienceStatusBadge.textContent = 'Audience Screen Active';
+            audienceStatusBadge.style.color = '';
+          }, 4000);
+        }
+      });
+    }
     if (typeof syncBus !== 'undefined' && syncBus) {
       syncBus.on('GOTO_PAGE', handleRemoteEvent);
       syncBus.on('SET_BLANK', handleRemoteEvent);
       syncBus.on('TIMER_CONTROL', handleRemoteEvent);
       syncBus.on('SET_LANGUAGE', handleRemoteEvent);
+      syncBus.on('PRESENTER_ALERT', handleRemoteEvent);
+      syncBus.on('CLEAR_PRESENTER_ALERT', handleRemoteEvent);
+      syncBus.on('STAGE_CUE', handleRemoteEvent);
     }
   }
 
@@ -953,7 +1151,39 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    btnCompanion.addEventListener('click', openCompanionModal);
+    // Consolidated Pro Tools Dropdown Popover Menu
+    const btnProToolsMenu = document.getElementById('btnProToolsMenu');
+    const proToolsMenuPopover = document.getElementById('proToolsMenuPopover');
+
+    if (btnProToolsMenu && proToolsMenuPopover) {
+      btnProToolsMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = proToolsMenuPopover.style.display !== 'none';
+        proToolsMenuPopover.style.display = isOpen ? 'none' : 'block';
+        btnProToolsMenu.classList.toggle('active', !isOpen);
+        btnProToolsMenu.setAttribute('aria-expanded', String(!isOpen));
+      });
+
+      document.addEventListener('click', (e) => {
+        if (proToolsMenuPopover && !proToolsMenuPopover.contains(e.target) && e.target !== btnProToolsMenu) {
+          proToolsMenuPopover.style.display = 'none';
+          btnProToolsMenu.classList.remove('active');
+          btnProToolsMenu.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      proToolsMenuPopover.querySelectorAll('.pro-tools-menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+          proToolsMenuPopover.style.display = 'none';
+          btnProToolsMenu.classList.remove('active');
+          btnProToolsMenu.setAttribute('aria-expanded', 'false');
+        });
+      });
+    }
+
+    if (btnCompanion) {
+      btnCompanion.addEventListener('click', openCompanionModal);
+    }
 
     const handleGridRequest = (e) => {
       if (e) e.preventDefault();
@@ -980,6 +1210,275 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnExportNotes.addEventListener('click', () => openNotesExportModal());
     }
 
+    // Stage Confidence Monitor Modal & Controls
+    const btnConfidenceMonitor = document.getElementById('btnConfidenceMonitor');
+    const confidenceModal = document.getElementById('confidenceModal');
+    const btnLaunchConfidenceWindow = document.getElementById('btnLaunchConfidenceWindow');
+    const btnCopyConfidenceWebUrl = document.getElementById('btnCopyConfidenceWebUrl');
+    const txtStageCueMessage = document.getElementById('txtStageCueMessage');
+    const btnSendStageCue = document.getElementById('btnSendStageCue');
+    const btnClearStageCue = document.getElementById('btnClearStageCue');
+    const selConfidenceDisplay = document.getElementById('selConfidenceDisplay');
+    const btnRefreshConfidenceDisplays = document.getElementById('btnRefreshConfidenceDisplays');
+
+    async function populateConfidenceDisplays() {
+      if (!selConfidenceDisplay) return;
+      try {
+        let displays = [];
+        if (window.electronAPI && window.electronAPI.getDisplays) {
+          displays = await window.electronAPI.getDisplays();
+        }
+        if (!Array.isArray(displays) || displays.length === 0) {
+          selConfidenceDisplay.innerHTML = '<option value="">Display 1: Main Display (Default)</option>';
+          return;
+        }
+
+        const savedDisplayId = localStorage.getItem('pdf_presenter_confidence_display_id');
+        selConfidenceDisplay.innerHTML = '';
+
+        displays.forEach((disp, idx) => {
+          const opt = document.createElement('option');
+          opt.value = disp.id;
+          const isPrimary = Boolean(disp.isPrimary || idx === 0);
+          const role = isPrimary ? '(Primary Monitor)' : (idx === 1 ? '(Secondary / Audience Display)' : '(Stage / Floor Monitor)');
+          opt.textContent = `Display ${idx + 1}: ${disp.bounds.width}×${disp.bounds.height} ${role}`;
+          selConfidenceDisplay.appendChild(opt);
+        });
+
+        if (savedDisplayId && displays.some(d => String(d.id) === String(savedDisplayId))) {
+          selConfidenceDisplay.value = savedDisplayId;
+        } else if (displays.length > 2) {
+          selConfidenceDisplay.value = displays[2].id;
+        } else if (displays.length > 1) {
+          selConfidenceDisplay.value = displays[1].id;
+        } else {
+          selConfidenceDisplay.value = displays[0].id;
+        }
+      } catch (err) {
+        console.warn('[Confidence Displays Scan Error]', err);
+      }
+    }
+
+    if (selConfidenceDisplay) {
+      selConfidenceDisplay.addEventListener('change', () => {
+        try { localStorage.setItem('pdf_presenter_confidence_display_id', selConfidenceDisplay.value); } catch (e) {}
+      });
+    }
+
+    if (btnRefreshConfidenceDisplays) {
+      btnRefreshConfidenceDisplays.addEventListener('click', async () => {
+        const origText = btnRefreshConfidenceDisplays.textContent;
+        btnRefreshConfidenceDisplays.textContent = '✓ Scanned';
+        await populateConfidenceDisplays();
+        setTimeout(() => { btnRefreshConfidenceDisplays.textContent = origText; }, 1200);
+      });
+    }
+
+    if (btnConfidenceMonitor) {
+      btnConfidenceMonitor.addEventListener('click', () => {
+        populateConfidenceDisplays();
+        if (confidenceModal) confidenceModal.classList.add('open');
+      });
+    }
+
+    // Populate initial displays list
+    populateConfidenceDisplays();
+
+    if (btnLaunchConfidenceWindow) {
+      btnLaunchConfidenceWindow.addEventListener('click', async () => {
+        const displayId = selConfidenceDisplay ? selConfidenceDisplay.value : null;
+        if (window.electronAPI && window.electronAPI.launchConfidenceWindow) {
+          await window.electronAPI.launchConfidenceWindow({ displayId, fullscreen: true });
+        } else {
+          window.open('confidence.html', '_blank', 'width=1280,height=720');
+        }
+      });
+    }
+
+    if (btnCopyConfidenceWebUrl) {
+      btnCopyConfidenceWebUrl.addEventListener('click', async () => {
+        let confUrl = 'http://localhost:3000/views/confidence.html';
+        if (window.electronAPI && window.electronAPI.getCompanionInfo) {
+          const info = await window.electronAPI.getCompanionInfo();
+          if (info && info.confidenceUrl) {
+            confUrl = info.confidenceUrl;
+          } else if (info && info.companionApiUrl) {
+            try {
+              const parsed = new URL(info.companionApiUrl);
+              confUrl = `${parsed.protocol}//${parsed.host}/views/confidence.html`;
+            } catch (e) {}
+          }
+        }
+        try {
+          await navigator.clipboard.writeText(confUrl);
+          const orig = btnCopyConfidenceWebUrl.textContent;
+          btnCopyConfidenceWebUrl.textContent = '✓ Copied URL!';
+          setTimeout(() => { btnCopyConfidenceWebUrl.textContent = orig; }, 1500);
+        } catch (e) {
+          alert('Stage Confidence Monitor URL: ' + confUrl);
+        }
+      });
+    }
+
+    function dispatchStageCue(message, duration = 10000) {
+      emitSync({
+        type: 'STAGE_CUE',
+        message: message,
+        duration: duration
+      });
+    }
+
+    if (btnSendStageCue && txtStageCueMessage) {
+      btnSendStageCue.addEventListener('click', () => {
+        const msg = txtStageCueMessage.value.trim();
+        if (msg) {
+          dispatchStageCue(msg, 10000);
+          btnSendStageCue.textContent = '✓ Sent';
+          setTimeout(() => { btnSendStageCue.textContent = '📢 Send Cue'; }, 1200);
+        }
+      });
+      txtStageCueMessage.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          btnSendStageCue.click();
+        }
+      });
+    }
+
+    if (btnClearStageCue) {
+      btnClearStageCue.addEventListener('click', () => {
+        if (txtStageCueMessage) txtStageCueMessage.value = '';
+        dispatchStageCue(null, 0);
+      });
+    }
+
+    document.querySelectorAll('.cue-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cue = btn.dataset.cue;
+        if (cue) {
+          if (txtStageCueMessage) txtStageCueMessage.value = cue;
+          dispatchStageCue(cue, 10000);
+        }
+      });
+    });
+
+    // Spotlight Button & Mouse Viewport Tracker
+    const btnSpotlight = document.getElementById('btnSpotlight');
+    if (btnSpotlight) {
+      btnSpotlight.addEventListener('click', toggleSpotlightMode);
+    }
+
+    const activeSlideViewport = document.getElementById('activeSlideViewport');
+    if (activeSlideViewport) {
+      activeSlideViewport.addEventListener('mousemove', (e) => {
+        if (!spotlightEngine || !spotlightEngine.state.enabled || !activeSlideCanvas) return;
+        const rect = activeSlideCanvas.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const xPct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+          const yPct = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+          spotlightEngine.setPosition(xPct, yPct, true);
+          renderPresenterSpotlight();
+        }
+      });
+    }
+
+    // NDI 5/6 & IP Video Streaming Modal & Controls
+    const btnNdiBroadcast = document.getElementById('btnNdiBroadcast');
+    const ndiModal = document.getElementById('ndiModal');
+    const chkNdiToggle = document.getElementById('chkNdiToggle');
+    const ndiBroadcastStatusBadge = document.getElementById('ndiBroadcastStatusBadge');
+    const selNdiResolution = document.getElementById('selNdiResolution');
+    const selNdiFps = document.getElementById('selNdiFps');
+
+    if (btnNdiBroadcast) {
+      btnNdiBroadcast.addEventListener('click', () => {
+        if (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && !window.UpgradeModal.isPro()) {
+          window.UpgradeModal.open('ndi');
+          return;
+        }
+        if (ndiModal) ndiModal.classList.add('open');
+      });
+    }
+
+    if (chkNdiToggle && ndiEngine) {
+      chkNdiToggle.addEventListener('change', async () => {
+        if (chkNdiToggle.checked) {
+          const res = await ndiEngine.startBroadcast();
+          if (res && res.error === 'PRO_REQUIRED') {
+            chkNdiToggle.checked = false;
+            if (window.UpgradeModal) window.UpgradeModal.open('ndi');
+            return;
+          }
+          if (ndiBroadcastStatusBadge) {
+            ndiBroadcastStatusBadge.textContent = '● BROADCASTING LIVE';
+            ndiBroadcastStatusBadge.className = 'broadcast-badge live';
+          }
+          broadcastCurrentFrameToNdi();
+        } else {
+          await ndiEngine.stopBroadcast();
+          if (ndiBroadcastStatusBadge) {
+            ndiBroadcastStatusBadge.textContent = 'STANDBY';
+            ndiBroadcastStatusBadge.className = 'broadcast-badge standby';
+          }
+        }
+      });
+    }
+
+    if (selNdiResolution && ndiEngine) {
+      selNdiResolution.addEventListener('change', () => {
+        ndiEngine.setResolution(selNdiResolution.value);
+      });
+    }
+
+    if (selNdiFps && ndiEngine) {
+      selNdiFps.addEventListener('change', () => {
+        ndiEngine.setFramerate(Number(selNdiFps.value));
+      });
+    }
+
+    // OBS Studio & vMix Automation Gateway Modal & Controls
+    const btnBroadcastAutomation = document.getElementById('btnBroadcastAutomation');
+    const broadcastAutomationModal = document.getElementById('broadcastAutomationModal');
+    const chkAutomationToggle = document.getElementById('chkAutomationToggle');
+    const selSwitcherType = document.getElementById('selSwitcherType');
+    const txtSwitcherHost = document.getElementById('txtSwitcherHost');
+    const btnTestAutomationConnect = document.getElementById('btnTestAutomationConnect');
+
+    if (btnBroadcastAutomation) {
+      btnBroadcastAutomation.addEventListener('click', () => {
+        if (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && !window.UpgradeModal.isPro()) {
+          window.UpgradeModal.open('automation');
+          return;
+        }
+        if (broadcastAutomationModal) broadcastAutomationModal.classList.add('open');
+      });
+    }
+
+    if (chkAutomationToggle && automationEngine) {
+      chkAutomationToggle.addEventListener('change', () => {
+        if (chkAutomationToggle.checked) {
+          const res = automationEngine.enable();
+          if (res && res.error === 'PRO_REQUIRED') {
+            chkAutomationToggle.checked = false;
+            if (window.UpgradeModal) window.UpgradeModal.open('automation');
+            return;
+          }
+        } else {
+          automationEngine.disable();
+        }
+      });
+    }
+
+    if (btnTestAutomationConnect && automationEngine) {
+      btnTestAutomationConnect.addEventListener('click', async () => {
+        btnTestAutomationConnect.textContent = 'Connecting...';
+        const type = selSwitcherType ? selSwitcherType.value : 'obs';
+        const host = txtSwitcherHost ? txtSwitcherHost.value.trim() : 'localhost:4455';
+        const res = await automationEngine.testConnection({ type, host });
+        btnTestAutomationConnect.textContent = res.success ? '✓ Connected & Triggered!' : '✕ Connection Failed';
+        setTimeout(() => { btnTestAutomationConnect.textContent = '⚡ Test Connection & Trigger'; }, 2000);
+      });
+    }
+
     if (btnAddDeck && playlistFileInput) {
       btnAddDeck.addEventListener('click', () => {
         if (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && !window.UpgradeModal.isPro() && playlistEngine && playlistEngine.getPlaylist().length >= 1) {
@@ -990,30 +1489,39 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       playlistFileInput.addEventListener('change', async (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
 
         try {
-          const buffer = await file.arrayBuffer();
-          const tempDoc = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
-          const slideCount = tempDoc.numPages;
+          for (const file of files) {
+            const buffer = await file.arrayBuffer();
+            let slideCount = 1;
+            try {
+              if (typeof pdfjsLib !== 'undefined' && pdfjsLib.getDocument) {
+                const tempDoc = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+                slideCount = tempDoc.numPages;
+              }
+            } catch (pdfErr) {
+              console.warn('Could not read slide count for file:', file.name, pdfErr);
+            }
 
-          const res = playlistEngine.addDeck({
-            title: file.name.replace(/\.[^/.]+$/, ''),
-            path: file.path || '',
-            pdfBuffer: buffer,
-            slideCount: slideCount,
-            active: false,
-            speaker: `Speaker ${playlistEngine.getPlaylist().length + 1}`
-          });
+            const res = playlistEngine.addDeck({
+              title: file.name.replace(/\.[^/.]+$/, ''),
+              path: file.path || '',
+              pdfBuffer: buffer,
+              slideCount: slideCount,
+              active: false,
+              speaker: `Speaker ${playlistEngine.getPlaylist().length + 1}`
+            });
 
-          if (res && res.error === 'PRO_REQUIRED') {
-            if (window.UpgradeModal && window.UpgradeModal.open) window.UpgradeModal.open('playlist');
-          } else {
-            renderPlaylistQueue();
+            if (res && res.error === 'PRO_REQUIRED') {
+              if (window.UpgradeModal && window.UpgradeModal.open) window.UpgradeModal.open('playlist');
+              break;
+            }
           }
+          renderPlaylistQueue();
         } catch (err) {
-          alert('Could not load PDF file into playlist: ' + err.message);
+          alert('Could not load PDF files into playlist: ' + err.message);
         } finally {
           playlistFileInput.value = '';
         }
@@ -1165,8 +1673,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     window.addEventListener('keydown', (e) => {
-      // Keyboard focus trap inside open dialogs (WCAG 2.1 AA)
       const openModal = document.querySelector('.modal-backdrop.open');
+
+      // Keyboard focus trap inside open dialogs (WCAG 2.1 AA)
       if (openModal && e.key === 'Tab') {
         const focusable = openModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
         if (focusable.length > 0) {
@@ -1184,7 +1693,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
 
-      if (document.activeElement === notesTextarea) return;
+      // Check if user is typing into an input, textarea, select, or contenteditable field
+      const isEditing = (
+        (e.target && typeof e.target.matches === 'function' && e.target.matches('input, textarea, select, [contenteditable]')) ||
+        (document.activeElement && typeof document.activeElement.matches === 'function' && document.activeElement.matches('input, textarea, select, [contenteditable]'))
+      );
+
+      // If user is editing or any modal is currently open, suppress presenter shortcuts (allow Escape to close modals)
+      if (e.key === 'Escape') {
+        // Fall through to the Escape handler below to dismiss popovers or modals
+      } else {
+        if (isEditing) return;
+        if (openModal && e.key !== 'Tab') return;
+      }
 
       if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
@@ -1208,6 +1729,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTool(activeTool === 'pen' ? 'select' : 'pen');
       } else if (e.key === 'h' || e.key === 'H') {
         setTool(activeTool === 'highlighter' ? 'select' : 'highlighter');
+      } else if (e.key === 's' || e.key === 'S') {
+        toggleSpotlightMode();
       } else if (e.key === 'g' || e.key === 'G') {
         e.preventDefault();
         if (gridModal && gridModal.classList.contains('open')) {
@@ -1222,6 +1745,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (e.key === '?') {
         shortcutsModal.classList.toggle('open');
       } else if (e.key === 'Escape') {
+        if (proToolsMenuPopover && proToolsMenuPopover.style.display !== 'none') {
+          proToolsMenuPopover.style.display = 'none';
+          if (btnProToolsMenu) {
+            btnProToolsMenu.classList.remove('active');
+            btnProToolsMenu.setAttribute('aria-expanded', 'false');
+          }
+          return;
+        }
         const openModal = document.querySelector('.modal-backdrop.open');
         if (openModal) {
           openModal.classList.remove('open');

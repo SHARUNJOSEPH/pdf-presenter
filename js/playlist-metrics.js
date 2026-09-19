@@ -329,6 +329,8 @@
             deckId: targetDeck.id,
             title: targetDeck.title,
             path: targetDeck.path,
+            pdfData: targetDeck.pdfBuffer || null,
+            pdfBuffer: targetDeck.pdfBuffer || null,
             slideCount: targetDeck.slideCount,
             preserveAudienceWindow: true,
             timestamp: Date.now()

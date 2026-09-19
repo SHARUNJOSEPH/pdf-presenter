@@ -106,6 +106,24 @@
     "keySuccess": "专业版功能已成功解锁！",
     "keyInvalid": "许可证密钥无效，请核对后重试。",
     "trialBadge": "15分钟试用已开启",
-    "startTrial": "开启15分钟试用"
+    "startTrial": "开启15分钟试用",
+    "ndiTitle": "NDI® 网络 IP 视频广播",
+    "ndiDesc": "通过本地网络向 OBS、vMix 和导播台推流演示画面及透明通道字幕条。",
+    "ndiBroadcastActive": "正在实时进行 IP 网络推流",
+    "ndiStreamEndpoints": "推流端点与媒体源",
+    "ndiAlphaKeyStream": "Alpha 透明通道叠加流",
+    "confidenceTitle": "舞台返送监视器与提词器",
+    "confidenceDesc": "专属第三屏幕舞台地监视器，配备超大演讲倒计时、提词器备注和静音控台提示。",
+    "confidenceOpenWindow": "启动舞台监视窗口（第3屏幕）",
+    "confidenceWebUrl": "远程返送网页访问地址",
+    "stageCues": "控台静音提示信息",
+    "spotlightTitle": "电影级聚光灯专注模式",
+    "spotlightDesc": "压暗背景幻灯片，通过平滑径向光束聚焦核心数据与图表 (S)。",
+    "spotlightShortcut": "聚光灯模式 (S)",
+    "automationTitle": "OBS Studio 与 vMix 导播自动化",
+    "automationDesc": "在演讲开始、黑屏遮挡和退出演讲时自动触发导播台场景切换。",
+    "automationObs": "OBS Studio WebSocket (v5)",
+    "automationVmix": "vMix HTTP 接口",
+    "automationScenes": "场景自动化映射配置"
   }
 }

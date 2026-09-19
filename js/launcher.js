@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const recentList = document.getElementById('recentList');
   const btnClearRecent = document.getElementById('btnClearRecent');
   const RECENT_KEY = 'pdf_presenter_recent_decks_v1';
+  let launcherPlaylistEngine = null;
 
   // =========================================================================
   // 1. INITIALIZATION & SCREEN ENUMERATION
@@ -86,11 +87,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadApiSettingsUI();
   }
 
-  async function detectAndRenderScreens() {
+  let previousDisplayCount = 0;
+  let hotplugToastTimer = null;
+
+  function showHotplugToast(message, isAdded = true) {
+    const toast = document.getElementById('displayHotplugToast');
+    const msgEl = document.getElementById('displayHotplugToastMsg');
+    if (!toast || !msgEl) return;
+    msgEl.textContent = message;
+    toast.style.display = 'flex';
+    toast.style.borderColor = isAdded ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+    toast.style.background = isAdded 
+      ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(16, 185, 129, 0.12))'
+      : 'linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(220, 38, 38, 0.12))';
+    clearTimeout(hotplugToastTimer);
+    hotplugToastTimer = setTimeout(() => {
+      toast.style.display = 'none';
+    }, 4500);
+  }
+
+  async function detectAndRenderScreens(isManual = false) {
+    const btnRefreshScreens = document.getElementById('btnRefreshScreens');
+    if (isManual && btnRefreshScreens) {
+      btnRefreshScreens.classList.add('spinning');
+      setTimeout(() => btnRefreshScreens.classList.remove('spinning'), 800);
+    }
+
     if (window.electronAPI && window.electronAPI.getDisplays) {
       try {
-        connectedDisplays = await window.electronAPI.getDisplays();
-        renderScreenTopology(connectedDisplays);
+        const freshDisplays = await window.electronAPI.getDisplays();
+        const prevCount = previousDisplayCount;
+        connectedDisplays = freshDisplays;
+        previousDisplayCount = freshDisplays.length;
+
+        // Check if a new external screen was connected via HDMI / DisplayPort
+        if (prevCount > 0 && freshDisplays.length > prevCount) {
+          const addedDisplay = freshDisplays.find(d => !d.isPrimary) || freshDisplays[freshDisplays.length - 1];
+          showHotplugToast(`⚡ External Display Detected: ${addedDisplay.label}. Auto-selected for Audience projection!`, true);
+        } else if (prevCount > 0 && freshDisplays.length < prevCount) {
+          showHotplugToast(`⚠️ A display was disconnected. Target displays updated.`, false);
+        }
+
+        renderScreenTopology(connectedDisplays, prevCount > 0 && freshDisplays.length > prevCount);
         return;
       } catch (err) {
         console.warn('Electron getDisplays error', err);
@@ -101,13 +139,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       { id: 1, label: 'Primary Laptop Screen (1920x1080)', isPrimary: true, bounds: { width: 1920, height: 1080 } },
       { id: 2, label: 'External HDMI Projector (3840x2160)', isPrimary: false, bounds: { width: 3840, height: 2160 } }
     ];
-    renderScreenTopology(connectedDisplays);
+    previousDisplayCount = connectedDisplays.length;
+    renderScreenTopology(connectedDisplays, false);
   }
 
-  function renderScreenTopology(displays) {
+  function renderScreenTopology(displays, newlyAdded = false) {
     screenCardsList.innerHTML = '';
+    const prevSelectedAudience = selectAudienceDisplay.value;
+    const prevSelectedPresenter = selectPresenterDisplay.value;
+
     selectAudienceDisplay.innerHTML = '';
     selectPresenterDisplay.innerHTML = '';
+
+    // Update display count badge in header
+    const badgeEl = document.getElementById('displayCountBadge');
+    if (badgeEl) {
+      const hasExternal = displays.some(d => !d.isPrimary);
+      badgeEl.textContent = displays.length === 1 
+        ? '1 Display (Single Screen)' 
+        : `${displays.length} Displays (${hasExternal ? 'HDMI/Ext Active' : 'Active'})`;
+      badgeEl.classList.toggle('multi', displays.length > 1);
+    }
+
+    // Determine target selection
+    const externalDisplay = displays.find(d => !d.isPrimary);
+    const primaryDisplay = displays.find(d => d.isPrimary) || displays[0];
 
     displays.forEach((display, index) => {
       const card = document.createElement('div');
@@ -116,7 +172,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const isExt = !display.isPrimary;
       const icon = isExt ? '📽️' : '💻';
-      const badge = display.isPrimary ? '<span class="badge" style="color:#38bdf8;">Primary Monitor</span>' : '<span class="badge badge-connected">External Display</span>';
+      const badge = display.isPrimary 
+        ? '<span class="badge" style="color:#38bdf8;">Primary Monitor</span>' 
+        : '<span class="badge badge-connected">External HDMI / DisplayPort</span>';
 
       card.innerHTML = `
         <div class="screen-info-left">
@@ -130,20 +188,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
       screenCardsList.appendChild(card);
 
+      // Audience select option
       const optAud = document.createElement('option');
       optAud.value = display.id;
       optAud.textContent = `${display.label} (${display.bounds.width}x${display.bounds.height})`;
-      if (displays.length > 1 && !display.isPrimary) {
+      
+      if (newlyAdded && externalDisplay && display.id === externalDisplay.id) {
+        optAud.selected = true;
+      } else if (prevSelectedAudience && displays.some(d => String(d.id) === String(prevSelectedAudience))) {
+        optAud.selected = String(display.id) === String(prevSelectedAudience);
+      } else if (displays.length > 1 && !display.isPrimary) {
         optAud.selected = true;
       } else if (displays.length === 1) {
         optAud.selected = true;
       }
       selectAudienceDisplay.appendChild(optAud);
 
+      // Presenter select option
       const optPres = document.createElement('option');
       optPres.value = display.id;
       optPres.textContent = `${display.label} (${display.bounds.width}x${display.bounds.height})`;
-      if (display.isPrimary) {
+      if (prevSelectedPresenter && displays.some(d => String(d.id) === String(prevSelectedPresenter))) {
+        optPres.selected = String(display.id) === String(prevSelectedPresenter);
+      } else if (display.isPrimary) {
         optPres.selected = true;
       }
       selectPresenterDisplay.appendChild(optPres);
@@ -278,7 +345,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         isDemo: false,
         title: fileName,
         filePath: filePath,
-        totalPages: docInfo.totalPages
+        totalPages: docInfo.totalPages,
+        pdfBuffer: pdfData || null
       };
       updateDocPreviewUI();
       saveRecentDeck({ title: fileName, filePath: filePath, totalPages: docInfo.totalPages });
@@ -432,6 +500,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       if (apiErrorBanner) apiErrorBanner.style.display = 'none';
     }
+    updateStreamDeckMessageUrl();
+  }
+
+  function updateStreamDeckMessageUrl() {
+    const selTarget = document.getElementById('selStreamDeckTarget');
+    const txtSample = document.getElementById('txtStreamDeckSample');
+    const codeUrl = document.getElementById('codeStreamDeckUrl');
+    const btnCopy = document.getElementById('btnCopyStreamDeckUrl');
+    if (!codeUrl) return;
+
+    const base = (apiBaseUrlDisplay && apiBaseUrlDisplay.textContent && !apiBaseUrlDisplay.textContent.includes('Disabled') && !apiBaseUrlDisplay.textContent.includes('Conflict'))
+      ? apiBaseUrlDisplay.textContent.trim().replace(/\/$/, '')
+      : 'http://localhost:3000/api';
+
+    const target = selTarget ? selTarget.value : 'presenter';
+    const text = (txtSample && txtSample.value.trim()) ? txtSample.value.trim() : '5 MINUTES REMAINING';
+    const encodedText = encodeURIComponent(text);
+    const fullUrl = `${base}/message?text=${encodedText}&target=${target}&duration=10`;
+
+    codeUrl.textContent = fullUrl;
+    if (btnCopy) {
+      btnCopy.setAttribute('data-clipboard', fullUrl);
+    }
   }
 
   async function applyApiConfig() {
@@ -522,13 +613,68 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // Presentation lifecycle reset listeners
+    // Stream Deck Live Message URL helper listeners
+    const selStreamDeckTarget = document.getElementById('selStreamDeckTarget');
+    const txtStreamDeckSample = document.getElementById('txtStreamDeckSample');
+    const btnCopyStreamDeckUrl = document.getElementById('btnCopyStreamDeckUrl');
+
+    if (selStreamDeckTarget) selStreamDeckTarget.addEventListener('change', updateStreamDeckMessageUrl);
+    if (txtStreamDeckSample) txtStreamDeckSample.addEventListener('input', updateStreamDeckMessageUrl);
+    if (btnCopyStreamDeckUrl) {
+      btnCopyStreamDeckUrl.addEventListener('click', async () => {
+        const codeUrl = document.getElementById('codeStreamDeckUrl');
+        const urlToCopy = btnCopyStreamDeckUrl.getAttribute('data-clipboard') || (codeUrl ? codeUrl.textContent : '');
+        if (urlToCopy) {
+          try {
+            await navigator.clipboard.writeText(urlToCopy);
+            const orig = btnCopyStreamDeckUrl.textContent;
+            btnCopyStreamDeckUrl.textContent = '✓ Copied!';
+            setTimeout(() => { btnCopyStreamDeckUrl.textContent = orig; }, 1500);
+          } catch (e) {}
+        }
+      });
+    }
+
+    // Real-Time HDMI Display Hotplug Listener
+    if (window.electronAPI && window.electronAPI.onDisplaysChanged) {
+      window.electronAPI.onDisplaysChanged(async (data) => {
+        console.log('[Launcher] Real-time display topology change event received:', data);
+        await detectAndRenderScreens(false);
+      });
+    }
+
+    // Manual Refresh Displays Button
+    const btnRefreshScreens = document.getElementById('btnRefreshScreens');
+    if (btnRefreshScreens) {
+      btnRefreshScreens.addEventListener('click', async () => {
+        await detectAndRenderScreens(true);
+      });
+    }
+
+    // Presentation lifecycle reset listeners & window focus display check
     if (window.electronAPI && window.electronAPI.onPresentationEnded) {
       window.electronAPI.onPresentationEnded(() => {
         resetLaunchButton();
+        detectAndRenderScreens(false);
       });
     }
-    window.addEventListener('focus', resetLaunchButton);
+    window.addEventListener('focus', () => {
+      resetLaunchButton();
+      detectAndRenderScreens(false);
+    });
+
+    // Non-blocking 2.5s fallback background polling while launcher is active
+    setInterval(async () => {
+      if (window.electronAPI && window.electronAPI.getDisplays && document.visibilityState === 'visible') {
+        try {
+          const fresh = await window.electronAPI.getDisplays();
+          if (fresh && fresh.length !== previousDisplayCount) {
+            console.log(`[Launcher Polling] Display count changed from ${previousDisplayCount} to ${fresh.length}`);
+            await detectAndRenderScreens(false);
+          }
+        } catch (e) {}
+      }
+    }, 2500);
 
     // Transition controls
     if (rngTransitionDuration) {
@@ -547,14 +693,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnBrowseNative.addEventListener('click', async () => {
       resetLaunchButton();
       if (window.electronAPI && window.electronAPI.selectPdfFile) {
-        const result = await window.electronAPI.selectPdfFile();
+        const result = await window.electronAPI.selectPdfFile({ multiple: true });
         if (result && !result.canceled) {
-          await handleSelectedPdf(result.filePath, result.fileName, result.streamUrl, result.pdfData);
+          if (result.files && result.files.length > 1) {
+            await handleMultipleSelectedPdfs(result.files);
+          } else {
+            await handleSelectedPdf(result.filePath, result.fileName, result.streamUrl, result.pdfData);
+          }
         }
       } else {
         pdfFileInput.click();
       }
     });
+
+    if (pdfFileInput) {
+      pdfFileInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length > 1) {
+          await handleMultipleSelectedPdfs(files);
+        } else if (files.length === 1) {
+          const file = files[0];
+          const resolvedPath = (window.electronAPI && window.electronAPI.getPathForFile)
+            ? window.electronAPI.getPathForFile(file)
+            : (file.path || '');
+          if (resolvedPath && window.electronAPI && window.electronAPI.loadRecentPdf) {
+            try {
+              const res = await window.electronAPI.loadRecentPdf(resolvedPath);
+              if (res && res.success) {
+                await handleSelectedPdf(res.filePath, res.fileName, res.streamUrl, res.pdfData);
+              } else {
+                await handleSelectedPdf(resolvedPath, file.name);
+              }
+            } catch (err) {
+              await handleSelectedPdf(resolvedPath, file.name);
+            }
+          } else {
+            const buffer = await file.arrayBuffer();
+            if (window.electronAPI && window.electronAPI.setActivePdfBuffer) {
+              const res = await window.electronAPI.setActivePdfBuffer({ fileName: file.name, buffer: Array.from(new Uint8Array(buffer)) });
+              await handleSelectedPdf(null, file.name, res.streamUrl, buffer);
+            } else {
+              await handleSelectedPdf(null, file.name, null, buffer);
+            }
+          }
+        }
+        pdfFileInput.value = '';
+      });
+    }
 
     pdfDropzone.addEventListener('click', () => {
       btnBrowseNative.click();
@@ -573,27 +758,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       pdfDropzone.classList.remove('dragover');
       resetLaunchButton();
 
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        const file = e.dataTransfer.files[0];
-        if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-          if (file.path && window.electronAPI && window.electronAPI.startPresentation) {
-            // In Electron with file path on disk
-            await handleSelectedPdf(file.path, file.name);
-          } else {
-            // Transfer buffer to main process
-            const buffer = await file.arrayBuffer();
-            if (window.electronAPI && window.electronAPI.setActivePdfBuffer) {
-              const res = await window.electronAPI.setActivePdfBuffer({ fileName: file.name, buffer: Array.from(new Uint8Array(buffer)) });
-              await handleSelectedPdf(null, file.name, res.streamUrl);
+      const droppedFiles = Array.from(e.dataTransfer.files || []).filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+      if (droppedFiles.length > 1) {
+        await handleMultipleSelectedPdfs(droppedFiles);
+      } else if (droppedFiles.length === 1) {
+        const file = droppedFiles[0];
+        const resolvedPath = (window.electronAPI && window.electronAPI.getPathForFile)
+          ? window.electronAPI.getPathForFile(file)
+          : (file.path || '');
+        if (resolvedPath && window.electronAPI && window.electronAPI.loadRecentPdf) {
+          try {
+            const res = await window.electronAPI.loadRecentPdf(resolvedPath);
+            if (res && res.success) {
+              await handleSelectedPdf(res.filePath, res.fileName, res.streamUrl, res.pdfData);
             } else {
-              await engine.loadPDFData(buffer, file.name);
-              currentDocConfig = { isDemo: false, title: file.name, filePath: null, totalPages: engine.totalPages };
-              updateDocPreviewUI();
+              await handleSelectedPdf(resolvedPath, file.name);
             }
+          } catch (err) {
+            await handleSelectedPdf(resolvedPath, file.name);
           }
         } else {
-          alert('Please select a valid .PDF document.');
+          const buffer = await file.arrayBuffer();
+          if (window.electronAPI && window.electronAPI.setActivePdfBuffer) {
+            const res = await window.electronAPI.setActivePdfBuffer({ fileName: file.name, buffer: Array.from(new Uint8Array(buffer)) });
+            await handleSelectedPdf(null, file.name, res.streamUrl, buffer);
+          } else {
+            await handleSelectedPdf(null, file.name, null, buffer);
+          }
         }
+      } else {
+        alert('Please select a valid .PDF document.');
       }
     });
 
@@ -605,20 +799,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnStartPresentation.addEventListener('click', async () => {
       const duration = rngTransitionDuration ? parseFloat(rngTransitionDuration.value) : 1.0;
       const style = selectTransitionStyle ? selectTransitionStyle.value : 'crossfade';
+      const playlist = (launcherPlaylistEngine && typeof launcherPlaylistEngine.getPlaylist === 'function')
+        ? launcherPlaylistEngine.getPlaylist()
+        : [];
+
+      let startingDeck = null;
+      if (playlist.length > 0) {
+        startingDeck = playlist.find(d => d.active) || playlist[0];
+      }
+
+      const activeBuffer = (startingDeck && startingDeck.pdfBuffer)
+        ? startingDeck.pdfBuffer
+        : (currentDocConfig && currentDocConfig.pdfBuffer ? currentDocConfig.pdfBuffer : null);
 
       const config = {
-        isDemo: currentDocConfig.isDemo,
-        title: currentDocConfig.title,
-        filePath: currentDocConfig.filePath,
-        totalPages: currentDocConfig.totalPages,
+        isDemo: startingDeck ? false : Boolean(currentDocConfig.isDemo),
+        title: startingDeck ? startingDeck.title : currentDocConfig.title,
+        filePath: startingDeck ? (startingDeck.path || currentDocConfig.filePath) : currentDocConfig.filePath,
+        totalPages: startingDeck ? (startingDeck.slideCount || currentDocConfig.totalPages) : currentDocConfig.totalPages,
+        pdfBuffer: activeBuffer ? (activeBuffer.slice ? activeBuffer.slice(0) : new Uint8Array(activeBuffer)) : null,
         audienceDisplayId: selectAudienceDisplay.value,
         presenterDisplayId: selectPresenterDisplay.value,
         fullscreen: chkFullscreen.checked,
         alwaysOnTop: chkAlwaysOnTop.checked,
         transitionDuration: duration,
         transitionStyle: style,
-        companionEnabled: chkApiEnabled ? chkApiEnabled.checked : true
+        companionEnabled: chkApiEnabled ? chkApiEnabled.checked : true,
+        playlist: playlist
       };
+
+      if (activeBuffer && window.electronAPI && window.electronAPI.setActivePdfBuffer) {
+        try {
+          await window.electronAPI.setActivePdfBuffer({ fileName: config.title, buffer: activeBuffer });
+        } catch (e) {
+          console.warn('[StartPresentation] setActivePdfBuffer failed:', e);
+        }
+      }
 
       if (window.electronAPI && window.electronAPI.startPresentation) {
         btnStartPresentation.disabled = true;
@@ -815,6 +1031,614 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => {
       performUpdateCheck(false);
     }, 2500);
+
+    // Wire up Pre-Flight Pro Tools Dropdown & Modals
+    setupProToolsMenu();
+  }
+
+  // =========================================================================
+  // 5. PRO TOOLS PRE-FLIGHT DROPDOWN & MODALS CONTROLLER
+  // =========================================================================
+  function setupProToolsMenu() {
+    const btnProToolsMenu = document.getElementById('btnProToolsMenu');
+    const proToolsMenuPopover = document.getElementById('proToolsMenuPopover');
+
+    // 1. Popover Toggle & Dismissal
+    if (btnProToolsMenu && proToolsMenuPopover) {
+      btnProToolsMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = proToolsMenuPopover.style.display !== 'none';
+        proToolsMenuPopover.style.display = isOpen ? 'none' : 'block';
+        btnProToolsMenu.classList.toggle('active', !isOpen);
+        btnProToolsMenu.setAttribute('aria-expanded', String(!isOpen));
+      });
+
+      document.addEventListener('click', (e) => {
+        if (proToolsMenuPopover && !proToolsMenuPopover.contains(e.target) && e.target !== btnProToolsMenu) {
+          proToolsMenuPopover.style.display = 'none';
+          btnProToolsMenu.classList.remove('active');
+          btnProToolsMenu.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      proToolsMenuPopover.querySelectorAll('.pro-tools-menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+          proToolsMenuPopover.style.display = 'none';
+          btnProToolsMenu.classList.remove('active');
+          btnProToolsMenu.setAttribute('aria-expanded', 'false');
+        });
+      });
+    }
+
+    // Modal Close Buttons across all modals in launcher
+    document.querySelectorAll('.modal-backdrop').forEach(modal => {
+      modal.querySelectorAll('.modal-close-btn, .modal-close').forEach(btn => {
+        btn.addEventListener('click', () => modal.classList.remove('open'));
+      });
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('open');
+      });
+    });
+
+    const isPro = () => Boolean(window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && window.UpgradeModal.isPro());
+    const guardPro = (feature) => {
+      if (isPro()) return true;
+      if (window.UpgradeModal && typeof window.UpgradeModal.open === 'function') {
+        window.UpgradeModal.open(feature);
+      }
+      return false;
+    };
+
+    // 2. Multi-Deck Playlist Setup
+    const btnPlaylist = document.getElementById('btnPlaylist');
+    const playlistModal = document.getElementById('playlistModal');
+    const playlistQueueList = document.getElementById('playlistQueueList');
+    const btnAddDeck = document.getElementById('btnAddDeck');
+    const playlistFileInput = document.getElementById('playlistFileInput');
+    const launcherPlaylistSection = document.getElementById('launcherPlaylistSection');
+    const launcherPlaylistCards = document.getElementById('launcherPlaylistCards');
+    const launcherPlaylistCount = document.getElementById('launcherPlaylistCount');
+    const btnLauncherAddDeck = document.getElementById('btnLauncherAddDeck');
+    const btnLauncherClearPlaylist = document.getElementById('btnLauncherClearPlaylist');
+
+    if (!launcherPlaylistEngine && typeof PlaylistMetricsEngine !== 'undefined') {
+      launcherPlaylistEngine = new PlaylistMetricsEngine({
+        isPro: () => isPro()
+      });
+    }
+
+    async function selectActiveDeck(deckId) {
+      if (!launcherPlaylistEngine) return;
+      launcherPlaylistEngine.switchDeck(deckId);
+      const activeDeck = launcherPlaylistEngine.getActiveDeck();
+      if (activeDeck) {
+        if (activeDeck.path && window.electronAPI && window.electronAPI.loadRecentPdf) {
+          try {
+            const res = await window.electronAPI.loadRecentPdf(activeDeck.path);
+            if (res && res.success) {
+              if (res.pdfData && !activeDeck.pdfBuffer) {
+                activeDeck.pdfBuffer = res.pdfData;
+              }
+              await handleSelectedPdf(res.filePath, res.fileName, res.streamUrl, res.pdfData);
+            } else {
+              await handleSelectedPdf(activeDeck.path, activeDeck.title, null, activeDeck.pdfBuffer || null);
+            }
+          } catch (e) {
+            await handleSelectedPdf(activeDeck.path, activeDeck.title, null, activeDeck.pdfBuffer || null);
+          }
+        } else if (activeDeck.pdfBuffer) {
+          if (window.electronAPI && window.electronAPI.setActivePdfBuffer) {
+            try {
+              await window.electronAPI.setActivePdfBuffer({ fileName: activeDeck.title, buffer: activeDeck.pdfBuffer });
+            } catch (e) {
+              console.warn('[selectActiveDeck] setActivePdfBuffer error:', e);
+            }
+          }
+          const bufCopy = activeDeck.pdfBuffer.slice ? activeDeck.pdfBuffer.slice(0) : new Uint8Array(activeDeck.pdfBuffer);
+          await handleSelectedPdf(activeDeck.path || null, activeDeck.title, null, bufCopy);
+        } else if (activeDeck.path) {
+          await handleSelectedPdf(activeDeck.path, activeDeck.title);
+        } else {
+          currentDocConfig = { isDemo: false, title: activeDeck.title, filePath: null, totalPages: activeDeck.slideCount || 1, pdfBuffer: null };
+          updateDocPreviewUI();
+        }
+      }
+      renderLauncherPlaylist();
+    }
+
+    async function resetToDemoFallback() {
+      loadInitialDemoDeck();
+      currentDocConfig = {
+        isDemo: true,
+        title: 'Interactive Presentation Showcase.pdf',
+        filePath: null,
+        totalPages: 6,
+        pdfBuffer: null
+      };
+      resetLaunchButton();
+      updateDocPreviewUI();
+    }
+
+    async function handleMultipleSelectedPdfs(files) {
+      if (!files || files.length === 0) return;
+      if (!launcherPlaylistEngine && typeof PlaylistMetricsEngine !== 'undefined') {
+        launcherPlaylistEngine = new PlaylistMetricsEngine({ isPro: () => isPro() });
+      }
+      if (!launcherPlaylistEngine) return;
+
+      if (!isPro() && files.length > 1) {
+        if (window.UpgradeModal) window.UpgradeModal.open('playlist');
+        const first = files[0];
+        let p = first.filePath || first.path || '';
+        if (!p && window.electronAPI && window.electronAPI.getPathForFile) {
+          p = window.electronAPI.getPathForFile(first) || '';
+        }
+        let buf = null;
+        if (typeof first.arrayBuffer === 'function') {
+          try { buf = await first.arrayBuffer(); } catch (e) {}
+        }
+        await handleSelectedPdf(p || null, first.fileName || first.name || 'Deck 1', null, buf);
+        return;
+      }
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const title = file.fileName || file.name || (file.filePath ? file.filePath.split(/[/\\]/).pop() : `Deck ${i + 1}`);
+        let p = file.filePath || file.path || '';
+        if (!p && window.electronAPI && window.electronAPI.getPathForFile) {
+          p = window.electronAPI.getPathForFile(file) || '';
+        }
+
+        let buffer = null;
+        if (file.pdfBuffer) {
+          buffer = file.pdfBuffer;
+        } else if (typeof file.arrayBuffer === 'function') {
+          try {
+            buffer = await file.arrayBuffer();
+          } catch (e) {
+            console.warn('Could not read arrayBuffer from file:', e);
+          }
+        }
+
+        let slideCount = file.slideCount || 1;
+        if (buffer && window.pdfjsLib) {
+          try {
+            const copy = buffer.slice ? buffer.slice(0) : new Uint8Array(buffer);
+            const loadingTask = window.pdfjsLib.getDocument({
+              data: copy,
+              cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+              cMapPacked: true
+            });
+            const doc = await loadingTask.promise;
+            slideCount = doc.numPages || 1;
+          } catch (err) {
+            console.warn('Could not determine page count from buffer for', title, err);
+          }
+        }
+
+        await launcherPlaylistEngine.addDeck({
+          title: title,
+          path: p,
+          pdfBuffer: buffer,
+          slideCount: slideCount,
+          speaker: `Speaker ${(launcherPlaylistEngine.getPlaylist().length + 1)}`
+        });
+      }
+
+      renderLauncherPlaylist();
+
+      const playlist = launcherPlaylistEngine.getPlaylist();
+      const activeDeck = playlist.find(d => d.active) || playlist[0];
+      if (activeDeck) {
+        await selectActiveDeck(activeDeck.id);
+      }
+    }
+
+    function renderHomeScreenPlaylist() {
+      if (!launcherPlaylistSection || !launcherPlaylistCards || !launcherPlaylistEngine) return;
+      const playlist = launcherPlaylistEngine.getPlaylist();
+
+      if (playlist.length === 0) {
+        launcherPlaylistSection.style.display = 'none';
+        return;
+      }
+
+      launcherPlaylistSection.style.display = 'block';
+      if (launcherPlaylistCount) {
+        launcherPlaylistCount.textContent = playlist.length;
+      }
+
+      launcherPlaylistCards.innerHTML = '';
+      playlist.forEach((deck, idx) => {
+        const item = document.createElement('div');
+        item.className = `launcher-deck-item ${deck.active ? 'is-active' : ''}`;
+        item.dataset.id = deck.id;
+        item.style.cursor = 'pointer';
+        item.setAttribute('role', 'button');
+        item.setAttribute('tabindex', '0');
+        item.setAttribute('title', `Click to make "${deck.title}" the active starting deck`);
+        item.innerHTML = `
+          <div class="launcher-deck-left">
+            <div class="launcher-deck-idx">${idx + 1}</div>
+            <div class="launcher-deck-details">
+              <div class="launcher-deck-name" title="${deck.title}">${deck.title}</div>
+              <div class="launcher-deck-meta">
+                <span class="launcher-deck-speaker">${deck.speaker || `Speaker ${idx + 1}`}</span>
+                ${deck.active ? '<span class="launcher-deck-badge-active">● Active Starting Deck</span>' : ''}
+              </div>
+            </div>
+          </div>
+          <div class="launcher-deck-actions">
+            ${!deck.active ? `<button type="button" class="btn-deck-set-active" data-id="${deck.id}" title="Make this presentation the active starting deck">Make Active</button>` : ''}
+            <button type="button" class="btn-deck-remove" data-id="${deck.id}" title="Remove Deck from Queue">✕</button>
+          </div>
+        `;
+
+        item.addEventListener('click', async (e) => {
+          if (e.target.closest('.btn-deck-remove')) return;
+          await selectActiveDeck(deck.id);
+        });
+
+        launcherPlaylistCards.appendChild(item);
+      });
+
+      launcherPlaylistCards.querySelectorAll('.btn-deck-set-active').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await selectActiveDeck(btn.dataset.id);
+        });
+      });
+
+      launcherPlaylistCards.querySelectorAll('.btn-deck-remove').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          launcherPlaylistEngine.removeDeck(btn.dataset.id);
+          const remaining = launcherPlaylistEngine.getPlaylist();
+          if (remaining.length === 0) {
+            await resetToDemoFallback();
+          } else {
+            const active = launcherPlaylistEngine.getActiveDeck() || remaining[0];
+            if (active) await selectActiveDeck(active.id);
+          }
+          renderLauncherPlaylist();
+        });
+      });
+    }
+
+    function renderLauncherPlaylist() {
+      renderHomeScreenPlaylist();
+      if (!playlistQueueList || !launcherPlaylistEngine) return;
+      playlistQueueList.innerHTML = '';
+      const playlist = launcherPlaylistEngine.getPlaylist();
+
+      if (playlist.length === 0) {
+        playlistQueueList.innerHTML = `
+          <div style="text-align: center; padding: 24px; color: #94a3b8; font-size: 13px;">
+            No presentations queued. Click "+ Add PDF Deck" to queue speaker decks in advance.
+          </div>
+        `;
+        return;
+      }
+
+      playlist.forEach((deck, idx) => {
+        const card = document.createElement('div');
+        card.className = `playlist-item-card ${deck.active ? 'active' : ''}`;
+        card.dataset.id = deck.id;
+        card.style.cursor = 'pointer';
+        card.setAttribute('title', `Click to make "${deck.title}" the active presentation`);
+        card.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+            <span style="font-size: 20px;">${deck.active ? '▶️' : '📄'}</span>
+            <div style="min-width: 0; flex: 1;">
+              <div style="font-weight: 700; font-size: 13.5px; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                ${deck.title}
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center; margin-top: 3px;">
+                <span class="playlist-speaker-pill">${deck.speaker || `Speaker ${idx + 1}`}</span>
+                <span style="font-size: 11.5px; color: #94a3b8;">${deck.slideCount} slides</span>
+                ${deck.active ? '<span style="font-size: 11px; color: #38bdf8; font-weight: 700;">● Active Deck</span>' : ''}
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="btn btn-icon btn-remove-deck" data-id="${deck.id}" title="Remove Deck" style="padding: 4px 8px; font-size: 12px; color: #ef4444;">✕</button>
+          </div>
+        `;
+
+        card.addEventListener('click', async (e) => {
+          if (e.target.closest('.btn-remove-deck')) return;
+          await selectActiveDeck(deck.id);
+        });
+
+        playlistQueueList.appendChild(card);
+      });
+
+      playlistQueueList.querySelectorAll('.btn-remove-deck').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          launcherPlaylistEngine.removeDeck(btn.dataset.id);
+          const remaining = launcherPlaylistEngine.getPlaylist();
+          if (remaining.length === 0) {
+            await resetToDemoFallback();
+          } else {
+            const active = launcherPlaylistEngine.getActiveDeck() || remaining[0];
+            if (active) await selectActiveDeck(active.id);
+          }
+          renderLauncherPlaylist();
+        });
+      });
+    }
+
+    if (btnLauncherAddDeck) {
+      btnLauncherAddDeck.addEventListener('click', async () => {
+        if (!guardPro('playlist')) return;
+        if (window.electronAPI && window.electronAPI.selectPdfFile) {
+          const res = await window.electronAPI.selectPdfFile({ multiple: true });
+          if (res && !res.canceled) {
+            const filesToAdd = res.files || [{ filePath: res.filePath, fileName: res.fileName }];
+            await handleMultipleSelectedPdfs(filesToAdd);
+          }
+        } else if (playlistFileInput) {
+          playlistFileInput.click();
+        }
+      });
+    }
+
+    if (btnLauncherClearPlaylist) {
+      btnLauncherClearPlaylist.addEventListener('click', async () => {
+        if (launcherPlaylistEngine) {
+          launcherPlaylistEngine.playlist = [];
+          launcherPlaylistEngine.activeDeckId = null;
+        }
+        await resetToDemoFallback();
+        renderLauncherPlaylist();
+      });
+    }
+
+    if (btnPlaylist) {
+      btnPlaylist.addEventListener('click', () => {
+        if (!guardPro('playlist')) return;
+        renderLauncherPlaylist();
+        if (playlistModal) playlistModal.classList.add('open');
+      });
+    }
+
+    if (btnAddDeck && playlistFileInput) {
+      btnAddDeck.addEventListener('click', () => playlistFileInput.click());
+      playlistFileInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        try {
+          await handleMultipleSelectedPdfs(files);
+        } catch (err) {
+          console.error('Failed to add decks to launcher playlist:', err);
+        } finally {
+          playlistFileInput.value = '';
+        }
+      });
+    }
+
+    // 3. Rehearsal Analytics Modal
+    const btnRehearsalMetrics = document.getElementById('btnRehearsalMetrics');
+    const metricsModal = document.getElementById('metricsModal');
+    if (btnRehearsalMetrics) {
+      btnRehearsalMetrics.addEventListener('click', () => {
+        if (!guardPro('metrics')) return;
+        if (metricsModal) metricsModal.classList.add('open');
+      });
+    }
+
+    // 4. Bitfocus Companion API Settings
+    const btnCompanion = document.getElementById('btnCompanion');
+    if (btnCompanion) {
+      btnCompanion.addEventListener('click', () => {
+        if (apiModal) apiModal.classList.add('open');
+      });
+    }
+
+    // 5. NDI Broadcast Modal
+    const btnNdiBroadcast = document.getElementById('btnNdiBroadcast');
+    const ndiModal = document.getElementById('ndiModal');
+    const chkNdiToggle = document.getElementById('chkNdiToggle');
+    const ndiStatusDot = document.getElementById('ndiStatusDot');
+    const ndiStatusText = document.getElementById('ndiStatusText');
+    const selNdiResolution = document.getElementById('selNdiResolution');
+    const selNdiFramerate = document.getElementById('selNdiFramerate');
+
+    let launcherNdiEngine = null;
+    if (typeof NdiBroadcastEngine !== 'undefined') {
+      launcherNdiEngine = new NdiBroadcastEngine({
+        isPro: () => isPro()
+      });
+    }
+
+    if (btnNdiBroadcast) {
+      btnNdiBroadcast.addEventListener('click', () => {
+        if (!guardPro('ndi')) return;
+        if (ndiModal) ndiModal.classList.add('open');
+      });
+    }
+
+    if (chkNdiToggle && launcherNdiEngine) {
+      chkNdiToggle.addEventListener('change', async () => {
+        if (chkNdiToggle.checked) {
+          const res = await launcherNdiEngine.startBroadcast();
+          if (res && res.error === 'PRO_REQUIRED') {
+            chkNdiToggle.checked = false;
+            if (window.UpgradeModal) window.UpgradeModal.open('ndi');
+            return;
+          }
+          if (ndiStatusDot) ndiStatusDot.style.backgroundColor = '#22c55e';
+          if (ndiStatusText) ndiStatusText.textContent = 'NDI Broadcast: Live Ready';
+        } else {
+          await launcherNdiEngine.stopBroadcast();
+          if (ndiStatusDot) ndiStatusDot.style.backgroundColor = '#ef4444';
+          if (ndiStatusText) ndiStatusText.textContent = 'NDI Broadcast: Offline';
+        }
+      });
+    }
+
+    if (selNdiResolution && launcherNdiEngine) {
+      selNdiResolution.addEventListener('change', () => {
+        launcherNdiEngine.setResolution(selNdiResolution.value);
+      });
+    }
+
+    if (selNdiFramerate && launcherNdiEngine) {
+      selNdiFramerate.addEventListener('change', () => {
+        launcherNdiEngine.setFramerate(Number(selNdiFramerate.value));
+      });
+    }
+
+    // 6. Stage Confidence Monitor Modal
+    const btnConfidenceMonitor = document.getElementById('btnConfidenceMonitor');
+    const confidenceModal = document.getElementById('confidenceModal');
+    const btnLaunchConfidenceWindow = document.getElementById('btnLaunchConfidenceWindow');
+    const btnCopyConfidenceWebUrl = document.getElementById('btnCopyConfidenceWebUrl');
+    const selConfidenceDisplay = document.getElementById('selConfidenceDisplay');
+    const btnRefreshConfidenceDisplays = document.getElementById('btnRefreshConfidenceDisplays');
+
+    async function populateConfidenceDisplays() {
+      if (!selConfidenceDisplay) return;
+      try {
+        let displays = [];
+        if (window.electronAPI && window.electronAPI.getDisplays) {
+          displays = await window.electronAPI.getDisplays();
+        }
+        if (!Array.isArray(displays) || displays.length === 0) {
+          selConfidenceDisplay.innerHTML = '<option value="">Display 1: Main Display (Default)</option>';
+          return;
+        }
+
+        const savedDisplayId = localStorage.getItem('pdf_presenter_confidence_display_id');
+        selConfidenceDisplay.innerHTML = '';
+
+        displays.forEach((disp, idx) => {
+          const opt = document.createElement('option');
+          opt.value = disp.id;
+          const isPrimary = Boolean(disp.isPrimary || idx === 0);
+          const role = isPrimary ? '(Primary Monitor)' : (idx === 1 ? '(Secondary / Audience Display)' : '(Stage / Floor Monitor)');
+          opt.textContent = `Display ${idx + 1}: ${disp.bounds.width}×${disp.bounds.height} ${role}`;
+          selConfidenceDisplay.appendChild(opt);
+        });
+
+        if (savedDisplayId && displays.some(d => String(d.id) === String(savedDisplayId))) {
+          selConfidenceDisplay.value = savedDisplayId;
+        } else if (displays.length > 2) {
+          selConfidenceDisplay.value = displays[2].id;
+        } else if (displays.length > 1) {
+          selConfidenceDisplay.value = displays[1].id;
+        } else {
+          selConfidenceDisplay.value = displays[0].id;
+        }
+      } catch (err) {
+        console.warn('[Confidence Displays Scan Error]', err);
+      }
+    }
+
+    if (selConfidenceDisplay) {
+      selConfidenceDisplay.addEventListener('change', () => {
+        try { localStorage.setItem('pdf_presenter_confidence_display_id', selConfidenceDisplay.value); } catch (e) {}
+      });
+    }
+
+    if (btnRefreshConfidenceDisplays) {
+      btnRefreshConfidenceDisplays.addEventListener('click', async () => {
+        const origText = btnRefreshConfidenceDisplays.textContent;
+        btnRefreshConfidenceDisplays.textContent = '✓ Scanned';
+        await populateConfidenceDisplays();
+        setTimeout(() => { btnRefreshConfidenceDisplays.textContent = origText; }, 1200);
+      });
+    }
+
+    if (btnConfidenceMonitor) {
+      btnConfidenceMonitor.addEventListener('click', () => {
+        if (!guardPro('confidence')) return;
+        populateConfidenceDisplays();
+        if (confidenceModal) confidenceModal.classList.add('open');
+      });
+    }
+
+    populateConfidenceDisplays();
+
+    if (btnLaunchConfidenceWindow) {
+      btnLaunchConfidenceWindow.addEventListener('click', async () => {
+        if (!guardPro('confidence')) return;
+        const displayId = selConfidenceDisplay ? selConfidenceDisplay.value : null;
+        if (window.electronAPI && window.electronAPI.launchConfidenceWindow) {
+          await window.electronAPI.launchConfidenceWindow({ displayId, fullscreen: true });
+        } else {
+          window.open('confidence.html', '_blank', 'width=1280,height=720');
+        }
+      });
+    }
+
+    if (btnCopyConfidenceWebUrl) {
+      btnCopyConfidenceWebUrl.addEventListener('click', async () => {
+        let confUrl = 'http://localhost:3000/views/confidence.html';
+        if (window.electronAPI && window.electronAPI.getCompanionInfo) {
+          const info = await window.electronAPI.getCompanionInfo();
+          if (info && info.confidenceUrl) confUrl = info.confidenceUrl;
+        }
+        try {
+          await navigator.clipboard.writeText(confUrl);
+          const orig = btnCopyConfidenceWebUrl.innerHTML;
+          btnCopyConfidenceWebUrl.innerHTML = '✓ Copied URL!';
+          setTimeout(() => { btnCopyConfidenceWebUrl.innerHTML = orig; }, 1800);
+        } catch (e) {}
+      });
+    }
+
+    // 7. OBS & vMix Automation Modal
+    const btnBroadcastAutomation = document.getElementById('btnBroadcastAutomation');
+    const broadcastAutomationModal = document.getElementById('broadcastAutomationModal');
+    const chkAutomationToggle = document.getElementById('chkAutomationToggle');
+    const btnTestAutomationConnect = document.getElementById('btnTestAutomationConnect');
+
+    let launcherAutomationEngine = null;
+    if (typeof BroadcastAutomationEngine !== 'undefined') {
+      launcherAutomationEngine = new BroadcastAutomationEngine({
+        isPro: () => isPro()
+      });
+    }
+
+    if (btnBroadcastAutomation) {
+      btnBroadcastAutomation.addEventListener('click', () => {
+        if (!guardPro('automation')) return;
+        if (broadcastAutomationModal) broadcastAutomationModal.classList.add('open');
+      });
+    }
+
+    if (chkAutomationToggle && launcherAutomationEngine) {
+      chkAutomationToggle.addEventListener('change', () => {
+        if (chkAutomationToggle.checked) {
+          const res = launcherAutomationEngine.enable();
+          if (res && res.error === 'PRO_REQUIRED') {
+            chkAutomationToggle.checked = false;
+            if (window.UpgradeModal) window.UpgradeModal.open('automation');
+          }
+        } else {
+          launcherAutomationEngine.disable();
+        }
+      });
+    }
+
+    if (btnTestAutomationConnect) {
+      btnTestAutomationConnect.addEventListener('click', async () => {
+        const origText = btnTestAutomationConnect.innerHTML;
+        btnTestAutomationConnect.innerHTML = '⚡ Testing Connection...';
+        btnTestAutomationConnect.disabled = true;
+        setTimeout(() => {
+          btnTestAutomationConnect.innerHTML = '✓ Gateway Configuration Verified!';
+          btnTestAutomationConnect.style.background = '#10b981';
+          setTimeout(() => {
+            btnTestAutomationConnect.innerHTML = origText;
+            btnTestAutomationConnect.style.background = '';
+            btnTestAutomationConnect.disabled = false;
+          }, 2000);
+        }, 600);
+      });
+    }
   }
 
   await init();

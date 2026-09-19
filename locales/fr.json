@@ -106,6 +106,24 @@
     "keySuccess": "Fonctionnalités Pro débloquées avec succès !",
     "keyInvalid": "Clé de licence invalide. Veuillez vérifier et réessayer.",
     "trialBadge": "Essai de 15 Min Actif",
-    "startTrial": "Démarrer l'Essai de 15 Min"
+    "startTrial": "Démarrer l'Essai de 15 Min",
+    "ndiTitle": "Diffusion Vidéo IP NDI®",
+    "ndiDesc": "Diffusez la présentation et les bandeaux alpha transparents sur réseau local vers OBS, vMix et mélangeurs de diffusion.",
+    "ndiBroadcastActive": "Diffusion de Flux IP en Direct",
+    "ndiStreamEndpoints": "Points de Terminaison et Flux",
+    "ndiAlphaKeyStream": "Flux de Superposition Alpha Key",
+    "confidenceTitle": "Écran de Confiance de Scène et Téléprompteur",
+    "confidenceDesc": "Écran de retour scène dédié (3e écran) avec minuteur géant, notes de prompteur et messages silencieux.",
+    "confidenceOpenWindow": "Lancer la Fenêtre Scène (3e Écran)",
+    "confidenceWebUrl": "URL Web Distante de Confiance",
+    "stageCues": "Messages Silencieux de Scène",
+    "spotlightTitle": "Mode Projecteur Cinématique",
+    "spotlightDesc": "Assombrissez l'arrière-plan et mettez en valeur les détails essentiels avec un faisceau radial fluide (S).",
+    "spotlightShortcut": "Mode Projecteur (S)",
+    "automationTitle": "Automatisation OBS Studio et vMix",
+    "automationDesc": "Déclenchez automatiquement les transitions de scènes lors du lancement, du noir d'écran et de la fermeture.",
+    "automationObs": "OBS Studio WebSocket (v5)",
+    "automationVmix": "API HTTP vMix",
+    "automationScenes": "Mappage Automatisé des Scènes"
   }
 }

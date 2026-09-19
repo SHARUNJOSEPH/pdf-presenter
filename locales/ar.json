@@ -106,6 +106,24 @@
     "keySuccess": "تم تفعيل ميزات برو بنجاح!",
     "keyInvalid": "مفتاح ترخيص غير صالح. يرجى التحقق وإعادة المحاولة.",
     "trialBadge": "تجربة 15 دقيقة نشطة",
-    "startTrial": "بدء تجربة 15 دقيقة"
+    "startTrial": "بدء تجربة 15 دقيقة",
+    "ndiTitle": "بث الفيديو الشبكي NDI® IP",
+    "ndiDesc": "بث فيديو العرض وأشرطة العناوين الشفافة عبر الشبكة المحلية إلى OBS و vMix ومحولات البث.",
+    "ndiBroadcastActive": "البث الشبكي المباشر نشط الآن",
+    "ndiStreamEndpoints": "عناوين ونقاط نهاية البث",
+    "ndiAlphaKeyStream": "بث قناة الشفافية Alpha Key",
+    "confidenceTitle": "شاشة ثقة المسرح والمُلقّن الذكي",
+    "confidenceDesc": "شاشة أرضية مخصصة على المسرح (شاشة ثالثة) بمؤقت عملاق، ملاحظات مُلقّن، ورسائل توجيه صامتة.",
+    "confidenceOpenWindow": "تشغيل نافذة المسرح (الشاشة الثالثة)",
+    "confidenceWebUrl": "رابط الويب لشاشة الثقة عن بُعد",
+    "stageCues": "توجيهات المسرح الصامتة",
+    "spotlightTitle": "وضع تسليط الضوء السينمائي (Spotlight)",
+    "spotlightDesc": "تعتيم خلفية الشريحة وإبراز العناصر الأساسية بحزمة ضوئية شعاعية سلسة (S).",
+    "spotlightShortcut": "وضع تسليط الضوء (S)",
+    "automationTitle": "أتمتة OBS Studio و vMix",
+    "automationDesc": "تبديل مشاهد البث تلقائياً عند بدء العرض، الشاشة السوداء، والخروج.",
+    "automationObs": "OBS Studio WebSocket (v5)",
+    "automationVmix": "واجهة vMix البرمجية (HTTP API)",
+    "automationScenes": "تعيين المشاهد التلقائية"
   }
 }

@@ -9,12 +9,66 @@ const https = require('https');
 const { generateCompanionConfig } = require('./js/companion-presets.js');
 const licenseManager = require('./js/license-manager.js');
 
+// Enforce Single-Instance Application Lock (Prevents duplicate instances, port 3000 collisions, and crashes)
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  console.warn('[App Startup] Another instance of PDF Presenter Suite is already running. Quitting secondary process.');
+  app.quit();
+  process.exit(0);
+}
+
+// Anti-Debugging: Block dangerous remote inspection flags in production
+if (app.isPackaged) {
+  const dangerousArgs = ['--remote-debugging-port', '--inspect', '--inspect-brk', '--remote-debugging-targets'];
+  for (const arg of dangerousArgs) {
+    if (process.argv.some(a => typeof a === 'string' && a.startsWith(arg))) {
+      console.warn(`[Security Alert] Dangerous launch argument blocked: ${arg}`);
+      app.quit();
+      process.exit(1);
+    }
+  }
+}
+
+// Verify core filesystem module integrity
+function verifyCoreIntegrity() {
+  try {
+    const criticalFiles = [
+      path.join(__dirname, 'js/license-manager.js'),
+      path.join(__dirname, 'preload.js')
+    ];
+    for (const f of criticalFiles) {
+      if (fs.existsSync(f)) {
+        const stats = fs.statSync(f);
+        if (stats.size === 0) {
+          console.warn(`[Integrity Alert] Suspicious zero-byte critical file: ${f}`);
+          return false;
+        }
+      }
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+verifyCoreIntegrity();
+
 // Global Process Error Boundaries (Google/Microsoft Enterprise Stability)
 process.on('uncaughtException', (err) => {
   console.error('[CRITICAL UNCAUGHT EXCEPTION]', err);
 });
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[UNHANDLED PROMISE REJECTION]', reason);
+});
+
+// Second Instance Handler: Restore and focus active window when user clicks shortcut again
+app.on('second-instance', (event, commandLine, workingDirectory) => {
+  console.log('[Single Instance] Secondary launch attempted. Restoring and focusing existing instance.');
+  const activeWin = presenterWindow || launcherWindow || confidenceWindow;
+  if (activeWin && !activeWin.isDestroyed()) {
+    if (activeWin.isMinimized()) activeWin.restore();
+    activeWin.show();
+    activeWin.focus();
+  }
 });
 
 // Force dark mode for all native Chromium controls, popups, and dropdown menus
@@ -31,6 +85,7 @@ app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
 let launcherWindow = null;
 let presenterWindow = null;
 let audienceWindow = null;
+let confidenceWindow = null;
 
 // Presentation State
 const state = {
@@ -181,6 +236,7 @@ function getPublicState() {
     laserActive: state.laserActive,
     audienceConnected: !!audienceWindow && !audienceWindow.isDestroyed(),
     presenterConnected: !!presenterWindow && !presenterWindow.isDestroyed(),
+    confidenceConnected: !!confidenceWindow && !confidenceWindow.isDestroyed(),
     isPro: licenseManager.state.isPro,
     tier: licenseManager.state.tier,
     companionAuthorized: licenseManager.isCompanionApiAuthorized(),
@@ -547,6 +603,175 @@ function handleCompanionApi(req, res, pathname, query) {
       return processBanner(bannerMsg, bannerDur);
     }
 
+    case 'cue':
+    case 'stagecue': {
+      if (req.method === 'DELETE' || query.action === 'clear') {
+        relaySyncEvent({ type: 'STAGE_CUE', message: null, source: 'companion_api' });
+        return jsonResponse({ success: true, message: 'Stage cue cleared' });
+      }
+
+      let cueMsg = query.message || '';
+      let cueDur = Number(query.duration || 10000);
+
+      const processCue = (msg, dur) => {
+        relaySyncEvent({
+          type: 'STAGE_CUE',
+          message: msg,
+          duration: dur,
+          source: 'companion_api'
+        });
+        return jsonResponse({
+          success: true,
+          message: 'Stage cue sent to confidence monitor',
+          cue: { message: msg, duration: dur }
+        });
+      };
+
+      if (req.method === 'POST') {
+        let cData = '';
+        req.on('data', c => { cData += c; });
+        req.on('end', () => {
+          if (cData) {
+            try {
+              const parsed = JSON.parse(cData);
+              if (parsed.message !== undefined) cueMsg = parsed.message;
+              if (parsed.duration !== undefined) cueDur = Number(parsed.duration);
+            } catch (e) {}
+          }
+          return processCue(cueMsg, cueDur);
+        });
+        return;
+      }
+
+      return processCue(cueMsg, cueDur);
+    }
+
+    case 'message':
+    case 'broadcast': {
+      if (!licenseManager.isCompanionApiAuthorized()) {
+        return jsonResponse({
+          success: false,
+          error: 'Companion API requires Pro license or active 15-minute trial.',
+          code: 'PRO_REQUIRED'
+        }, 402);
+      }
+
+      const processMessage = (text, targetScreen, durationVal, actionVal) => {
+        const target = String(targetScreen || 'presenter').toLowerCase();
+        if (req.method === 'DELETE' || actionVal === 'clear' || actionVal === 'hide') {
+          if (target === 'presenter' || target === 'cockpit') {
+            relaySyncEvent({ type: 'CLEAR_PRESENTER_ALERT', source: 'companion_api' });
+          } else if (target === 'audience') {
+            relaySyncEvent({ type: 'HIDE_BANNER', source: 'companion_api' });
+          } else if (target === 'stage' || target === 'confidence') {
+            relaySyncEvent({ type: 'STAGE_CUE', message: null, source: 'companion_api' });
+          } else if (target === 'all') {
+            relaySyncEvent({ type: 'CLEAR_PRESENTER_ALERT', source: 'companion_api' });
+            relaySyncEvent({ type: 'HIDE_BANNER', source: 'companion_api' });
+            relaySyncEvent({ type: 'STAGE_CUE', message: null, source: 'companion_api' });
+          }
+          return jsonResponse({ success: true, message: `Message cleared on ${target}`, target });
+        }
+
+        const msgText = String(text || '').trim();
+        if (!msgText) {
+          return jsonResponse({ success: false, error: 'Message text is required (use ?text=... or ?message=...)' }, 400);
+        }
+
+        let dur = Number(durationVal || 10);
+        if (isNaN(dur) || dur < 0) dur = 10;
+        const durMs = (dur > 0 && dur < 1000) ? dur * 1000 : dur;
+
+        if (target === 'presenter' || target === 'cockpit') {
+          relaySyncEvent({
+            type: 'PRESENTER_ALERT',
+            message: msgText,
+            duration: durMs,
+            target: 'presenter',
+            source: 'companion_api'
+          });
+        } else if (target === 'audience') {
+          relaySyncEvent({
+            type: 'SHOW_BANNER',
+            message: msgText,
+            duration: durMs,
+            target: 'audience',
+            source: 'companion_api'
+          });
+        } else if (target === 'stage' || target === 'confidence') {
+          relaySyncEvent({
+            type: 'STAGE_CUE',
+            message: msgText,
+            duration: durMs,
+            target: 'stage',
+            source: 'companion_api'
+          });
+        } else if (target === 'all') {
+          relaySyncEvent({
+            type: 'PRESENTER_ALERT',
+            message: msgText,
+            duration: durMs,
+            target: 'all',
+            source: 'companion_api'
+          });
+          relaySyncEvent({
+            type: 'SHOW_BANNER',
+            message: msgText,
+            duration: durMs,
+            target: 'all',
+            source: 'companion_api'
+          });
+          relaySyncEvent({
+            type: 'STAGE_CUE',
+            message: msgText,
+            duration: durMs,
+            target: 'all',
+            source: 'companion_api'
+          });
+        } else {
+          return jsonResponse({
+            success: false,
+            error: `Invalid target screen: "${target}". Valid targets are: presenter (default), audience, stage, all.`
+          }, 400);
+        }
+
+        return jsonResponse({
+          success: true,
+          message: `Live message broadcast to ${target}`,
+          target: target,
+          text: msgText,
+          duration: durMs
+        });
+      };
+
+      let initialText = query.text || query.message || '';
+      let initialTarget = query.target || query.screen || 'presenter';
+      let initialDur = query.duration;
+      let initialAction = query.action;
+
+      if (req.method === 'POST') {
+        let pData = '';
+        req.on('data', c => { pData += c; });
+        req.on('end', () => {
+          if (pData) {
+            try {
+              const parsed = JSON.parse(pData);
+              if (parsed.text !== undefined) initialText = parsed.text;
+              else if (parsed.message !== undefined) initialText = parsed.message;
+              if (parsed.target !== undefined) initialTarget = parsed.target;
+              else if (parsed.screen !== undefined) initialTarget = parsed.screen;
+              if (parsed.duration !== undefined) initialDur = parsed.duration;
+              if (parsed.action !== undefined) initialAction = parsed.action;
+            } catch (e) {}
+          }
+          return processMessage(initialText, initialTarget, initialDur, initialAction);
+        });
+        return;
+      }
+
+      return processMessage(initialText, initialTarget, initialDur, initialAction);
+    }
+
     case 'info':
       return jsonResponse({
         enabled: apiSettings.enabled,
@@ -554,7 +779,8 @@ function handleCompanionApi(req, res, pathname, query) {
         serverPort: apiSettings.port,
         serverHost: apiSettings.host,
         localIPs: getLocalIPs(),
-        companionApiUrl: getActiveApiUrl()
+        companionApiUrl: getActiveApiUrl(),
+        confidenceUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/views/confidence.html` : null
       });
 
     default:
@@ -566,7 +792,7 @@ function handleCompanionApi(req, res, pathname, query) {
 // 2. WINDOW CREATION & LIFECYCLE MANAGEMENT
 // ===========================================================================
 
-// Secure Window Helper: Disables keyboard inspection shortcuts in production
+// Secure Window Helper: Disables keyboard inspection shortcuts and devtools in production
 function secureWindow(win) {
   if (!win) return;
   if (app.isPackaged) {
@@ -574,11 +800,19 @@ function secureWindow(win) {
       if (
         input.key === 'F12' ||
         (input.control && input.shift && input.key.toLowerCase() === 'i') ||
+        (input.control && input.shift && input.key.toLowerCase() === 'j') ||
+        (input.control && input.shift && input.key.toLowerCase() === 'c') ||
         (input.control && input.shift && input.key.toLowerCase() === 'r') ||
         (input.control && input.key.toLowerCase() === 'r')
       ) {
         event.preventDefault();
       }
+    });
+
+    win.webContents.on('devtools-opened', () => {
+      try {
+        win.webContents.closeDevTools();
+      } catch (e) {}
     });
   }
 }
@@ -630,6 +864,9 @@ function startPresentationWindows(config) {
   } else if (config.filePath && fs.existsSync(config.filePath)) {
     activePdfPath = config.filePath;
     activePdfBuffer = null; // Stream directly from file
+  } else if (config.pdfBuffer) {
+    activePdfBuffer = Buffer.isBuffer(config.pdfBuffer) ? config.pdfBuffer : Buffer.from(config.pdfBuffer);
+    activePdfPath = null;
   }
 
   currentPdfConfig = {
@@ -638,7 +875,8 @@ function startPresentationWindows(config) {
     filePath: config.filePath || null,
     totalPages: config.totalPages || 6,
     transitionDuration: typeof config.transitionDuration === 'number' ? config.transitionDuration : 1.0,
-    transitionStyle: config.transitionStyle || 'crossfade'
+    transitionStyle: config.transitionStyle || 'crossfade',
+    playlist: Array.isArray(config.playlist) ? config.playlist : []
   };
 
   state.documentTitle = currentPdfConfig.title;
@@ -745,6 +983,78 @@ function startPresentationWindows(config) {
   });
 }
 
+function createConfidenceWindow(options = {}) {
+  const displays = screen.getAllDisplays();
+  const primaryDisplay = screen.getPrimaryDisplay();
+
+  let targetDisplay = null;
+  if (options && options.displayId) {
+    targetDisplay = displays.find(d => String(d.id) === String(options.displayId));
+  }
+
+  // If not explicitly found or provided, find an external display different from primary
+  if (!targetDisplay) {
+    if (displays.length > 2) {
+      targetDisplay = displays.find(d => d.id !== primaryDisplay.id) || displays[2];
+    } else if (displays.length > 1) {
+      targetDisplay = displays.find(d => d.id !== primaryDisplay.id) || displays[1];
+    } else {
+      targetDisplay = primaryDisplay;
+    }
+  }
+
+  if (confidenceWindow && !confidenceWindow.isDestroyed()) {
+    if (targetDisplay) {
+      confidenceWindow.setBounds({
+        x: targetDisplay.bounds.x,
+        y: targetDisplay.bounds.y,
+        width: targetDisplay.bounds.width,
+        height: targetDisplay.bounds.height
+      });
+      if (options && options.fullscreen) {
+        confidenceWindow.setFullScreen(true);
+      }
+    }
+    if (confidenceWindow.isMinimized()) confidenceWindow.restore();
+    confidenceWindow.focus();
+    return { success: true, opened: false, focused: true, displayId: targetDisplay ? targetDisplay.id : null };
+  }
+
+  const isFullscreen = options && options.fullscreen !== false;
+  const bounds = targetDisplay ? targetDisplay.bounds : { x: 0, y: 0, width: 1280, height: 720 };
+
+  confidenceWindow = new BrowserWindow({
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: bounds.height,
+    fullscreen: isFullscreen,
+    minWidth: 800,
+    minHeight: 600,
+    title: 'PDF Presenter - Stage Confidence Monitor',
+    backgroundColor: '#0b0f19',
+    autoHideMenuBar: true,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+      devTools: !app.isPackaged
+    }
+  });
+
+  secureWindow(confidenceWindow);
+  confidenceWindow.loadFile(path.join(__dirname, 'views/confidence.html'));
+  confidenceWindow.webContents.on('console-message', (event, level, message) => {
+    console.log(`[Confidence Console] ${message}`);
+  });
+
+  confidenceWindow.on('closed', () => {
+    confidenceWindow = null;
+  });
+
+  return { success: true, opened: true, displayId: targetDisplay ? targetDisplay.id : null };
+}
+
 function endPresentation() {
   if (audienceWindow && !audienceWindow.isDestroyed()) {
     audienceWindow.close();
@@ -753,6 +1063,10 @@ function endPresentation() {
   if (presenterWindow && !presenterWindow.isDestroyed()) {
     presenterWindow.close();
     presenterWindow = null;
+  }
+  if (confidenceWindow && !confidenceWindow.isDestroyed()) {
+    confidenceWindow.close();
+    confidenceWindow = null;
   }
 
   if (launcherWindow && !launcherWindow.isDestroyed()) {
@@ -765,6 +1079,26 @@ function endPresentation() {
 }
 
 function relaySyncEvent(data) {
+  if (!data || typeof data !== 'object') return;
+
+  // Zero-Trust Main Process Security Gate:
+  // Disallow unauthorized broadcast of Pro features even if renderer memory was tampered with
+  const isProActive = licenseManager && typeof licenseManager.isPro === 'function' && licenseManager.isPro();
+  const isCompActive = licenseManager && typeof licenseManager.isCompanionApiAuthorized === 'function' && licenseManager.isCompanionApiAuthorized();
+
+  if (data.type === 'SET_WATERMARK' && data.config && data.config.enabled && !isProActive) {
+    console.warn('[Security Guard] Blocked unauthorized SET_WATERMARK sync event (Pro required)');
+    return;
+  }
+  if ((data.type === 'SHOW_BANNER' || data.type === 'STAGE_CUE' || data.type === 'PRESENTER_ALERT') && !isProActive && !isCompActive) {
+    console.warn('[Security Guard] Blocked unauthorized banner/cue sync event (Pro or Trial required)');
+    return;
+  }
+  if (data.type === 'NDI_STREAM_START' && !isProActive) {
+    console.warn('[Security Guard] Blocked unauthorized NDI broadcast sync event (Pro required)');
+    return;
+  }
+
   console.log(`[IPC Relay] ${data.type} (page: ${data.page || state.currentPage})`);
   if (data.type === 'PAGE_CHANGED' || data.type === 'GOTO_PAGE') {
     state.currentPage = Number(data.page || state.currentPage);
@@ -779,6 +1113,10 @@ function relaySyncEvent(data) {
 
   if (audienceWindow && !audienceWindow.isDestroyed()) {
     audienceWindow.webContents.send('sync-event', data);
+  }
+
+  if (confidenceWindow && !confidenceWindow.isDestroyed()) {
+    confidenceWindow.webContents.send('sync-event', data);
   }
 
   broadcastState('IPC_SYNC');
@@ -811,9 +1149,10 @@ ipcMain.handle('get-displays', () => {
   });
 });
 
-ipcMain.handle('select-pdf-file', async () => {
+ipcMain.handle('select-pdf-file', async (event, options = {}) => {
+  const allowMultiple = options && options.multiple !== false;
   const result = await dialog.showOpenDialog(launcherWindow || presenterWindow, {
-    properties: ['openFile'],
+    properties: allowMultiple ? ['openFile', 'multiSelections'] : ['openFile'],
     filters: [{ name: 'PDF Documents', extensions: ['pdf'] }]
   });
 
@@ -835,10 +1174,17 @@ ipcMain.handle('select-pdf-file', async () => {
     console.warn('[PDF Read Error]', err.message);
   }
 
+  const files = result.filePaths.map(fp => ({
+    filePath: fp,
+    fileName: path.basename(fp)
+  }));
+
   return {
     canceled: false,
     filePath: filePath,
     fileName: fileName,
+    filePaths: result.filePaths,
+    files: files,
     streamUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/api/document/current.pdf` : null,
     pdfData: bufferData ? bufferData.buffer.slice(bufferData.byteOffset, bufferData.byteOffset + bufferData.byteLength) : null
   };
@@ -914,6 +1260,7 @@ ipcMain.handle('get-companion-info', () => {
     host: apiSettings.host,
     localIPs: getLocalIPs(),
     companionApiUrl: getActiveApiUrl(),
+    confidenceUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/views/confidence.html` : null,
     endpoints: [
       { path: '/api/next', desc: 'Advance slide' },
       { path: '/api/prev', desc: 'Previous slide' },
@@ -924,6 +1271,8 @@ ipcMain.handle('get-companion-info', () => {
       { path: '/api/whiteout', desc: 'Toggle whiteout' },
       { path: '/api/timer/start', desc: 'Start timer' },
       { path: '/api/timer/pause', desc: 'Pause timer' },
+      { path: '/api/stagecue?message=MSG', desc: 'Send silent stage cue to confidence monitor' },
+      { path: '/api/message?text=MSG&target=presenter|audience|stage|all&duration=10', desc: 'Broadcast live alert message to target screen (default: presenter cockpit)' },
       { path: '/api/status', desc: 'Get live state JSON' }
     ]
   };
@@ -938,7 +1287,8 @@ ipcMain.handle('get-api-config', () => {
     error: apiServerError,
     localIPs: getLocalIPs(),
     interfaces: getNetworkInterfacesInfo(),
-    activeUrl: getActiveApiUrl()
+    activeUrl: getActiveApiUrl(),
+    confidenceUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/views/confidence.html` : null
   };
 });
 
@@ -953,7 +1303,8 @@ ipcMain.handle('update-api-config', async (event, newConfig) => {
     error: apiServerError,
     localIPs: getLocalIPs(),
     interfaces: getNetworkInterfacesInfo(),
-    activeUrl: getActiveApiUrl()
+    activeUrl: getActiveApiUrl(),
+    confidenceUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/views/confidence.html` : null
   };
 });
 
@@ -971,6 +1322,31 @@ ipcMain.handle('toggle-presenter-fullscreen', () => {
     return { isFullScreen: !isFS };
   }
   return { isFullScreen: false };
+});
+
+// Stage Confidence Monitor IPC Handlers (Zero-Trust Gated in Main Process)
+ipcMain.handle('launch-confidence-window', (event, options = {}) => {
+  if (!licenseManager || !licenseManager.isPro()) {
+    console.warn('[Security Guard] Blocked unauthorized launch-confidence-window request (Pro required)');
+    return { success: false, error: 'PRO_REQUIRED' };
+  }
+  return createConfidenceWindow(options);
+});
+
+ipcMain.handle('open-confidence-window', (event, options = {}) => {
+  if (!licenseManager || !licenseManager.isPro()) {
+    console.warn('[Security Guard] Blocked unauthorized open-confidence-window request (Pro required)');
+    return { success: false, error: 'PRO_REQUIRED' };
+  }
+  return createConfidenceWindow(options);
+});
+
+ipcMain.on('open-confidence-window', (event, options = {}) => {
+  if (!licenseManager || !licenseManager.isPro()) {
+    console.warn('[Security Guard] Blocked unauthorized open-confidence-window IPC event (Pro required)');
+    return;
+  }
+  createConfidenceWindow(options);
 });
 
 ipcMain.on('sync-event', (event, data) => {
@@ -992,6 +1368,30 @@ ipcMain.handle('activate-license-key', (event, key) => {
 
 ipcMain.handle('start-companion-trial', () => {
   return licenseManager.startCompanionTrial();
+});
+
+ipcMain.handle('set-edition', (event, edition) => {
+  return licenseManager.setEdition(edition);
+});
+
+ipcMain.handle('toggle-edition', () => {
+  return licenseManager.toggleEdition();
+});
+
+ipcMain.handle('forget-license', () => {
+  return licenseManager.forgetStoredLicense();
+});
+
+// Broadcast license state changes to all active windows
+licenseManager.onChange((status) => {
+  const windows = [launcherWindow, presenterWindow, audienceWindow, confidenceWindow];
+  windows.forEach(win => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('license-changed', status);
+      win.webContents.send('license-status-changed', status);
+    }
+  });
+  relaySyncEvent({ type: 'LICENSE_CHANGED', status });
 });
 
 // Semantic Version Parser & Comparator
@@ -1128,7 +1528,42 @@ app.whenReady().then(async () => {
     broadcastState('LICENSE_UPDATE');
   });
 
+  // Real-time Display Topology & Hotplug Broadcaster (HDMI / DisplayPort)
+  function broadcastDisplayChange(changeType, detail = {}) {
+    const displays = screen.getAllDisplays().map((d, index) => {
+      const primary = screen.getPrimaryDisplay();
+      const isPrimary = d.id === primary.id;
+      const res = `${d.bounds.width}x${d.bounds.height}`;
+      let label = d.label || `Display ${index + 1}`;
+      if (!d.label) {
+        label = isPrimary ? `Built-in Screen (${res})` : `External Display (${res})`;
+      }
+      return {
+        id: d.id,
+        label: label,
+        bounds: d.bounds,
+        workArea: d.workArea,
+        scaleFactor: d.scaleFactor,
+        isPrimary: isPrimary,
+        isInternal: d.internal || isPrimary
+      };
+    });
+
+    const payload = { changeType, displays, detail, count: displays.length };
+    const wins = [launcherWindow, presenterWindow, audienceWindow, confidenceWindow];
+    for (const win of wins) {
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('displays-changed', payload);
+      }
+    }
+  }
+
   // Multi-Screen & Display Hotplug Resilience (Google/Microsoft Enterprise Standard)
+  screen.on('display-added', (event, newDisplay) => {
+    console.log(`[Display Hotplug Alert] External display ${newDisplay.id} connected via HDMI/DisplayPort (${newDisplay.bounds.width}x${newDisplay.bounds.height}).`);
+    broadcastDisplayChange('display-added', { displayId: newDisplay.id, bounds: newDisplay.bounds });
+  });
+
   screen.on('display-removed', (event, oldDisplay) => {
     console.warn(`[Display Alert] Display ${oldDisplay.id} was disconnected.`);
     if (audienceWindow && !audienceWindow.isDestroyed()) {
@@ -1145,10 +1580,12 @@ app.whenReady().then(async () => {
         });
       }
     }
+    broadcastDisplayChange('display-removed', { displayId: oldDisplay.id });
   });
 
   screen.on('display-metrics-changed', (event, display, changedMetrics) => {
     console.log(`[Display Metrics Changed] Display ${display.id}: ${changedMetrics ? changedMetrics.join(', ') : 'unknown'}`);
+    broadcastDisplayChange('display-metrics-changed', { displayId: display.id, changedMetrics });
     if (presenterWindow && !presenterWindow.isDestroyed()) {
       presenterWindow.webContents.send('display-metrics-changed', { displayId: display.id });
     }

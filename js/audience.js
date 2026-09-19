@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const slideCanvasA = document.getElementById('audienceSlideCanvasA');
   const slideCanvasB = document.getElementById('audienceSlideCanvasB');
   const drawCanvas = document.getElementById('audienceDrawCanvas');
+  const audienceSpotlightCanvas = document.getElementById('audienceSpotlightCanvas');
   const laserDot = document.getElementById('laserDot');
   const screenCurtain = document.getElementById('screenCurtain');
   const placeholder = document.getElementById('placeholder');
@@ -30,6 +31,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const audienceBanner = document.getElementById('audienceBanner');
   const audienceBannerText = document.getElementById('audienceBannerText');
   let bannerTimeout = null;
+
+  const EngineClass = window.SpotlightEngine || (typeof SpotlightEngine !== 'undefined' ? SpotlightEngine : null);
+  const spotlightEngine = EngineClass ? new EngineClass({ syncBus: syncBus }) : null;
 
   let activeCanvas = slideCanvasA;
   let backCanvas = slideCanvasB;
@@ -54,6 +58,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupSyncListeners();
     setupInactivityHiding();
     window.addEventListener('resize', handleResize);
+
+    // Restore stored watermark overlay if previously enabled
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const rawWatermark = localStorage.getItem('pdf_presenter_watermark_config');
+        if (rawWatermark) {
+          applyWatermark(JSON.parse(rawWatermark));
+        }
+      }
+    } catch (e) {}
 
     if (window.electronAPI && window.electronAPI.getPresentationData) {
       try {
@@ -196,11 +210,34 @@ document.addEventListener('DOMContentLoaded', async () => {
           hideAudienceBanner();
           break;
 
+        case 'SPOTLIGHT_TOGGLE':
+          if (spotlightEngine) {
+            spotlightEngine.toggle(data.enabled);
+            renderAudienceSpotlight();
+          }
+          break;
+
+        case 'SPOTLIGHT_MOVE':
+          if (spotlightEngine) {
+            spotlightEngine.setPosition(data.x, data.y, false);
+            renderAudienceSpotlight();
+          }
+          break;
+
+        case 'SPOTLIGHT_CONFIG':
+          if (spotlightEngine) {
+            if (data.radius) spotlightEngine.setRadius(data.radius);
+            renderAudienceSpotlight();
+          }
+          break;
+
         case 'LOAD_DOCUMENT':
-          if (data.isDemo || !data.path) {
+          if (data.isDemo) {
             await loadDemo();
-          } else if (data.path) {
-            await loadDocumentConfig({ title: data.title }, null, data.pdfData || null);
+          } else if (data.pdfData || data.pdfBuffer || data.path) {
+            await loadDocumentConfig({ title: data.title }, null, data.pdfData || data.pdfBuffer || null);
+          } else {
+            await loadDemo();
           }
           clearDrawings();
           break;
@@ -219,6 +256,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       syncBus.on('PEN_UP', handleSync);
       syncBus.on('CLEAR_PEN', handleSync);
       syncBus.on('SET_BLANK', handleSync);
+      syncBus.on('SPOTLIGHT_TOGGLE', handleSync);
+      syncBus.on('SPOTLIGHT_MOVE', handleSync);
+      syncBus.on('SPOTLIGHT_CONFIG', handleSync);
       syncBus.on('SET_LANGUAGE', handleSync);
       syncBus.on('SET_WATERMARK', handleSync);
       syncBus.on('SHOW_BANNER', handleSync);
@@ -439,7 +479,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     drawCanvas.style.height = `${rect.height}px`;
     drawCanvas.style.left = `${rect.left}px`;
     drawCanvas.style.top = `${rect.top}px`;
+
+    if (audienceSpotlightCanvas) {
+      audienceSpotlightCanvas.width = drawCanvas.width;
+      audienceSpotlightCanvas.height = drawCanvas.height;
+      audienceSpotlightCanvas.style.width = drawCanvas.style.width;
+      audienceSpotlightCanvas.style.height = drawCanvas.style.height;
+      audienceSpotlightCanvas.style.left = drawCanvas.style.left;
+      audienceSpotlightCanvas.style.top = drawCanvas.style.top;
+      renderAudienceSpotlight();
+    }
+
     redrawAllStrokes();
+  }
+
+  function renderAudienceSpotlight() {
+    if (!audienceSpotlightCanvas || !spotlightEngine) return;
+    const ctx = audienceSpotlightCanvas.getContext('2d');
+    ctx.clearRect(0, 0, audienceSpotlightCanvas.width, audienceSpotlightCanvas.height);
+    if (spotlightEngine.state && spotlightEngine.state.enabled) {
+      spotlightEngine.render(ctx, audienceSpotlightCanvas.width, audienceSpotlightCanvas.height);
+    }
   }
 
   function hexToRgba(hex, alpha = 1.0) {

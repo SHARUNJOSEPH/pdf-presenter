@@ -300,6 +300,31 @@ function handleIncomingWsMessage(msg, senderSocket) {
   }
 }
 
+// NDI & Low-Latency IP Streaming State
+const streamState = {
+  latestProgramBuffer: null,
+  latestAlphaBuffer: null,
+  programSubscribers: new Set(),
+  alphaSubscribers: new Set(),
+  framesReceived: 0,
+  lastFrameTime: 0,
+  stageCue: { message: '', duration: 0, active: false }
+};
+
+function pushFrameToSubscribers(subscribers, buffer, mimeType = 'image/jpeg') {
+  if (!buffer || subscribers.size === 0) return;
+  const header = `--frame\r\nContent-Type: ${mimeType}\r\nContent-Length: ${buffer.length}\r\n\r\n`;
+  for (const client of subscribers) {
+    try {
+      client.write(header);
+      client.write(buffer);
+      client.write('\r\n');
+    } catch (e) {
+      subscribers.delete(client);
+    }
+  }
+}
+
 const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
   let pathname = parsedUrl.pathname;
@@ -311,6 +336,63 @@ const server = http.createServer((req, res) => {
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
     res.end();
+    return;
+  }
+
+  // --- NDI & MJPEG BROADCAST STREAMS ---
+  if (pathname === '/api/stream/program' || pathname === '/api/stream/program.mjpg') {
+    res.writeHead(200, {
+      'Content-Type': 'multipart/x-mixed-replace; boundary=--frame',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Connection': 'close',
+      'Pragma': 'no-cache'
+    });
+    streamState.programSubscribers.add(res);
+    if (streamState.latestProgramBuffer) {
+      res.write(`--frame\r\nContent-Type: image/jpeg\r\nContent-Length: ${streamState.latestProgramBuffer.length}\r\n\r\n`);
+      res.write(streamState.latestProgramBuffer);
+      res.write('\r\n');
+    }
+    req.on('close', () => streamState.programSubscribers.delete(res));
+    return;
+  }
+
+  if (pathname === '/api/stream/alpha' || pathname === '/api/stream/alpha.mjpg') {
+    res.writeHead(200, {
+      'Content-Type': 'multipart/x-mixed-replace; boundary=--frame',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Connection': 'close',
+      'Pragma': 'no-cache'
+    });
+    streamState.alphaSubscribers.add(res);
+    if (streamState.latestAlphaBuffer) {
+      res.write(`--frame\r\nContent-Type: image/png\r\nContent-Length: ${streamState.latestAlphaBuffer.length}\r\n\r\n`);
+      res.write(streamState.latestAlphaBuffer);
+      res.write('\r\n');
+    }
+    req.on('close', () => streamState.alphaSubscribers.delete(res));
+    return;
+  }
+
+  if (pathname === '/api/stream/program/snapshot') {
+    if (streamState.latestProgramBuffer) {
+      res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache' });
+      res.end(streamState.latestProgramBuffer);
+    } else {
+      res.writeHead(204);
+      res.end();
+    }
+    return;
+  }
+
+  if (pathname === '/api/stream/alpha/snapshot') {
+    if (streamState.latestAlphaBuffer) {
+      res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-cache' });
+      res.end(streamState.latestAlphaBuffer);
+    } else {
+      res.writeHead(204);
+      res.end();
+    }
     return;
   }
 
@@ -327,6 +409,8 @@ const server = http.createServer((req, res) => {
     pathname = '/views/presenter.html';
   } else if (pathname === '/audience' || pathname === '/audience.html') {
     pathname = '/views/audience.html';
+  } else if (pathname === '/confidence' || pathname === '/confidence.html') {
+    pathname = '/views/confidence.html';
   }
 
   let filePath = path.join(PUBLIC_DIR, pathname);
@@ -505,6 +589,122 @@ function handleApiRequest(req, res, pathname, query) {
         return jsonResponse({ success: true, message: 'Timer reset', state: getPublicState() });
       }
 
+      case 'message':
+      case 'broadcast': {
+        if (!licenseManager.isCompanionApiAuthorized()) {
+          return jsonResponse({
+            success: false,
+            error: 'Companion API requires Pro license or active 15-minute trial.',
+            code: 'PRO_REQUIRED'
+          }, 402);
+        }
+
+        const target = String(
+          (parsedBody && (parsedBody.target || parsedBody.screen)) ||
+          query.target ||
+          query.screen ||
+          'presenter'
+        ).toLowerCase();
+
+        if (req.method === 'DELETE' || query.action === 'clear' || query.action === 'hide') {
+          if (target === 'presenter' || target === 'cockpit') {
+            broadcastWs({ type: 'CLEAR_PRESENTER_ALERT', source: 'companion_api' });
+          } else if (target === 'audience') {
+            broadcastWs({ type: 'HIDE_BANNER', source: 'companion_api' });
+          } else if (target === 'stage' || target === 'confidence') {
+            streamState.stageCue = { message: '', duration: 0, active: false };
+            broadcastWs({ type: 'STAGE_CUE', message: '', duration: 0, source: 'companion_api' });
+          } else if (target === 'all') {
+            streamState.stageCue = { message: '', duration: 0, active: false };
+            broadcastWs({ type: 'CLEAR_PRESENTER_ALERT', source: 'companion_api' });
+            broadcastWs({ type: 'HIDE_BANNER', source: 'companion_api' });
+            broadcastWs({ type: 'STAGE_CUE', message: '', duration: 0, source: 'companion_api' });
+          }
+          return jsonResponse({ success: true, message: `Message cleared on ${target}`, target });
+        }
+
+        const msgText = String(
+          (parsedBody && (parsedBody.text !== undefined ? parsedBody.text : parsedBody.message)) ||
+          query.text ||
+          query.message ||
+          ''
+        ).trim();
+
+        if (!msgText) {
+          return jsonResponse({ success: false, error: 'Message text is required (use ?text=... or ?message=...)' }, 400);
+        }
+
+        let dur = Number(
+          (parsedBody && parsedBody.duration !== undefined) ? parsedBody.duration : (query.duration || 10)
+        );
+        if (isNaN(dur) || dur < 0) dur = 10;
+        // Normalize seconds to milliseconds if < 1000 and > 0
+        const durMs = (dur > 0 && dur < 1000) ? dur * 1000 : dur;
+
+        if (target === 'presenter' || target === 'cockpit') {
+          broadcastWs({
+            type: 'PRESENTER_ALERT',
+            message: msgText,
+            duration: durMs,
+            target: 'presenter',
+            source: 'companion_api'
+          });
+        } else if (target === 'audience') {
+          broadcastWs({
+            type: 'SHOW_BANNER',
+            message: msgText,
+            duration: durMs,
+            target: 'audience',
+            source: 'companion_api'
+          });
+        } else if (target === 'stage' || target === 'confidence') {
+          streamState.stageCue = { message: msgText, duration: durMs, active: true };
+          broadcastWs({
+            type: 'STAGE_CUE',
+            message: msgText,
+            duration: durMs,
+            target: 'stage',
+            source: 'companion_api'
+          });
+        } else if (target === 'all') {
+          streamState.stageCue = { message: msgText, duration: durMs, active: true };
+          broadcastWs({
+            type: 'PRESENTER_ALERT',
+            message: msgText,
+            duration: durMs,
+            target: 'all',
+            source: 'companion_api'
+          });
+          broadcastWs({
+            type: 'SHOW_BANNER',
+            message: msgText,
+            duration: durMs,
+            target: 'all',
+            source: 'companion_api'
+          });
+          broadcastWs({
+            type: 'STAGE_CUE',
+            message: msgText,
+            duration: durMs,
+            target: 'all',
+            source: 'companion_api'
+          });
+        } else {
+          return jsonResponse({
+            success: false,
+            error: `Invalid target screen: "${target}". Valid targets are: presenter (default), audience, stage, all.`
+          }, 400);
+        }
+
+        return jsonResponse({
+          success: true,
+          message: `Live message broadcast to ${target}`,
+          target: target,
+          text: msgText,
+          duration: durMs
+        });
+      }
+
       case 'banner': {
         if (!licenseManager.isCompanionApiAuthorized()) {
           return jsonResponse({
@@ -542,6 +742,60 @@ function handleApiRequest(req, res, pathname, query) {
         });
       }
 
+      case 'stream/frame': {
+        const channel = (parsedBody && parsedBody.channel) || query.channel || 'program';
+        const dataUrl = (parsedBody && parsedBody.dataUrl) || query.dataUrl;
+        if (dataUrl && typeof dataUrl === 'string') {
+          const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          streamState.framesReceived++;
+          streamState.lastFrameTime = Date.now();
+
+          if (channel === 'alpha') {
+            streamState.latestAlphaBuffer = buffer;
+            pushFrameToSubscribers(streamState.alphaSubscribers, buffer, 'image/png');
+          } else {
+            streamState.latestProgramBuffer = buffer;
+            pushFrameToSubscribers(streamState.programSubscribers, buffer, 'image/jpeg');
+          }
+          return jsonResponse({ success: true, channel: channel, frames: streamState.framesReceived });
+        }
+        return jsonResponse({ success: false, error: 'No frame dataUrl provided' }, 400);
+      }
+
+      case 'ndi/status':
+        return jsonResponse({
+          success: true,
+          programSubscribers: streamState.programSubscribers.size,
+          alphaSubscribers: streamState.alphaSubscribers.size,
+          framesReceived: streamState.framesReceived,
+          lastFrameTime: streamState.lastFrameTime,
+          hasProgramFrame: Boolean(streamState.latestProgramBuffer),
+          hasAlphaFrame: Boolean(streamState.latestAlphaBuffer),
+          streamEndpoints: {
+            program: `http://localhost:${PORT}/api/stream/program.mjpg`,
+            alpha: `http://localhost:${PORT}/api/stream/alpha.mjpg`,
+            programSnapshot: `http://localhost:${PORT}/api/stream/program/snapshot`,
+            alphaSnapshot: `http://localhost:${PORT}/api/stream/alpha/snapshot`
+          }
+        });
+
+      case 'stage/cue': {
+        if (req.method === 'DELETE' || query.action === 'clear') {
+          streamState.stageCue = { message: '', duration: 0, active: false };
+          broadcastWs({ type: 'STAGE_CUE', message: '', duration: 0 });
+          return jsonResponse({ success: true, message: 'Stage cue cleared' });
+        }
+        const cueMsg = String((parsedBody && parsedBody.message) || query.message || '').trim();
+        const cueDuration = Number((parsedBody && parsedBody.duration) || query.duration || 10000);
+        if (!cueMsg) {
+          return jsonResponse({ success: false, error: 'Message is required for stage cue' }, 400);
+        }
+        streamState.stageCue = { message: cueMsg, duration: cueDuration, active: true };
+        broadcastWs({ type: 'STAGE_CUE', message: cueMsg, duration: cueDuration });
+        return jsonResponse({ success: true, message: 'Stage cue broadcast', cue: streamState.stageCue });
+      }
+
       case 'info':
         const ips = getLocalIPs();
         return jsonResponse({
@@ -565,6 +819,8 @@ function handleApiRequest(req, res, pathname, query) {
             { method: 'GET/POST', path: '/api/timer/reset', desc: 'Reset timer' },
             { method: 'POST', path: '/api/banner', desc: 'Display lower-third banner (body: { message, duration })' },
             { method: 'DELETE', path: '/api/banner', desc: 'Hide lower-third banner' },
+            { method: 'GET/POST', path: '/api/message?text=MSG&target=presenter|audience|stage|all&duration=10', desc: 'Broadcast live alert message to target screen (default: presenter cockpit)' },
+            { method: 'DELETE', path: '/api/message?target=presenter|audience|stage|all', desc: 'Clear/dismiss live message on target screen' },
             { method: 'GET/POST', path: '/api/status', desc: 'Live status JSON' }
           ]
         });
@@ -599,6 +855,7 @@ if (require.main === module) {
 module.exports = {
   server,
   state,
+  licenseManager,
   startServerTimer,
   pauseServerTimer,
   resetServerTimer,
