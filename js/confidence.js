@@ -141,6 +141,11 @@
       btnToggleAutoScroll.textContent = autoScrollActive ? '⏸ Pause' : '▶ Auto-Scroll';
       btnToggleAutoScroll.classList.toggle('active', autoScrollActive);
     }
+    const btnNotesScrollToggle = document.getElementById('btnNotesScrollToggle');
+    if (btnNotesScrollToggle) {
+      btnNotesScrollToggle.textContent = autoScrollActive ? '⏸ Pause' : '▶ Scroll';
+      btnNotesScrollToggle.classList.toggle('active', autoScrollActive);
+    }
     if (autoScrollActive) {
       startAutoScroll();
     } else {
@@ -619,8 +624,42 @@
     const next = spans[(spans.indexOf(cur) + 1) % spans.length];
     dashboardState.spans[windowId] = next;
     delete dashboardState.flexibleSpans[windowId];
+
+    if (windowId === 'next') {
+      const curWin = getDockWindowEl('current');
+      if (curWin) {
+        if (next === 'span-3') {
+          dashboardState.spans['current'] = 'span-1';
+          currentLayout.slidesWidthPercent = 33;
+        } else if (next === 'span-2') {
+          dashboardState.spans['current'] = 'span-2';
+          currentLayout.slidesWidthPercent = 50;
+        } else if (next === 'span-1') {
+          dashboardState.spans['current'] = 'span-3';
+          currentLayout.slidesWidthPercent = 67;
+        } else if (next === 'span-full') {
+          dashboardState.spans['current'] = 'span-full';
+        }
+      }
+    } else if (windowId === 'current') {
+      const nextWin = getDockWindowEl('next');
+      if (nextWin) {
+        if (next === 'span-3') {
+          dashboardState.spans['next'] = 'span-1';
+          currentLayout.slidesWidthPercent = 67;
+        } else if (next === 'span-2') {
+          dashboardState.spans['next'] = 'span-2';
+          currentLayout.slidesWidthPercent = 50;
+        } else if (next === 'span-1') {
+          dashboardState.spans['next'] = 'span-3';
+          currentLayout.slidesWidthPercent = 33;
+        }
+      }
+    }
+
     saveDashboardState();
     renderDashboardOrder();
+    if (typeof updateSlides === 'function') updateSlides(currentPage);
   }
 
   function cycleWindowHeight(windowId) {
@@ -791,17 +830,58 @@
 
         function onPointerMove(ev) {
           if (isRight || isCorner) {
-            const deltaX = ev.clientX - startX;
-            const newW = Math.max(80, startW + deltaX);
-            const span = Math.max(15, Math.min(105, Math.round((newW / gridW) * 120)));
-            win.style.gridColumn = `span ${span}`;
-            dashboardState.flexibleSpans[wid] = span;
+            if (wid === 'current' || wid === 'next') {
+              const curWin = document.getElementById('dockWindowCurrent');
+              const nextWin = document.getElementById('dockWindowNext');
+              if (curWin && nextWin) {
+                const totalW = curWin.offsetWidth + nextWin.offsetWidth;
+                const deltaX = ev.clientX - startX;
+                const newWinW = wid === 'current' 
+                  ? Math.max(60, Math.min(totalW - 60, startW + deltaX))
+                  : Math.max(60, Math.min(totalW - 60, startW - deltaX));
+                const pct = newWinW / totalW;
+                const spanWin = Math.max(15, Math.min(105, Math.round(pct * 120)));
+                const spanPair = 120 - spanWin;
+
+                if (wid === 'current') {
+                  curWin.style.gridColumn = `span ${spanWin}`;
+                  nextWin.style.gridColumn = `span ${spanPair}`;
+                  dashboardState.flexibleSpans['current'] = spanWin;
+                  dashboardState.flexibleSpans['next'] = spanPair;
+                  setSlidesSplit(Math.round(pct * 100));
+                } else {
+                  nextWin.style.gridColumn = `span ${spanWin}`;
+                  curWin.style.gridColumn = `span ${spanPair}`;
+                  dashboardState.flexibleSpans['next'] = spanWin;
+                  dashboardState.flexibleSpans['current'] = spanPair;
+                  setSlidesSplit(Math.round((1 - pct) * 100));
+                }
+              }
+            } else {
+              const deltaX = ev.clientX - startX;
+              const newW = Math.max(80, startW + deltaX);
+              const span = Math.max(15, Math.min(105, Math.round((newW / gridW) * 120)));
+              win.style.gridColumn = `span ${span}`;
+              dashboardState.flexibleSpans[wid] = span;
+            }
           }
           if (isBottom || isCorner) {
-            const deltaY = ev.clientY - startY;
-            const newH = Math.max(60, startH + deltaY);
-            win.style.height = `${newH}px`;
-            dashboardState.flexibleRows[wid] = newH;
+            if (wid === 'current' || wid === 'next') {
+              const gridH = confDashboardGrid ? confDashboardGrid.offsetHeight : 800;
+              const bottomH = Math.max(60, Math.min(Math.round(gridH * 0.65), gridH - ev.clientY + 40));
+              setBottomNotesHeight(bottomH);
+              dashboardState.flexibleRows[wid] = win.offsetHeight;
+            } else if (wid === 'timer' || wid === 'clock' || wid === 'counter') {
+              const deltaY = ev.clientY - startY;
+              const newTopH = Math.max(60, Math.min(240, startH + deltaY));
+              setTopBarHeight(newTopH);
+              dashboardState.flexibleRows[wid] = newTopH;
+            } else {
+              const deltaY = ev.clientY - startY;
+              const newH = Math.max(60, startH + deltaY);
+              win.style.height = `${newH}px`;
+              dashboardState.flexibleRows[wid] = newH;
+            }
           }
         }
 
@@ -826,6 +906,17 @@
         win.style.height = '';
         delete dashboardState.flexibleSpans[wid];
         delete dashboardState.flexibleRows[wid];
+        if (wid === 'current' || wid === 'next') {
+          const curWin = document.getElementById('dockWindowCurrent');
+          const nextWin = document.getElementById('dockWindowNext');
+          if (curWin) { curWin.style.gridColumn = ''; delete dashboardState.flexibleSpans['current']; }
+          if (nextWin) { nextWin.style.gridColumn = ''; delete dashboardState.flexibleSpans['next']; }
+          setSlidesSplit(50);
+          setBottomNotesHeight(148);
+        }
+        if (wid === 'timer' || wid === 'clock' || wid === 'counter') {
+          setTopBarHeight(92);
+        }
         saveDashboardState();
         renderDashboardOrder();
       });
@@ -1042,9 +1133,75 @@
     if (sTop) sTop.value = curTop;
     if (valTop) valTop.textContent = `${curTop}px`;
     if (bTop) bTop.textContent = `${curTop}px`;
+
+    const sBot = document.getElementById('sliderBottomHeight');
+    const valBot = document.getElementById('valBottomHeight');
+    const bBot = document.getElementById('badgeBottomHeight');
+    const curBot = parseInt(confDashboardGrid ? confDashboardGrid.style.getPropertyValue('--conf-row-bottom-h') : '148', 10) || 148;
+    if (sBot) sBot.value = curBot;
+    if (valBot) valBot.textContent = `${curBot}px`;
+    if (bBot) bBot.textContent = `${curBot}px`;
+
+    const sTimer = document.getElementById('sliderTimerWidth');
+    const bTimer = document.getElementById('badgeTimerWidth');
+    const curTimerSpan = dashboardState.flexibleSpans['timer'] || 40;
+    const curTimerPct = Math.round((curTimerSpan / 120) * 100);
+    if (sTimer) sTimer.value = curTimerPct;
+    if (bTimer) bTimer.textContent = `${curTimerPct}% (${curTimerSpan} cols)`;
+
+    const sNotes = document.getElementById('sliderNotesWidth');
+    const bNotes = document.getElementById('badgeNotesWidth');
+    const curNotesSpan = dashboardState.flexibleSpans['notes'] || 80;
+    const curNotesPct = Math.round((curNotesSpan / 120) * 100);
+    if (sNotes) sNotes.value = curNotesPct;
+    if (bNotes) bNotes.textContent = `${curNotesPct}% (${curNotesSpan} cols)`;
   }
 
   initTabSizeDrawer();
+
+  // Quick Tally Scaling for Live & Next Slides
+  const btnNextEnlarge = document.getElementById('btnNextEnlarge');
+  if (btnNextEnlarge) {
+    btnNextEnlarge.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cycleWindowWidth('next');
+    });
+  }
+
+  const btnLiveEnlarge = document.getElementById('btnLiveEnlarge');
+  if (btnLiveEnlarge) {
+    btnLiveEnlarge.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cycleWindowWidth('current');
+    });
+  }
+
+  // Hook up notes tally buttons to teleprompter engine
+  const btnNotesFontUp = document.getElementById('btnNotesFontUp');
+  if (btnNotesFontUp) {
+    btnNotesFontUp.addEventListener('click', (e) => {
+      e.stopPropagation();
+      notesFontSize = Math.min(64, notesFontSize + 4);
+      if (confNotesText) confNotesText.style.fontSize = `${notesFontSize}px`;
+    });
+  }
+
+  const btnNotesFontDown = document.getElementById('btnNotesFontDown');
+  if (btnNotesFontDown) {
+    btnNotesFontDown.addEventListener('click', (e) => {
+      e.stopPropagation();
+      notesFontSize = Math.max(16, notesFontSize - 4);
+      if (confNotesText) confNotesText.style.fontSize = `${notesFontSize}px`;
+    });
+  }
+
+  const btnNotesScrollToggle = document.getElementById('btnNotesScrollToggle');
+  if (btnNotesScrollToggle) {
+    btnNotesScrollToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleAutoScroll();
+    });
+  }
 
   // =========================================================================
   // 7. HIGH-RESOLUTION SLIDE PREVIEW RENDERING & RESIZE OBSERVER
