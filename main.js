@@ -6,6 +6,7 @@ const url = require('url');
 const os = require('os');
 const crypto = require('crypto');
 const https = require('https');
+const child_process = require('child_process');
 const { generateCompanionConfig } = require('./js/companion-presets.js');
 const licenseManager = require('./js/license-manager.js');
 
@@ -1494,6 +1495,19 @@ ipcMain.handle('check-for-updates', async () => {
 
   const latestVersion = (result.release.tag_name || '').replace(/^v/, '');
   const hasUpdate = isNewerVersion(latestVersion, currentVersion);
+
+  // Extract direct platform-specific binary URL to bypass confusing GitHub releases page
+  let directDownloadUrl = '';
+  const assets = Array.isArray(result.release.assets) ? result.release.assets : [];
+  if (process.platform === 'win32') {
+    const setupAsset = assets.find(a => typeof a.name === 'string' && a.name.endsWith('.exe') && a.name.includes('Setup')) ||
+                       assets.find(a => typeof a.name === 'string' && a.name.endsWith('.exe'));
+    if (setupAsset) directDownloadUrl = setupAsset.browser_download_url;
+  } else if (process.platform === 'darwin') {
+    const dmgAsset = assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg'));
+    if (dmgAsset) directDownloadUrl = dmgAsset.browser_download_url;
+  }
+
   return {
     isStore: false,
     hasUpdate,
@@ -1501,8 +1515,143 @@ ipcMain.handle('check-for-updates', async () => {
     latestVersion,
     releaseName: result.release.name || `v${latestVersion}`,
     releaseNotes: result.release.body || '',
-    releaseUrl: result.release.html_url || 'https://github.com/SHARUNJOSEPH/pdf-presenter/releases'
+    releaseUrl: directDownloadUrl || result.release.html_url || 'https://github.com/SHARUNJOSEPH/pdf-presenter/releases',
+    directDownloadUrl
   };
+});
+
+// Helper: Download a file over HTTPS with automatic redirect resolution and progress tracking
+function downloadFileWithProgress(targetUrl, destPath, onProgress) {
+  return new Promise((resolve, reject) => {
+    const fileStream = fs.createWriteStream(destPath);
+    let totalBytes = 0;
+    let receivedBytes = 0;
+
+    function executeGet(urlStr, redirectCount = 0) {
+      if (redirectCount > 5) {
+        fileStream.close();
+        fs.unlink(destPath, () => {});
+        return reject(new Error('Too many redirects while downloading update'));
+      }
+
+      const parsed = new url.URL(urlStr);
+      const req = https.get(parsed, {
+        headers: {
+          'User-Agent': `PDF-Presenter-Suite/${app.getVersion()}`
+        },
+        timeout: 60000
+      }, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          return executeGet(res.headers.location, redirectCount + 1);
+        }
+
+        if (res.statusCode !== 200) {
+          fileStream.close();
+          fs.unlink(destPath, () => {});
+          return reject(new Error(`Server returned status code ${res.statusCode}`));
+        }
+
+        totalBytes = parseInt(res.headers['content-length'] || '0', 10);
+
+        res.on('data', (chunk) => {
+          receivedBytes += chunk.length;
+          if (typeof onProgress === 'function') {
+            const percent = totalBytes > 0 ? Math.min(100, Math.round((receivedBytes / totalBytes) * 100)) : 0;
+            onProgress({ percent, receivedBytes, totalBytes });
+          }
+        });
+
+        res.pipe(fileStream);
+
+        fileStream.on('finish', () => {
+          fileStream.close(() => resolve(destPath));
+        });
+      });
+
+      req.on('error', (err) => {
+        fileStream.close();
+        fs.unlink(destPath, () => {});
+        reject(err);
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        fileStream.close();
+        fs.unlink(destPath, () => {});
+        reject(new Error('Download connection timed out'));
+      });
+    }
+
+    executeGet(targetUrl);
+  });
+}
+
+// In-App Background Update Downloader IPC Handler
+ipcMain.handle('download-update', async (event, customUrl) => {
+  try {
+    let downloadUrl = customUrl;
+    if (!downloadUrl) {
+      const result = await fetchLatestGithubRelease();
+      if (!result.success || !result.release) {
+        throw new Error('Could not fetch release information from update server');
+      }
+      const assets = Array.isArray(result.release.assets) ? result.release.assets : [];
+      if (process.platform === 'win32') {
+        const setupAsset = assets.find(a => typeof a.name === 'string' && a.name.endsWith('.exe') && a.name.includes('Setup')) ||
+                           assets.find(a => typeof a.name === 'string' && a.name.endsWith('.exe'));
+        if (setupAsset) downloadUrl = setupAsset.browser_download_url;
+      } else if (process.platform === 'darwin') {
+        const dmgAsset = assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg'));
+        if (dmgAsset) downloadUrl = dmgAsset.browser_download_url;
+      }
+    }
+
+    if (!downloadUrl) {
+      throw new Error('No compatible installer found for this platform in the latest release');
+    }
+
+    const ext = process.platform === 'darwin' ? '.dmg' : '.exe';
+    const tempDir = app.getPath('temp');
+    const fileName = `PDF-Presenter-Suite-Update-${Date.now()}${ext}`;
+    const targetFilePath = path.join(tempDir, fileName);
+
+    await downloadFileWithProgress(downloadUrl, targetFilePath, (progress) => {
+      event.sender.send('update-download-progress', progress);
+    });
+
+    event.sender.send('update-downloaded', { filePath: targetFilePath });
+    return { success: true, filePath: targetFilePath };
+  } catch (err) {
+    console.error('[AutoUpdate] Download error:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+// In-App Update Installer & Reloader IPC Handler
+ipcMain.handle('install-update', async (event, filePath) => {
+  try {
+    if (!filePath || !fs.existsSync(filePath)) {
+      return { success: false, error: 'Downloaded installer file not found on disk' };
+    }
+
+    if (process.platform === 'win32') {
+      const child = child_process.spawn(filePath, [], {
+        detached: true,
+        stdio: 'ignore'
+      });
+      child.unref();
+      setTimeout(() => {
+        app.quit();
+      }, 600);
+      return { success: true };
+    } else {
+      await shell.openPath(filePath);
+      return { success: true };
+    }
+  } catch (err) {
+    console.error('[AutoUpdate] Install error:', err);
+    return { success: false, error: err.message };
+  }
 });
 
 // Bitfocus Companion & Stream Deck Presets Export Handler

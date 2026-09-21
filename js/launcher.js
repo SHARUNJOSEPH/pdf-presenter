@@ -965,32 +965,126 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // In-App Software Updates
+    // In-App Software Updates & Auto-Downloader
     const btnCheckUpdates = document.getElementById('btnCheckUpdates');
     const updateStatusText = document.getElementById('updateStatusText');
     const updateBanner = document.getElementById('updateNotificationBanner');
     const btnDownloadUpdate = document.getElementById('btnDownloadUpdate');
     const btnDismissUpdate = document.getElementById('btnDismissUpdate');
     const updateBannerTitle = document.getElementById('updateBannerTitle');
+    const btnInstallUpdate = document.getElementById('btnInstallUpdate');
+    const updateProgressContainer = document.getElementById('updateProgressContainer');
+    const updateProgressLabel = document.getElementById('updateProgressLabel');
+    const updateProgressPercent = document.getElementById('updateProgressPercent');
+    const updateProgressBar = document.getElementById('updateProgressBar');
 
     let cachedReleaseUrl = 'https://github.com/SHARUNJOSEPH/pdf-presenter/releases';
+    let downloadedInstallerPath = null;
+    let isDownloadingUpdate = false;
+    let availableDirectDownloadUrl = '';
+
+    // Listen for real-time download progress from Electron main process
+    if (window.electronAPI && window.electronAPI.onUpdateProgress) {
+      window.electronAPI.onUpdateProgress((progress) => {
+        if (updateProgressContainer) updateProgressContainer.style.display = 'block';
+        const pct = progress.percent || 0;
+        if (updateProgressBar) updateProgressBar.style.width = `${pct}%`;
+        if (updateProgressPercent) updateProgressPercent.textContent = `${pct}%`;
+        if (updateProgressLabel) {
+          const rxMb = progress.receivedBytes ? (progress.receivedBytes / (1024 * 1024)).toFixed(1) : '0';
+          const totMb = progress.totalBytes ? (progress.totalBytes / (1024 * 1024)).toFixed(1) : '?';
+          updateProgressLabel.textContent = `Downloading update... (${rxMb} MB / ${totMb} MB)`;
+        }
+      });
+    }
+
+    // Listen for download completion
+    if (window.electronAPI && window.electronAPI.onUpdateDownloaded) {
+      window.electronAPI.onUpdateDownloaded((data) => {
+        isDownloadingUpdate = false;
+        downloadedInstallerPath = data.filePath;
+        if (updateProgressBar) {
+          updateProgressBar.style.width = '100%';
+          updateProgressBar.style.background = '#10b981';
+        }
+        if (updateProgressPercent) updateProgressPercent.textContent = '100%';
+        if (updateProgressLabel) {
+          updateProgressLabel.textContent = '✓ Update downloaded successfully!';
+          updateProgressLabel.style.color = '#34d399';
+        }
+        if (btnCheckUpdates) btnCheckUpdates.style.display = 'none';
+        if (btnInstallUpdate) {
+          btnInstallUpdate.style.display = 'inline-block';
+        }
+        if (updateStatusText) {
+          updateStatusText.innerHTML = '<span style="color: #34d399; font-weight: 600;">✓ Ready to install!</span> Click button to restart.';
+        }
+      });
+    }
+
+    const startUpdateDownload = async (directUrl) => {
+      if (isDownloadingUpdate) return;
+      isDownloadingUpdate = true;
+      if (updateProgressContainer) updateProgressContainer.style.display = 'block';
+      if (updateProgressLabel) updateProgressLabel.textContent = 'Connecting to update server...';
+      if (btnCheckUpdates) {
+        btnCheckUpdates.disabled = true;
+        btnCheckUpdates.textContent = 'Downloading...';
+      }
+
+      try {
+        const res = await window.electronAPI.downloadUpdate(directUrl || availableDirectDownloadUrl);
+        if (!res.success) {
+          throw new Error(res.error || 'Download failed');
+        }
+      } catch (err) {
+        isDownloadingUpdate = false;
+        console.error('Download update error:', err);
+        if (updateProgressLabel) {
+          updateProgressLabel.textContent = 'Download failed. Please check internet connection.';
+          updateProgressLabel.style.color = '#ef4444';
+        }
+        if (btnCheckUpdates) {
+          btnCheckUpdates.disabled = false;
+          btnCheckUpdates.textContent = 'Retry Download';
+        }
+      }
+    };
+
+    if (btnInstallUpdate) {
+      btnInstallUpdate.addEventListener('click', async () => {
+        if (!downloadedInstallerPath) return;
+        btnInstallUpdate.disabled = true;
+        btnInstallUpdate.textContent = 'Launching Installer...';
+        await window.electronAPI.installUpdate(downloadedInstallerPath);
+      });
+    }
 
     const performUpdateCheck = async (interactive = false) => {
       if (!window.electronAPI || !window.electronAPI.checkForUpdates) return;
       if (interactive && updateStatusText) {
-        updateStatusText.textContent = 'Checking GitHub for updates...';
+        updateStatusText.textContent = 'Checking for updates...';
         if (btnCheckUpdates) btnCheckUpdates.disabled = true;
       }
 
       try {
         const info = await window.electronAPI.checkForUpdates();
         if (info.releaseUrl) cachedReleaseUrl = info.releaseUrl;
+        if (info.directDownloadUrl) availableDirectDownloadUrl = info.directDownloadUrl;
 
         if (info.isStore) {
           if (updateStatusText) updateStatusText.textContent = 'Updates are handled automatically by the Microsoft Store.';
         } else if (info.hasUpdate) {
           if (updateStatusText) {
             updateStatusText.innerHTML = `<span style="color: #38bdf8; font-weight: 600;">🎉 v${info.latestVersion} available!</span>`;
+          }
+          if (btnCheckUpdates) {
+            btnCheckUpdates.disabled = false;
+            btnCheckUpdates.textContent = '⬇️ Download Update';
+            btnCheckUpdates.style.background = 'linear-gradient(135deg, #0284c7, #2563eb)';
+            btnCheckUpdates.style.color = '#ffffff';
+            btnCheckUpdates.style.fontWeight = '700';
+            btnCheckUpdates.onclick = () => startUpdateDownload(availableDirectDownloadUrl);
           }
           if (updateBanner) {
             updateBanner.style.display = 'flex';
@@ -1000,6 +1094,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (updateStatusText) {
             updateStatusText.textContent = `✓ You are running the latest version (v${info.currentVersion}).`;
           }
+          if (btnCheckUpdates) {
+            btnCheckUpdates.textContent = 'Check for Updates';
+          }
         }
       } catch (err) {
         console.warn('Update check failed:', err);
@@ -1007,21 +1104,23 @@ document.addEventListener('DOMContentLoaded', async () => {
           updateStatusText.textContent = 'Could not check for updates. Check internet connection.';
         }
       } finally {
-        if (interactive && btnCheckUpdates) btnCheckUpdates.disabled = false;
+        if (interactive && btnCheckUpdates && !isDownloadingUpdate && !btnCheckUpdates.onclick) {
+          btnCheckUpdates.disabled = false;
+        }
       }
     };
 
     if (btnCheckUpdates) {
-      btnCheckUpdates.addEventListener('click', () => performUpdateCheck(true));
+      btnCheckUpdates.addEventListener('click', () => {
+        if (!availableDirectDownloadUrl || btnCheckUpdates.textContent === 'Check for Updates') {
+          performUpdateCheck(true);
+        }
+      });
     }
 
     if (btnDownloadUpdate) {
       btnDownloadUpdate.addEventListener('click', () => {
-        if (window.electronAPI && window.electronAPI.openExternal) {
-          window.electronAPI.openExternal(cachedReleaseUrl);
-        } else {
-          window.open(cachedReleaseUrl, '_blank');
-        }
+        startUpdateDownload(availableDirectDownloadUrl);
       });
     }
 

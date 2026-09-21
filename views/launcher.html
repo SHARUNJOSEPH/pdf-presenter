@@ -512,18 +512,35 @@
         </div>
 
         <!-- Software Version & Updates -->
-        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-          <div>
-            <div style="font-size: 12.5px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
-              <span>🔄</span> Software Version & Updates
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 18px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+                <span>🔄</span> Software Version & Updates
+              </div>
+              <div id="updateStatusText" style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
+                Current build: v1.2.1 (Production)
+              </div>
             </div>
-            <div id="updateStatusText" style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
-              Current build: v1.2.1 (Production)
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn" id="btnCheckUpdates" style="font-size: 11.5px; padding: 6px 12px; white-space: nowrap; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; cursor: pointer; border-radius: 6px;">
+                Check for Updates
+              </button>
+              <button type="button" class="btn" id="btnInstallUpdate" style="display: none; font-size: 11.5px; padding: 6px 14px; white-space: nowrap; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; font-weight: 700; cursor: pointer; border-radius: 6px; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);">
+                🚀 Install & Restart
+              </button>
             </div>
           </div>
-          <button type="button" class="btn" id="btnCheckUpdates" style="font-size: 11.5px; padding: 6px 12px; white-space: nowrap; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; cursor: pointer;">
-            Check for Updates
-          </button>
+          <!-- Real-Time Auto-Download Progress Bar -->
+          <div id="updateProgressContainer" style="display: none; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 5px;">
+              <span id="updateProgressLabel" style="color: #38bdf8; font-weight: 600;">Downloading update in background...</span>
+              <span id="updateProgressPercent" style="color: #f8fafc; font-weight: 700; font-family: monospace;">0%</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 9999px; overflow: hidden;">
+              <div id="updateProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8); border-radius: 9999px; transition: width 0.15s ease;"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Active Edition & Features (Switch between Free and Pro) -->

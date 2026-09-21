@@ -62,6 +62,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Updates & Companion Preset Export
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: (url) => ipcRenderer.invoke('download-update', url),
+  installUpdate: (filePath) => ipcRenderer.invoke('install-update', filePath),
+  onUpdateProgress: (callback) => {
+    const listener = (event, data) => callback(data);
+    ipcRenderer.on('update-download-progress', listener);
+    return () => ipcRenderer.removeListener('update-download-progress', listener);
+  },
+  onUpdateDownloaded: (callback) => {
+    const listener = (event, data) => callback(data);
+    ipcRenderer.on('update-downloaded', listener);
+    return () => ipcRenderer.removeListener('update-downloaded', listener);
+  },
   exportCompanionConfig: (options) => ipcRenderer.invoke('export-companion-config', options),
 
   // Freemium & In-App Purchase (IAP) License Management
