@@ -129,19 +129,27 @@
             <span class="drawer-tab-name">🔴 LIVE SLIDE vs ⏭️ UP NEXT SLIDE</span>
             <span class="drawer-tab-val" id="valSlidesSplit">50% / 50%</span>
           </div>
-          <div class="drawer-control-row">
-            <label class="control-label">Width Split:</label>
-            <button type="button" class="btn-size-step" id="btnSlideCurrentLess" title="Live Slide Narrower (Next Wider)">◀</button>
-            <input type="range" class="range-slider" id="sliderSlidesSplit" min="15" max="85" value="50" step="1">
-            <button type="button" class="btn-size-step" id="btnSlideCurrentMore" title="Live Slide Wider (Next Narrower)">▶</button>
-            <span class="control-badge" id="badgeSlidesSplit">50% / 50%</span>
+          <div class="drawer-control-group">
+            <div class="control-label-row">
+              <label class="control-label" for="sliderSlidesSplit">Width Split:</label>
+              <span class="control-badge" id="badgeSlidesSplit">50% / 50%</span>
+            </div>
+            <div class="drawer-control-row">
+              <button type="button" class="btn-size-step" id="btnSlideCurrentLess" title="Live Slide Narrower (Next Wider)">◀</button>
+              <input type="range" class="range-slider" id="sliderSlidesSplit" min="15" max="85" value="50" step="1">
+              <button type="button" class="btn-size-step" id="btnSlideCurrentMore" title="Live Slide Wider (Next Narrower)">▶</button>
+            </div>
           </div>
-          <div class="drawer-control-row">
-            <label class="control-label">Slides vs Notes Height:</label>
-            <button type="button" class="btn-size-step" id="btnSlidesHeightLess" title="Slides Shorter (Notes Taller)">▼</button>
-            <input type="range" class="range-slider" id="sliderSlidesHeight" min="80" max="400" value="148" step="5">
-            <button type="button" class="btn-size-step" id="btnSlidesHeightMore" title="Slides Taller (Notes Shorter)">▲</button>
-            <span class="control-badge" id="badgeSlidesHeight">Slides: 1fr</span>
+          <div class="drawer-control-group">
+            <div class="control-label-row">
+              <label class="control-label" for="sliderSlidesHeight">Slides vs Notes Height:</label>
+              <span class="control-badge" id="badgeSlidesHeight">Slides: 1fr</span>
+            </div>
+            <div class="drawer-control-row">
+              <button type="button" class="btn-size-step" id="btnSlidesHeightLess" title="Slides Shorter (Notes Taller)">▼</button>
+              <input type="range" class="range-slider" id="sliderSlidesHeight" min="80" max="400" value="148" step="5">
+              <button type="button" class="btn-size-step" id="btnSlidesHeightMore" title="Slides Taller (Notes Shorter)">▲</button>
+            </div>
           </div>
         </div>
 
@@ -151,19 +159,27 @@
             <span class="drawer-tab-name">⏱️ TOP BAR (TIMER, CLOCK, PROGRESS)</span>
             <span class="drawer-tab-val" id="valTopHeight">92px</span>
           </div>
-          <div class="drawer-control-row">
-            <label class="control-label">Top Bar Height:</label>
-            <button type="button" class="btn-size-step" id="btnTopHeightLess" title="Decrease Top Bar Height">−</button>
-            <input type="range" class="range-slider" id="sliderTopHeight" min="60" max="260" value="92" step="4">
-            <button type="button" class="btn-size-step" id="btnTopHeightMore" title="Increase Top Bar Height">+</button>
-            <span class="control-badge" id="badgeTopHeight">92px</span>
+          <div class="drawer-control-group">
+            <div class="control-label-row">
+              <label class="control-label" for="sliderTopHeight">Top Bar Height:</label>
+              <span class="control-badge" id="badgeTopHeight">92px</span>
+            </div>
+            <div class="drawer-control-row">
+              <button type="button" class="btn-size-step" id="btnTopHeightLess" title="Decrease Top Bar Height">−</button>
+              <input type="range" class="range-slider" id="sliderTopHeight" min="60" max="260" value="92" step="4">
+              <button type="button" class="btn-size-step" id="btnTopHeightMore" title="Increase Top Bar Height">+</button>
+            </div>
           </div>
-          <div class="drawer-control-row">
-            <label class="control-label">Timer Width:</label>
-            <button type="button" class="btn-size-step" id="btnTimerWidthLess" title="Decrease Timer Width">◀</button>
-            <input type="range" class="range-slider" id="sliderTimerWidth" min="20" max="80" value="33" step="1">
-            <button type="button" class="btn-size-step" id="btnTimerWidthMore" title="Increase Timer Width">▶</button>
-            <span class="control-badge" id="badgeTimerWidth">33% (40 cols)</span>
+          <div class="drawer-control-group">
+            <div class="control-label-row">
+              <label class="control-label" for="sliderTimerWidth">Timer Width:</label>
+              <span class="control-badge" id="badgeTimerWidth">33% (40 cols)</span>
+            </div>
+            <div class="drawer-control-row">
+              <button type="button" class="btn-size-step" id="btnTimerWidthLess" title="Decrease Timer Width">◀</button>
+              <input type="range" class="range-slider" id="sliderTimerWidth" min="20" max="80" value="33" step="1">
+              <button type="button" class="btn-size-step" id="btnTimerWidthMore" title="Increase Timer Width">▶</button>
+            </div>
           </div>
         </div>
 
@@ -173,19 +189,27 @@
             <span class="drawer-tab-name">📝 TELEPROMPTER NOTES & ⚠️ STAGE CUE</span>
             <span class="drawer-tab-val" id="valBottomHeight">148px</span>
           </div>
-          <div class="drawer-control-row">
-            <label class="control-label">Notes Bar Height:</label>
-            <button type="button" class="btn-size-step" id="btnBottomHeightLess" title="Decrease Notes Bar Height">−</button>
-            <input type="range" class="range-slider" id="sliderBottomHeight" min="70" max="450" value="148" step="5">
-            <button type="button" class="btn-size-step" id="btnBottomHeightMore" title="Increase Notes Bar Height">+</button>
-            <span class="control-badge" id="badgeBottomHeight">148px</span>
+          <div class="drawer-control-group">
+            <div class="control-label-row">
+              <label class="control-label" for="sliderBottomHeight">Notes Bar Height:</label>
+              <span class="control-badge" id="badgeBottomHeight">148px</span>
+            </div>
+            <div class="drawer-control-row">
+              <button type="button" class="btn-size-step" id="btnBottomHeightLess" title="Decrease Notes Bar Height">−</button>
+              <input type="range" class="range-slider" id="sliderBottomHeight" min="70" max="450" value="148" step="5">
+              <button type="button" class="btn-size-step" id="btnBottomHeightMore" title="Increase Notes Bar Height">+</button>
+            </div>
           </div>
-          <div class="drawer-control-row">
-            <label class="control-label">Notes Width:</label>
-            <button type="button" class="btn-size-step" id="btnNotesWidthLess" title="Decrease Notes Width">◀</button>
-            <input type="range" class="range-slider" id="sliderNotesWidth" min="25" max="100" value="67" step="1">
-            <button type="button" class="btn-size-step" id="btnNotesWidthMore" title="Increase Notes Width">▶</button>
-            <span class="control-badge" id="badgeNotesWidth">67% (80 cols)</span>
+          <div class="drawer-control-group">
+            <div class="control-label-row">
+              <label class="control-label" for="sliderNotesWidth">Notes Width:</label>
+              <span class="control-badge" id="badgeNotesWidth">67% (80 cols)</span>
+            </div>
+            <div class="drawer-control-row">
+              <button type="button" class="btn-size-step" id="btnNotesWidthLess" title="Decrease Notes Width">◀</button>
+              <input type="range" class="range-slider" id="sliderNotesWidth" min="25" max="100" value="67" step="1">
+              <button type="button" class="btn-size-step" id="btnNotesWidthMore" title="Increase Notes Width">▶</button>
+            </div>
           </div>
         </div>
       </div>

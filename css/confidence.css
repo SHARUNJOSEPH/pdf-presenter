@@ -332,18 +332,19 @@ body.confidence-body {
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 32px);
-  max-width: 900px;
-  background: rgba(13, 19, 33, 0.96);
+  max-width: 980px;
+  background: rgba(10, 15, 29, 0.97);
   border: 1px solid var(--conf-accent-blue);
   border-radius: 12px;
-  padding: 16px;
+  padding: 16px 20px;
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 20px rgba(0, 242, 254, 0.2);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 242, 254, 0.25);
   z-index: 200;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  box-sizing: border-box;
 }
 
 .drawer-header {
@@ -393,7 +394,7 @@ body.confidence-body {
 
 .drawer-preset-buttons {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
@@ -403,31 +404,36 @@ body.confidence-body {
   color: var(--conf-text-primary);
   font-size: 11px;
   font-weight: 600;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 5px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-drawer-preset:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .drawer-tabs-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 8px;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .drawer-tab-card {
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.45);
   border: 1px solid var(--conf-border-subtle);
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .drawer-tab-header {
@@ -437,31 +443,61 @@ body.confidence-body {
   font-size: 11px;
   font-weight: 700;
   color: var(--conf-text-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .drawer-tab-val {
   color: var(--conf-accent-blue);
   font-variant-numeric: tabular-nums;
   font-size: 11px;
+  font-weight: 700;
+}
+
+.drawer-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+
+.control-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.control-label {
+  font-size: 11px;
+  color: var(--conf-text-muted);
+  font-weight: 600;
+}
+
+.control-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--conf-accent-blue);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .drawer-control-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.control-label {
-  font-size: 10px;
-  color: var(--conf-text-muted);
-  width: 90px;
-  flex-shrink: 0;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .range-slider {
   flex: 1;
+  min-width: 0;
+  width: 100%;
   accent-color: var(--conf-accent-blue);
   cursor: pointer;
+  height: 6px;
 }
 
 .btn-size-step {
@@ -469,22 +505,22 @@ body.confidence-body {
   border: 1px solid var(--conf-border-subtle);
   color: #fff;
   font-size: 11px;
-  padding: 2px 6px;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 4px;
   cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
 }
 
 .btn-size-step:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.control-badge {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--conf-accent-blue);
-  min-width: 60px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--conf-accent-blue);
 }
 
 /* ==========================================================================
