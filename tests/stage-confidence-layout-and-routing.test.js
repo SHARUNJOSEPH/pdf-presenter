@@ -1002,6 +1002,52 @@ describe('11. Pro Studio Stage Confidence Display Architecture & Auto-Dimming', 
   });
 });
 
+describe('6. Stage Cue End-to-End Routing & Launcher Integration', () => {
+  const confHtml = fs.readFileSync(path.join(__dirname, '../views/confidence.html'), 'utf8');
+  const confCss = fs.readFileSync(path.join(__dirname, '../css/confidence.css'), 'utf8');
+  const confJs = fs.readFileSync(path.join(__dirname, '../js/confidence.js'), 'utf8');
+  const launcherJs = fs.readFileSync(path.join(__dirname, '../js/launcher.js'), 'utf8');
+  const launcherHtml = fs.readFileSync(path.join(__dirname, '../views/launcher.html'), 'utf8');
+  const mainJs = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
 
+  it('views/confidence.html contains floating stage cue overlay and side-by-side row 3 dock tiles', () => {
+    assert.ok(confHtml.includes('id="confFloatingStageCue"'), 'Must have #confFloatingStageCue overlay');
+    assert.ok(confHtml.includes('id="confFloatingCueText"'), 'Must have #confFloatingCueText element');
+    assert.ok(confHtml.includes('id="dockWindowCue"'), 'Must have dockWindowCue element');
+    assert.ok(confHtml.includes('id="dockWindowNotes"'), 'Must have dockWindowNotes element');
+  });
 
+  it('css/confidence.css contains broadcast-grade floating cue styles', () => {
+    assert.ok(confCss.includes('.conf-floating-stage-cue'), 'Must style .conf-floating-stage-cue');
+    assert.ok(confCss.includes('.conf-floating-cue-badge'), 'Must style .conf-floating-cue-badge');
+    assert.ok(confCss.includes('.conf-floating-cue-msg'), 'Must style .conf-floating-cue-msg');
+  });
 
+  it('js/confidence.js binds floating cue elements and balances row 3 tiles', () => {
+    assert.ok(confJs.includes("document.getElementById('confFloatingStageCue')"), 'Must bind confFloatingStageCue');
+    assert.ok(confJs.includes("document.getElementById('confFloatingCueText')"), 'Must bind confFloatingCueText');
+    assert.ok(confJs.includes("cue: 'span-1'"), 'Default cue span must be span-1');
+    assert.ok(confJs.includes("notes: 'span-3'"), 'Default notes span must be span-3');
+    assert.ok(confJs.includes('confFloatingStageCue.style.display'), 'handleStageCue must toggle floating cue display');
+  });
+
+  it('views/launcher.html and js/launcher.js wire up stage cue dispatcher in Confidence Modal', () => {
+    assert.ok(launcherHtml.includes('id="txtStageCueMessage"'), 'Launcher HTML must have txtStageCueMessage');
+    assert.ok(launcherHtml.includes('id="btnSendStageCue"'), 'Launcher HTML must have btnSendStageCue');
+    assert.ok(launcherHtml.includes('id="btnClearStageCue"'), 'Launcher HTML must have btnClearStageCue');
+    assert.ok(launcherHtml.includes('class="btn btn-preset-banner cue-preset"'), 'Launcher HTML must have cue presets');
+
+    assert.ok(launcherJs.includes("document.getElementById('txtStageCueMessage')"), 'Launcher JS must bind txtStageCueMessage');
+    assert.ok(launcherJs.includes("document.getElementById('btnSendStageCue')"), 'Launcher JS must bind btnSendStageCue');
+    assert.ok(launcherJs.includes("document.getElementById('btnClearStageCue')"), 'Launcher JS must bind btnClearStageCue');
+    assert.ok(launcherJs.includes("dispatchLauncherStageCue"), 'Launcher JS must define dispatchLauncherStageCue');
+    assert.ok(launcherJs.includes("type: 'STAGE_CUE'"), 'Launcher JS must dispatch STAGE_CUE payload');
+  });
+
+  it('main.js relays STAGE_CUE without blocking Free tier and syncs to confidenceWindow & wsClients', () => {
+    assert.ok(!mainJs.includes("(data.type === 'SHOW_BANNER' || data.type === 'STAGE_CUE'"), 'main.js must not block STAGE_CUE in Free tier');
+    assert.ok(mainJs.includes("if (data.type === 'STAGE_CUE')"), 'main.js must track STAGE_CUE state');
+    assert.ok(mainJs.includes("state.activeStageCue = data.message"), 'main.js must save activeStageCue to state');
+    assert.ok(mainJs.includes("confidenceWindow.webContents.send('sync-event', data)"), 'main.js must relay to confidenceWindow');
+  });
+});

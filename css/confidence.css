@@ -1130,6 +1130,53 @@ body.conf-resizing-se, body.conf-resizing-se * { cursor: nwse-resize !important;
   font-size: 8px;
 }
 
+/* Floating High-Visibility Broadcast Stage Cue Toast Overlay */
+.conf-floating-stage-cue {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 180;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.96), rgba(185, 28, 28, 0.98));
+  border: 2px solid #fecaca;
+  box-shadow: 0 0 50px rgba(239, 68, 68, 0.8), 0 20px 40px rgba(0, 0, 0, 0.9);
+  padding: 14px 28px;
+  border-radius: 14px;
+  color: #fff;
+  animation: pulse-crit 1.2s infinite ease-in-out;
+  pointer-events: none;
+  max-width: 85%;
+}
+
+.conf-floating-cue-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.floating-cue-icon {
+  font-size: 20px;
+}
+
+.conf-floating-cue-msg {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ==========================================================================
    3. BROADCAST STAGE RESIZERS (#confResizerH & #confResizerV)
    ========================================================================== */

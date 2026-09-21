@@ -48,6 +48,8 @@
   const confStageCueBanner = document.getElementById('confStageCueBanner');
   const confStageCueText = document.getElementById('confStageCueText');
   const confCueIdleMsg = document.getElementById('confCueIdleMsg');
+  const confFloatingStageCue = document.getElementById('confFloatingStageCue');
+  const confFloatingCueText = document.getElementById('confFloatingCueText');
 
   // Presets & Controls
   const btnPresetBalanced = document.getElementById('btnPresetBalanced');
@@ -389,8 +391,8 @@
       counter: 'span-1',
       current: 'span-2',
       next: 'span-2',
-      notes: 'span-2',
-      cue: 'span-full'
+      notes: 'span-3',
+      cue: 'span-1'
     },
     rowSpans: {
       timer: 'row-span-1',
@@ -412,6 +414,10 @@
       if (raw) {
         const parsed = JSON.parse(raw);
         dashboardState = { ...dashboardState, ...parsed };
+      }
+      if (dashboardState.spans && dashboardState.spans.cue === 'span-full') {
+        dashboardState.spans.cue = 'span-1';
+        dashboardState.spans.notes = 'span-3';
       }
     } catch (e) {}
     renderDashboardOrder();
@@ -503,8 +509,8 @@
         counter: 'span-1',
         current: 'span-2',
         next: 'span-2',
-        notes: 'span-2',
-        cue: 'span-full'
+        notes: 'span-3',
+        cue: 'span-1'
       },
       rowSpans: {
         timer: 'row-span-1',
@@ -1106,14 +1112,20 @@
   }
 
   function setNotesWidth(percent) {
-    const val = Math.max(25, Math.min(100, Math.round(percent)));
-    const span = Math.round((val / 100) * 120);
+    const val = Math.max(25, Math.min(95, Math.round(percent)));
+    const span = Math.max(20, Math.min(100, Math.round((val / 100) * 120)));
+    const cueSpan = Math.max(15, 120 - span);
     const win = getDockWindowEl('notes');
+    const cueWin = getDockWindowEl('cue');
     if (win) {
       win.style.gridColumn = `span ${span}`;
       dashboardState.flexibleSpans['notes'] = span;
-      saveDashboardState();
     }
+    if (cueWin) {
+      cueWin.style.gridColumn = `span ${cueSpan}`;
+      dashboardState.flexibleSpans['cue'] = cueSpan;
+    }
+    saveDashboardState();
     syncDrawerControlsFromState();
   }
 
@@ -1321,29 +1333,33 @@
 
   let stageCueTimeout = null;
   function handleStageCue(message, duration = 10000) {
-    if (!confStageCueBanner) return;
-
     if (stageCueTimeout) {
       clearTimeout(stageCueTimeout);
       stageCueTimeout = null;
     }
 
-    if (message && String(message).trim()) {
-      if (confStageCueText) confStageCueText.textContent = String(message).trim();
-      confStageCueBanner.style.display = 'flex';
+    const cleanMsg = message && String(message).trim();
+    if (cleanMsg) {
+      if (confStageCueText) confStageCueText.textContent = cleanMsg;
+      if (confStageCueBanner) confStageCueBanner.style.display = 'flex';
       if (confCueIdleMsg) confCueIdleMsg.style.display = 'none';
+
+      if (confFloatingCueText) confFloatingCueText.textContent = cleanMsg;
+      if (confFloatingStageCue) confFloatingStageCue.style.display = 'flex';
 
       const dur = Number(duration || 10000);
       if (dur > 0) {
         stageCueTimeout = setTimeout(() => {
-          confStageCueBanner.style.display = 'none';
+          if (confStageCueBanner) confStageCueBanner.style.display = 'none';
           if (confCueIdleMsg) confCueIdleMsg.style.display = 'flex';
+          if (confFloatingStageCue) confFloatingStageCue.style.display = 'none';
           stageCueTimeout = null;
         }, dur);
       }
     } else {
-      confStageCueBanner.style.display = 'none';
+      if (confStageCueBanner) confStageCueBanner.style.display = 'none';
       if (confCueIdleMsg) confCueIdleMsg.style.display = 'flex';
+      if (confFloatingStageCue) confFloatingStageCue.style.display = 'none';
     }
   }
 
@@ -1401,6 +1417,21 @@
 
     if (window.electronAPI && window.electronAPI.onSync) {
       window.electronAPI.onSync(handleSync);
+    }
+
+    // Connect WebSocket bridge if running in browser / tablet over HTTP
+    if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+      try {
+        const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProto}//${window.location.host}/ws`;
+        const ws = new WebSocket(wsUrl);
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            handleSync(data);
+          } catch (e) {}
+        };
+      } catch (e) {}
     }
   }
 

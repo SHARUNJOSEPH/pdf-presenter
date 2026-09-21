@@ -1593,6 +1593,74 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
+    // Silent Stage Cue Dispatcher in Confidence Modal
+    const txtStageCueMessage = document.getElementById('txtStageCueMessage');
+    const btnSendStageCue = document.getElementById('btnSendStageCue');
+    const btnClearStageCue = document.getElementById('btnClearStageCue');
+
+    let launcherSyncBus = null;
+    if (typeof PresentationSyncBus !== 'undefined') {
+      try {
+        launcherSyncBus = new PresentationSyncBus('launcher');
+      } catch (e) {}
+    }
+
+    function dispatchLauncherStageCue(message, duration = 10000) {
+      const payload = {
+        type: 'STAGE_CUE',
+        message: message,
+        duration: duration,
+        source: 'launcher'
+      };
+      if (window.electronAPI && window.electronAPI.sendSync) {
+        window.electronAPI.sendSync(payload);
+      }
+      if (launcherSyncBus && launcherSyncBus.send) {
+        launcherSyncBus.send(payload);
+      }
+    }
+
+    if (btnSendStageCue && txtStageCueMessage) {
+      btnSendStageCue.addEventListener('click', () => {
+        const msg = txtStageCueMessage.value.trim();
+        if (msg) {
+          dispatchLauncherStageCue(msg, 10000);
+          const orig = btnSendStageCue.textContent;
+          btnSendStageCue.textContent = '✓ Sent';
+          setTimeout(() => { btnSendStageCue.textContent = orig; }, 1200);
+        }
+      });
+
+      txtStageCueMessage.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          btnSendStageCue.click();
+        }
+      });
+    }
+
+    if (btnClearStageCue) {
+      btnClearStageCue.addEventListener('click', () => {
+        if (txtStageCueMessage) txtStageCueMessage.value = '';
+        dispatchLauncherStageCue(null, 0);
+        const orig = btnClearStageCue.textContent;
+        btnClearStageCue.textContent = '✓';
+        setTimeout(() => { btnClearStageCue.textContent = orig; }, 1000);
+      });
+    }
+
+    document.querySelectorAll('#confidenceModal .cue-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cue = btn.dataset.cue;
+        if (cue) {
+          if (txtStageCueMessage) txtStageCueMessage.value = cue;
+          dispatchLauncherStageCue(cue, 10000);
+          const orig = btn.textContent;
+          btn.textContent = '✓ Sent';
+          setTimeout(() => { btn.textContent = orig; }, 1200);
+        }
+      });
+    });
+
     // 7. OBS & vMix Automation Modal
     const btnBroadcastAutomation = document.getElementById('btnBroadcastAutomation');
     const broadcastAutomationModal = document.getElementById('broadcastAutomationModal');

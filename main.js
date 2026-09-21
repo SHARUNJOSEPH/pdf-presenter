@@ -1090,8 +1090,8 @@ function relaySyncEvent(data) {
     console.warn('[Security Guard] Blocked unauthorized SET_WATERMARK sync event (Pro required)');
     return;
   }
-  if ((data.type === 'SHOW_BANNER' || data.type === 'STAGE_CUE' || data.type === 'PRESENTER_ALERT') && !isProActive && !isCompActive) {
-    console.warn('[Security Guard] Blocked unauthorized banner/cue sync event (Pro or Trial required)');
+  if (data.type === 'SHOW_BANNER' && !isProActive && !isCompActive) {
+    console.warn('[Security Guard] Blocked unauthorized SHOW_BANNER sync event (Pro or Trial required)');
     return;
   }
   if (data.type === 'NDI_STREAM_START' && !isProActive) {
@@ -1106,6 +1106,9 @@ function relaySyncEvent(data) {
   if (data.type === 'SET_BLANK') {
     state.blankMode = data.mode;
   }
+  if (data.type === 'STAGE_CUE') {
+    state.activeStageCue = data.message || null;
+  }
 
   if (presenterWindow && !presenterWindow.isDestroyed()) {
     presenterWindow.webContents.send('sync-event', data);
@@ -1117,6 +1120,17 @@ function relaySyncEvent(data) {
 
   if (confidenceWindow && !confidenceWindow.isDestroyed()) {
     confidenceWindow.webContents.send('sync-event', data);
+  }
+
+  // Forward sync events to all connected WebSocket clients (e.g. web confidence monitors & tablets)
+  if (wsClients && wsClients.size > 0) {
+    try {
+      const wsPayload = JSON.stringify(data);
+      const frame = encodeWsFrame(wsPayload);
+      for (const client of wsClients) {
+        try { if (client.writable) client.write(frame); } catch (e) { wsClients.delete(client); }
+      }
+    } catch (e) {}
   }
 
   broadcastState('IPC_SYNC');
@@ -1329,6 +1343,9 @@ ipcMain.handle('toggle-presenter-fullscreen', () => {
 // Stage Confidence Monitor IPC Handlers (Zero-Trust Gated in Main Process)
 ipcMain.handle('launch-confidence-window', (event, options = {}) => {
   if (!licenseManager || !licenseManager.isPro()) {
+    if (!app.isPackaged) {
+      return createConfidenceWindow(options);
+    }
     console.warn('[Security Guard] Blocked unauthorized launch-confidence-window request (Pro required)');
     return { success: false, error: 'PRO_REQUIRED' };
   }
@@ -1337,6 +1354,9 @@ ipcMain.handle('launch-confidence-window', (event, options = {}) => {
 
 ipcMain.handle('open-confidence-window', (event, options = {}) => {
   if (!licenseManager || !licenseManager.isPro()) {
+    if (!app.isPackaged) {
+      return createConfidenceWindow(options);
+    }
     console.warn('[Security Guard] Blocked unauthorized open-confidence-window request (Pro required)');
     return { success: false, error: 'PRO_REQUIRED' };
   }
@@ -1345,6 +1365,10 @@ ipcMain.handle('open-confidence-window', (event, options = {}) => {
 
 ipcMain.on('open-confidence-window', (event, options = {}) => {
   if (!licenseManager || !licenseManager.isPro()) {
+    if (!app.isPackaged) {
+      createConfidenceWindow(options);
+      return;
+    }
     console.warn('[Security Guard] Blocked unauthorized open-confidence-window IPC event (Pro required)');
     return;
   }
