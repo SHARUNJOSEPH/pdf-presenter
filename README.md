@@ -8,6 +8,9 @@
   <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest">
     <img src="https://img.shields.io/badge/⬇️%20Download-Windows%20Setup%20(.exe)-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer" />
   </a>
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest">
+    <img src="https://img.shields.io/badge/🍎%20Download-macOS%20(.dmg)-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS Installer" />
+  </a>
   <a href="https://apps.microsoft.com/detail/9NS3LKFXHBXW">
     <img src="https://img.shields.io/badge/🛍️%20Get%20it%20from-Microsoft%20Store-0078D4?style=for-the-badge&logo=windows11&logoColor=white" alt="Microsoft Store" />
   </a>
@@ -60,6 +63,19 @@ Choose your preferred way to download and use **PDF Presenter Suite**:
 
 ## 🌟 Key Features
 
+- **🎬 Pro Studio Stage Confidence Display**:
+  - **4 Instant Broadcast Templates**: Switch seamlessly between 🎬 **Dual Cinema** (balanced live/next split), 📝 **Prompter Focus** (expanded teleprompter), ⏱️ **Timekeeper Focus** (giant stage timer), and 🖥️ **Single Live Mirror** (full-width audience mirror).
+  - **Optimized for Stage Distance**: High-contrast, glare-resistant typography and responsive multiviewer layout readable from 20 to 40+ feet away.
+  - **Independent Confidence Output**: Launch on dedicated onstage speaker monitors, foldback screens, or teleprompter glass.
+- **📝 High-Readability Stage Teleprompter**:
+  - **Auto-Scrolling Speaker Notes**: Hands-free auto-scrolling with real-time speed control (`[` to slow down, `]` to speed up, `Space` to pause/resume).
+  - **Live Script Preview**: Keep your speaking cadence smooth without looking down at a laptop screen.
+- **📢 Silent Stage Cue to Speaker Monitor**:
+  - **Direct Backstage-to-Stage Messaging**: Technical directors and event managers can send silent instructions (*"Wrap up in 2 min"*, *"Mic check"*, *"Q&A Starting"*) directly to the speaker's monitor.
+  - **High-Visibility Broadcast Banner**: Prominent pulsing stage overlay with auto-dismiss countdown timer so the speaker never misses a critical cue.
+- **⏱️ Smart Keynote Countdown Timer & Overtime Alert**:
+  - **Keynote Countdown Mode**: 5m, 10m, 15m, 20m, 30m, 45m, and 60m presets.
+  - **Multi-Phase Color Alerts**: Normal (Cyan) → Warning (Pulsing Amber at ≤5m) → Critical (Pulsing Red at ≤1m) → **Flashing Red Overtime (`+MM:SS`)** when presentation exceeds allotted time.
 - **Enterprise 11-Language Internationalization (i18n)**:
   - **11 Fully Localized Languages**: English (`en`), Español (`es`), Français (`fr`), Deutsch (`de`), 简体中文 (`zh`), 日本語 (`ja`), العربية (`ar`), Português (`pt`), हिन्दी (`hi`), Русский (`ru`), and Italiano (`it`).
   - **Auto-Detection**: Automatically detects the host operating system's native language upon launch.
@@ -141,6 +157,7 @@ npm start
 | `G` | Toggle Slide Grid Modal |
 | `?` | Show Shortcuts Cheat Sheet |
 | `F11` | Toggle Fullscreen Cockpit |
+| `[` / `]` | Teleprompter: Slower / Faster Scroll Speed |
 | `Esc` | Exit Presenter View / Close Modal |
 
 ---
@@ -158,7 +175,11 @@ npm start
 | `POST /api/whiteout` | POST | Toggle stage whiteout |
 | `POST /api/timer/start` | POST | Start/resume presentation timer |
 | `POST /api/timer/pause` | POST | Pause presentation timer |
-| `GET /api/status` | GET | Retrieve live JSON presentation state |
+| `POST /api/timer/reset` | POST | Reset presentation timer |
+| `POST /api/timer/set` | POST | Set keynote countdown duration (seconds) |
+| `POST /api/message` | POST | Send silent cue to speaker monitor (`target=stage`) or cockpit |
+| `POST /api/banner` | POST | Display lower-third ticker banner on audience display |
+| `GET /api/status` | GET | Retrieve live JSON presentation state & telemetry |
 
 ---
 
