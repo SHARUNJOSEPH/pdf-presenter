@@ -74,44 +74,42 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{ github.ref_name }} — Enterprise Multi-Language Release & RTL Layout Support
+          name: ${{ github.ref_name }} — Pro Studio Stage Confidence Display & Hardware Automation
           draft: false
           prerelease: false
           generate_release_notes: false
           body: |
-            # 🌐 PDF Presenter Suite ${{ github.ref_name }} — Enterprise Multi-Language Release
+            # 🎬 PDF Presenter Suite ${{ github.ref_name }} — Pro Studio Stage Confidence Display & Hardware Automation
 
-            We are excited to announce the release of **PDF Presenter Suite ${{ github.ref_name }}**, introducing full **Enterprise Internationalization (i18n)** across 11 core languages, comprehensive **Right-to-Left (RTL)** layout support with bidirectional text isolation, and an autonomous quality-assured synchronization engine.
+            We are excited to announce **PDF Presenter Suite ${{ github.ref_name }}**, featuring our completely redesigned **Pro Studio Stage Confidence Display**, high-contrast **Stage Teleprompter** with variable-speed auto-scrolling, and enhanced **Bitfocus Companion / Stream Deck** hardware integration.
 
             ---
 
             ### 🚀 What's New in ${{ github.ref_name }}
 
+            - **Pro Studio Stage Confidence Display**:
+              4 instant broadcast templates (🎬 Dual Cinema, 📝 Prompter Focus, ⏱️ Timekeeper Focus, and 🖥️ Single Live Mirror) designed for large stages and confidence monitors 20–40 feet away.
+            - **High-Readability Stage Teleprompter**:
+              Auto-scrolling speaker notes with variable speed, live script preview, and keyboard shortcuts (`[` / `]` speed, `Space` pause/resume).
+            - **Silent Stage Cue to Speaker Monitor**:
+              Direct stage alert dispatcher from launcher or cockpit with high-visibility pulsing broadcast banner overlay and auto-dismiss timer.
+            - **Bitfocus Companion & Stream Deck Integration**:
+              Direct hardware control for slide changes, timers, blackout curtain, lower-third banners, and silent stage cues via local REST API.
             - **11-Language Enterprise Internationalization Engine**:
-              Full localization parity across English (`en`), Spanish (`es`), French (`fr`), German (`de`), Simplified Chinese (`zh`), Japanese (`ja`), Arabic (`ar`), Portuguese (`pt`), Hindi (`hi`), Russian (`ru`), and Italian (`it`) with dynamic parameter interpolation (`{count}`, `{current}`, `{total}`).
-            - **Automatic OS Language Detection**:
-              The application automatically detects the device's native language upon launch and configures the UI language accordingly with smooth fallback to English.
-            - **Arabic Right-to-Left (RTL) Layout & Bidirectional Isolation**:
-              Engineered full RTL interface flow with strict Left-to-Right (`unicode-bidi: isolate; direction: ltr !important`) numerical isolation on presentation timers (`#timerDisplay`), wall clocks (`#clockDisplay`), slide counters (`1 / 6`), and API code blocks to prevent digit flipping.
-            - **Hardened Dual-Channel Synchronization**:
-              Upgraded concurrent message routing across Electron IPC and native `BroadcastChannel('pdf_presenter_sync_bus')` for instant cross-window language switching with zero page reload.
-            - **Enhanced Modal Dialog Accessibility**:
-              Implemented triple dismissal interaction paths: Close button click, `Escape` keydown, and dark overlay backdrop clicks across all dialogs.
-            - **Multi-Language Windows Installer**:
-              Configured NSIS installer packages supporting native language installation flows for global enterprise deployments.
-            - **Autonomous QA & Verification Swarm**:
-              Achieved 100% certification across 30 unit tests, 6 pre-flight release gates, and 151 autonomous swarm verification assertions.
+              Full localization parity across English (`en`), Spanish (`es`), French (`fr`), German (`de`), Chinese (`zh`), Japanese (`ja`), Arabic (`ar`), Portuguese (`pt`), Hindi (`hi`), Russian (`ru`), and Italian (`it`) with bidirectional numerical isolation.
+            - **100% Certified Code Quality**:
+              Passed all 253 unit and integration tests and all 6/6 pre-flight release quality gates.
 
             ---
 
             ### 💾 Downloads & Installation
 
-            | Platform | Package | Type |
-            | :--- | :--- | :--- |
-            | **Windows 10/11** | `PDF Presenter Suite Setup 1.2.0.exe` | Multi-Language NSIS Installer |
-            | **Windows Portable** | `PDF Presenter Suite 1.2.0.exe` | Zero-Install Standalone Executable |
-            | **macOS** | `PDF Presenter Suite-1.2.0.dmg` | Apple Disk Image |
-            | **macOS Portable** | `PDF Presenter Suite-1.2.0-mac.zip` | Universal Zip Archive |
+            | Platform | Package | Architecture | Type |
+            | :--- | :--- | :--- | :--- |
+            | **Windows 10/11** | `PDF Presenter Suite Setup *.exe` | x64 | Multi-Language NSIS Installer |
+            | **Windows Portable** | `PDF Presenter Suite *.exe` | x64 | Zero-Install Standalone Executable |
+            | **macOS Disk Image** | `PDF Presenter Suite *.dmg` | Apple Silicon (arm64) & Intel (x64) | Apple Disk Image Installer |
+            | **macOS Portable** | `PDF Presenter Suite *-mac.zip` | Apple Silicon (arm64) & Intel (x64) | Universal Zip Archive |
           files: |
             release-binaries/*.exe
             release-binaries/*.dmg
