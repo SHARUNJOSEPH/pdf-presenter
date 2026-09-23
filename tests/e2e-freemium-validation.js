@@ -151,8 +151,8 @@ function setupMockIPC() {
   ipcMain.handle('check-for-updates', () => ({
     isStore: false,
     hasUpdate: false,
-    currentVersion: '1.2.1',
-    latestVersion: '1.2.1',
+    currentVersion: '1.2.2',
+    latestVersion: '1.2.2',
     releaseUrl: 'https://github.com/SHARUNJOSEPH/pdf-presenter/releases'
   }));
 
