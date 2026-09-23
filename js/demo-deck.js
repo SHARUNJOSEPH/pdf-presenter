@@ -106,9 +106,11 @@ class DemoSlideDeck {
     const BASE_W = 1920;
     const BASE_H = 1080;
 
-    targetCanvas.width = targetWidth;
-    targetCanvas.height = targetHeight;
-    const ctx = targetCanvas.getContext('2d');
+    // Off-screen double buffer: compose entirely in memory to prevent DOM canvas flickering
+    const buffer = document.createElement('canvas');
+    buffer.width = targetWidth;
+    buffer.height = targetHeight;
+    const ctx = buffer.getContext('2d');
 
     // High quality smoothing
     ctx.imageSmoothingEnabled = true;
@@ -498,6 +500,12 @@ class DemoSlideDeck {
     ctx.fillStyle = '#a5b4fc';
     ctx.font = '20px -apple-system, sans-serif';
     ctx.fillText('💡 Pro Tip: Press "G" to toggle the slide grid or "?" for the full keyboard shortcuts cheat sheet.', cardX + 90, stepY + 68);
+
+    // Atomically paint finished frame to targetCanvas without clearing texture
+    if (targetCanvas.width !== targetWidth) targetCanvas.width = targetWidth;
+    if (targetCanvas.height !== targetHeight) targetCanvas.height = targetHeight;
+    const destCtx = targetCanvas.getContext('2d');
+    destCtx.drawImage(buffer, 0, 0);
   }
 
   // Canvas Helper: Rounded Rectangles

@@ -349,13 +349,18 @@
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--transition-duration, 1.0s) ease-in-out;
-  will-change: opacity;
   z-index: 1;
 }
 
 .presenter-slide-canvas.active {
   opacity: 1;
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.presenter-slide-canvas.dissolve-in {
+  opacity: 1;
+  transition: opacity var(--transition-duration, 1.0s) ease-in-out;
   pointer-events: auto;
   z-index: 2;
 }

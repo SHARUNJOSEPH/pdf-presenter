@@ -183,13 +183,19 @@ class PDFDocumentEngine {
     try {
       await renderTask.promise;
 
-      // 2. Once 100% complete, synchronously copy to target DOM canvas in a single instant paint
-      targetCanvas.width = viewport.width;
-      targetCanvas.height = viewport.height;
+      // 2. Only resize if dimensions actually changed to preserve GPU backing texture
+      if (targetCanvas.width !== viewport.width) {
+        targetCanvas.width = viewport.width;
+      }
+      if (targetCanvas.height !== viewport.height) {
+        targetCanvas.height = viewport.height;
+      }
 
       const cssScale = scale / dpr;
-      targetCanvas.style.width = `${Math.round(baseViewport.width * cssScale)}px`;
-      targetCanvas.style.height = `${Math.round(baseViewport.height * cssScale)}px`;
+      const targetCssW = `${Math.round(baseViewport.width * cssScale)}px`;
+      const targetCssH = `${Math.round(baseViewport.height * cssScale)}px`;
+      if (targetCanvas.style.width !== targetCssW) targetCanvas.style.width = targetCssW;
+      if (targetCanvas.style.height !== targetCssH) targetCanvas.style.height = targetCssH;
 
       const ctx = targetCanvas.getContext('2d');
       ctx.drawImage(offscreen, 0, 0);

@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let isRendering = false;
   let isTransitioning = false;
   let transitionTimer = null;
+  let pendingPage = null;
 
   // DOM Elements
   const audienceStage = document.getElementById('audienceStage');
@@ -351,7 +352,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function renderSlide() {
-    if (isRendering) return;
+    if (isRendering) {
+      pendingPage = currentPage;
+      return;
+    }
     isRendering = true;
 
     try {
@@ -363,8 +367,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const targetW = window.innerWidth || 1920;
       const targetH = window.innerHeight || 1080;
 
-      // 1. First render or 0s instant cut
-      if (isFirstRender || transitionDuration === 0 || transitionStyle === 'none') {
+      // 1. First render
+      if (isFirstRender) {
         await engine.renderPageToCanvas(currentPage, activeCanvas, {
           targetWidth: targetW,
           targetHeight: targetH,
@@ -388,7 +392,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // 2. Render new slide off-screen into backCanvas while it is strictly hidden (opacity 0)
+      // 2. Instant cut (0s duration or 'none' style) - render offscreen to backCanvas first, then swap atomically
+      if (transitionDuration === 0 || transitionStyle === 'none') {
+        backCanvas.style.transition = 'none';
+        backCanvas.style.opacity = '0';
+        backCanvas.style.zIndex = '1';
+        backCanvas.className = 'slide-canvas';
+
+        await engine.renderPageToCanvas(currentPage, backCanvas, {
+          targetWidth: targetW,
+          targetHeight: targetH,
+          width: targetW,
+          height: targetH,
+          scale: 2.0
+        });
+
+        // Atomic swap without intermediate blank frame
+        backCanvas.style.opacity = '1';
+        backCanvas.className = 'slide-canvas active';
+        activeCanvas.style.opacity = '0';
+        activeCanvas.className = 'slide-canvas';
+
+        const outgoing = activeCanvas;
+        activeCanvas = backCanvas;
+        backCanvas = outgoing;
+
+        resizeDrawCanvas();
+        if (placeholder) placeholder.style.display = 'none';
+        return;
+      }
+
+      // 3. Render new slide off-screen into backCanvas while hidden (opacity 0)
       backCanvas.style.transition = 'none';
       backCanvas.style.opacity = '0';
       backCanvas.style.zIndex = '1';
@@ -405,26 +439,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Force layout flush so browser applies opacity 0 before transition begins
       void backCanvas.offsetWidth;
 
-      // 3. True Keynote/PowerPoint Dissolve:
+      // 4. Solid Underlay Dissolve or Slide Animation:
       // The outgoing slide stays solid underneath (opacity 1, zIndex 1).
       // The incoming slide is placed ON TOP (zIndex 2) and smoothly fades from 0 to 1.
-      // This prevents ANY black dip, background gap, or white flash.
+      // This prevents ANY black dip, background gap, or transparency hole.
       isTransitioning = true;
-      backCanvas.style.zIndex = '2';
       activeCanvas.style.zIndex = '1';
       activeCanvas.style.opacity = '1';
 
       if (transitionStyle === 'slide') {
         activeCanvas.className = 'slide-canvas outgoing';
+        backCanvas.style.zIndex = '2';
         backCanvas.className = 'slide-canvas incoming active';
       } else {
+        activeCanvas.style.transition = 'none';
+        activeCanvas.className = 'slide-canvas active';
+
+        backCanvas.style.zIndex = '2';
         backCanvas.style.transition = `opacity ${transitionDuration}s ease-in-out`;
         backCanvas.style.opacity = '1';
-        backCanvas.className = 'slide-canvas active';
-        activeCanvas.className = 'slide-canvas';
+        backCanvas.className = 'slide-canvas dissolve-in';
       }
 
-      // 4. Swap buffer references
+      // Swap buffer references
       const outgoing = activeCanvas;
       activeCanvas = backCanvas;
       backCanvas = outgoing;
@@ -435,14 +472,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         backCanvas.style.transition = 'none';
         backCanvas.style.opacity = '0';
         backCanvas.style.zIndex = '1';
+        backCanvas.className = 'slide-canvas';
+
+        activeCanvas.style.transition = 'none';
+        activeCanvas.style.opacity = '1';
         activeCanvas.style.zIndex = '1';
+        activeCanvas.className = 'slide-canvas active';
+
         transitionTimer = null;
-      }, transitionDuration * 1000);
+      }, (transitionDuration * 1000) + 50);
 
       resizeDrawCanvas();
       if (placeholder) placeholder.style.display = 'none';
     } finally {
       isRendering = false;
+      if (pendingPage !== null && pendingPage !== currentPage) {
+        const next = pendingPage;
+        pendingPage = null;
+        currentPage = next;
+        renderSlide();
+      } else {
+        pendingPage = null;
+      }
     }
   }
 
