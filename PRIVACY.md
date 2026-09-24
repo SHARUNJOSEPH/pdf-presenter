@@ -1,45 +1,24 @@
 # Privacy Policy for PDF Presenter Suite
 
-**Last Updated:** September 3, 2026  
-**Developer:** Joseph Sharun  
-**Contact:** [josephsharun9895@gmail.com](mailto:josephsharun9895@gmail.com) | [GitHub](https://github.com/SHARUNJOSEPH/pdf-presenter)
+**Last Updated:** September 2026
 
----
+PDF Presenter Suite ("we", "our", or "the application") is committed to protecting your privacy. This Privacy Policy explains our practices regarding data handling.
 
-### 1. Overview
-This Privacy Policy applies to the **PDF Presenter Suite** desktop application developed by Joseph Sharun.
+## 1. Information Collection and Storage
+PDF Presenter Suite is designed with privacy and local execution as foundational principles:
+- **No Personal Data Collection:** The application does not collect, harvest, track, or transmit any personally identifiable information (PII).
+- **Local Document Processing:** All PDF presentations, notes, annotations, and slides are processed entirely on your local machine. No documents or slide contents are ever uploaded to any cloud server or third party.
+- **Local Application Settings:** User preferences (e.g., language selection, theme, timer settings, recent file shortcuts) and license activation keys are stored strictly in local storage on your device.
+- **Local Network Companion App:** The optional mobile companion remote operates over your local Wi-Fi / local area network (LAN) directly between your computer and mobile browser via a local WebSocket server. No telemetry or presentation data leaves your local network.
 
-Your privacy is a core priority. PDF Presenter Suite is engineered to operate **100% locally on your computer**. We believe that your presentations, slides, speaker notes, and files belong entirely to you.
+## 2. Network Connections & Updates
+- **Software Updates:** The application may check GitHub Releases (`https://api.github.com/repos/SHARUNJOSEPH/pdf-presenter/releases/latest`) solely to notify you when a new software version is available. No personal identifier or tracking cookies are sent.
+- **Microsoft Store Services:** If downloaded through the Microsoft Store, purchase and license verification may be handled securely through standard Microsoft Store APIs under Microsoft's Privacy Policy.
 
----
+## 3. Third-Party Services
+PDF Presenter Suite does not integrate third-party analytics (such as Google Analytics or telemetry SDKs) and does not display third-party advertisements.
 
-### 2. Information We Do NOT Collect
-PDF Presenter Suite does **not** collect, transmit, store, sell, or share any personal information or usage data:
-* **No Telemetry or Analytics**: The application does not contain background analytics trackers, metrics collectors, or diagnostic tracking SDKs.
-* **No Personal Identifiable Information (PII)**: We do not collect names, email addresses, IP addresses, location data, or device identifiers.
-* **No Cloud Uploads of Documents**: When you open and present a PDF file, all rendering is performed in-memory on your local machine using client-side WebAssembly and PDF.js. Your documents are never uploaded to any remote server or cloud service.
-* **No Third-Party Advertising**: The application contains zero advertisements, sponsored trackers, or commercial data brokers.
-
----
-
-### 3. Local Data Storage & Networking
-* **Local Settings & Notes**: Presentation preferences (such as window layout, display choices, and custom speaker notes) are stored exclusively on your local device (via your system's local storage). This data never leaves your computer.
-* **Bitfocus Companion & Stream Deck API**: The optional HTTP API runs strictly on your local machine (`localhost:3000`) or within your private local area network (LAN) solely to receive control commands from hardware production switchers (like an Elgato Stream Deck). It does not transmit outbound traffic over the public internet.
-
----
-
-### 4. Children’s Privacy
-PDF Presenter Suite does not collect any data from any user, including children under the age of 13.
-
----
-
-### 5. Changes to This Privacy Policy
-If we update this Privacy Policy in future versions, the changes will be posted directly in this document with a revised "Last Updated" date.
-
----
-
-### 6. Contact Information
-If you have any questions or concerns regarding this Privacy Policy, please contact:
-* **Developer**: Joseph Sharun
-* **Email**: [josephsharun9895@gmail.com](mailto:josephsharun9895@gmail.com)
-* **GitHub Repository**: [https://github.com/SHARUNJOSEPH/pdf-presenter](https://github.com/SHARUNJOSEPH/pdf-presenter)
+## 4. Contact
+For any questions regarding this Privacy Policy or support inquiries, please visit:
+- **GitHub Repository:** https://github.com/SHARUNJOSEPH/pdf-presenter
+- **Issues & Support:** https://github.com/SHARUNJOSEPH/pdf-presenter/issues
