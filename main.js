@@ -1509,7 +1509,10 @@ ipcMain.handle('check-for-updates', async () => {
                        assets.find(a => typeof a.name === 'string' && a.name.endsWith('.exe'));
     if (setupAsset) directDownloadUrl = setupAsset.browser_download_url;
   } else if (process.platform === 'darwin') {
-    const dmgAsset = assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg'));
+    const isArm64 = process.arch === 'arm64';
+    const dmgAsset = isArm64 
+      ? (assets.find(a => typeof a.name === 'string' && a.name.includes('arm64') && a.name.endsWith('.dmg')) || assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg')))
+      : (assets.find(a => typeof a.name === 'string' && !a.name.includes('arm64') && a.name.endsWith('.dmg')) || assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg')));
     if (dmgAsset) directDownloadUrl = dmgAsset.browser_download_url;
   }
 
@@ -1606,7 +1609,10 @@ ipcMain.handle('download-update', async (event, customUrl) => {
                            assets.find(a => typeof a.name === 'string' && a.name.endsWith('.exe'));
         if (setupAsset) downloadUrl = setupAsset.browser_download_url;
       } else if (process.platform === 'darwin') {
-        const dmgAsset = assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg'));
+        const isArm64 = process.arch === 'arm64';
+        const dmgAsset = isArm64 
+          ? (assets.find(a => typeof a.name === 'string' && a.name.includes('arm64') && a.name.endsWith('.dmg')) || assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg')))
+          : (assets.find(a => typeof a.name === 'string' && !a.name.includes('arm64') && a.name.endsWith('.dmg')) || assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg')));
         if (dmgAsset) downloadUrl = dmgAsset.browser_download_url;
       }
     }
