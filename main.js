@@ -1695,9 +1695,75 @@ ipcMain.handle('export-companion-config', async (event, options = {}) => {
   };
 });
 
+// Native Desktop Shortcut Creator for Windows (Microsoft Store & Standalone)
+function createDesktopShortcut() {
+  if (process.platform !== 'win32') {
+    return { success: false, error: 'Desktop shortcuts are only supported on Windows.' };
+  }
+
+  try {
+    const desktopPath = app.getPath('desktop');
+    const shortcutPath = path.join(desktopPath, 'PDF Presenter Suite.lnk');
+    const isStore = Boolean(process.windowsStore);
+
+    const target = isStore ? 'explorer.exe' : process.execPath;
+    const args = isStore ? 'shell:AppsFolder\\JOSEPHSHARUN.PDFPresenterSuite_1zxrw60jqtf3j!PDFPresenterSuite' : '';
+    const iconLocation = `${process.execPath},0`;
+    const workingDir = path.dirname(process.execPath);
+
+    const psCommand = [
+      `$WshShell = New-Object -ComObject WScript.Shell`,
+      `$Shortcut = $WshShell.CreateShortcut('${shortcutPath.replace(/'/g, "''")}')`,
+      `$Shortcut.TargetPath = '${target.replace(/'/g, "''")}'`,
+      args ? `$Shortcut.Arguments = '${args.replace(/'/g, "''")}'` : '',
+      `$Shortcut.Description = 'PDF Presenter Suite - Professional Presentation Software'`,
+      `$Shortcut.IconLocation = '${iconLocation.replace(/'/g, "''")}'`,
+      `$Shortcut.WorkingDirectory = '${workingDir.replace(/'/g, "''")}'`,
+      `$Shortcut.Save()`
+    ].filter(Boolean).join('; ');
+
+    child_process.execSync(`powershell.exe -NoProfile -NonInteractive -Command "${psCommand}"`, {
+      windowsHide: true,
+      timeout: 5000
+    });
+
+    console.log('[Desktop Shortcut] Successfully created/updated shortcut at:', shortcutPath);
+    return { success: true, path: shortcutPath };
+  } catch (err) {
+    console.warn('[Desktop Shortcut] Failed to create shortcut:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+// Automatically ensure desktop shortcut exists on first run (Store & Git)
+function ensureDesktopShortcutOnFirstRun() {
+  if (process.platform !== 'win32') return;
+  try {
+    const desktopPath = app.getPath('desktop');
+    const shortcutPath = path.join(desktopPath, 'PDF Presenter Suite.lnk');
+    if (!fs.existsSync(shortcutPath)) {
+      const cfg = loadApiSettings();
+      if (!cfg.desktopShortcutCreated) {
+        const res = createDesktopShortcut();
+        if (res.success) {
+          cfg.desktopShortcutCreated = true;
+          saveApiSettings();
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('[Desktop Shortcut] First-run shortcut check skipped:', e.message);
+  }
+}
+
+ipcMain.handle('create-desktop-shortcut', () => {
+  return createDesktopShortcut();
+});
+
 // App Lifecycle
 app.whenReady().then(async () => {
   loadApiSettings();
+  ensureDesktopShortcutOnFirstRun();
   if (apiSettings.enabled) {
     await startCompanionServer(apiSettings.host, apiSettings.port);
   }

@@ -543,6 +543,21 @@
           </div>
         </div>
 
+        <!-- System Utilities: Desktop Shortcut Creation -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div>
+            <div style="font-size: 12.5px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+              <span>📌</span> Desktop Shortcut
+            </div>
+            <div id="desktopShortcutStatusText" style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
+              Place a 1-click launch icon directly onto your Windows Desktop
+            </div>
+          </div>
+          <button type="button" class="btn" id="btnCreateDesktopShortcut" style="font-size: 11.5px; padding: 6px 14px; white-space: nowrap; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; cursor: pointer; border-radius: 6px; font-weight: 600;">
+            Create Shortcut
+          </button>
+        </div>
+
         <!-- Active Edition & Features (Switch between Free and Pro) -->
         <div class="about-edition-box" id="aboutEditionBox" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 18px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
@@ -598,6 +613,87 @@
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
         <span style="font-size: 11.5px; color: #64748b;">© 2026 Joseph Sharun • MIT License</span>
         <button class="btn btn-secondary" id="btnAboutOk">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolume-Style Dedicated Software Update Modal Dialog -->
+  <div class="modal-backdrop" id="softwareUpdateModal" style="display: none; z-index: 10060;" role="dialog" aria-modal="true" aria-labelledby="softwareUpdateModalTitle">
+    <div class="modal-card" style="max-width: 540px; border: 1px solid rgba(99, 102, 241, 0.4); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(99, 102, 241, 0.25);">
+      <!-- Header -->
+      <div class="modal-header" style="background: linear-gradient(135deg, rgba(30, 27, 75, 0.8), rgba(15, 23, 42, 0.95)); border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 16px 20px;">
+        <h3 id="softwareUpdateModalTitle" style="display: flex; align-items: center; gap: 10px; margin: 0; font-size: 16px; font-weight: 700; color: #f8fafc;">
+          <span style="font-size: 20px;">🚀</span>
+          <span>PDF Presenter Suite Update</span>
+        </h3>
+        <button class="modal-close" id="btnCloseSoftwareUpdateModal" aria-label="Close" style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body" style="padding: 22px; max-height: 70vh; overflow-y: auto;">
+        <!-- Version comparison pill -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 18px; padding: 12px 16px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-md);">
+          <div style="text-align: center;">
+            <div style="font-size: 10.5px; color: #94a3b8; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Current Version</div>
+            <div id="modalCurrentVersionBadge" style="font-size: 14px; font-weight: 700; color: #cbd5e1; margin-top: 2px;">v1.2.2</div>
+          </div>
+          <div style="font-size: 18px; color: #6366f1;">➔</div>
+          <div style="text-align: center;">
+            <div style="font-size: 10.5px; color: #34d399; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Available Update</div>
+            <div id="modalNewVersionBadge" style="font-size: 14px; font-weight: 800; color: #34d399; margin-top: 2px;">v1.2.3</div>
+          </div>
+        </div>
+
+        <!-- Update Pitch / Subtitle -->
+        <div id="modalUpdateSummary" style="font-size: 13px; color: #cbd5e1; line-height: 1.5; margin-bottom: 16px; text-align: center;">
+          A new version of PDF Presenter Suite is available with new features and improvements!
+        </div>
+
+        <!-- Release Highlights / Changelog Box -->
+        <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #818cf8; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+            <span>✨</span> What's New in this Release:
+          </div>
+          <ul id="modalReleaseNotesList" style="margin: 0; padding-left: 20px; font-size: 12px; color: #94a3b8; line-height: 1.6;">
+            <li><strong style="color: #f1f5f9;">Community Pro Gift</strong>: Free lifetime community Pro edition pre-activated by default for early adopters.</li>
+            <li><strong style="color: #f1f5f9;">Resolume-Style In-App Updater</strong>: Seamless background downloads without opening web browsers.</li>
+            <li><strong style="color: #f1f5f9;">Desktop Shortcut Creation</strong>: Direct desktop icon deployment for Windows Store & portable setups.</li>
+            <li><strong style="color: #f1f5f9;">Performance Enhancements</strong>: Ultra-smooth presentation playback & low-latency Companion triggers.</li>
+          </ul>
+        </div>
+
+        <!-- Download & Progress Section -->
+        <div id="modalDownloadProgressSection" style="display: none; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: var(--radius-md); padding: 14px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 8px;">
+            <span id="modalProgressStatusLabel" style="color: #38bdf8; font-weight: 600;">Downloading update in background...</span>
+            <span id="modalProgressPercent" style="color: #f8fafc; font-weight: 800; font-family: monospace;">0%</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 9999px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);">
+            <div id="modalProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8); border-radius: 9999px; transition: width 0.15s ease;"></div>
+          </div>
+          <div id="modalProgressBytesLabel" style="font-size: 11px; color: #64748b; margin-top: 6px; text-align: right;">0.0 MB / 0.0 MB</div>
+        </div>
+
+        <!-- Download Complete Banner -->
+        <div id="modalDownloadSuccessBanner" style="display: none; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 16px; text-align: center;">
+          <div style="font-size: 13px; font-weight: 700; color: #34d399; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>✓</span> Update Download Complete & Verified!
+          </div>
+          <div style="font-size: 11.5px; color: #94a3b8; margin-top: 4px;">
+            Click below to install the update and restart PDF Presenter Suite.
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="modal-footer" style="background: rgba(15, 23, 42, 0.95); border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-secondary" id="btnModalDismissUpdate" style="padding: 8px 16px; font-size: 12.5px;">Remind Me Later</button>
+        <button type="button" class="btn" id="btnModalStartDownload" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white; font-weight: 700; padding: 8px 20px; font-size: 12.5px; border-radius: var(--radius-sm); border: none; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <span>⬇️</span> Download Update Now
+        </button>
+        <button type="button" class="btn" id="btnModalInstallRestart" style="display: none; background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 700; padding: 8px 22px; font-size: 13px; border-radius: var(--radius-sm); border: none; cursor: pointer; align-items: center; gap: 8px; box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);">
+          <span>🚀</span> Install & Restart Now
+        </button>
       </div>
     </div>
   </div>

@@ -75,6 +75,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('update-downloaded', listener);
   },
   exportCompanionConfig: (options) => ipcRenderer.invoke('export-companion-config', options),
+  createDesktopShortcut: () => ipcRenderer.invoke('create-desktop-shortcut'),
 
   // Freemium & In-App Purchase (IAP) License Management
   getLicenseStatus: () => ipcRenderer.invoke('get-license-status'),

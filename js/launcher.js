@@ -978,22 +978,108 @@ document.addEventListener('DOMContentLoaded', async () => {
     const updateProgressPercent = document.getElementById('updateProgressPercent');
     const updateProgressBar = document.getElementById('updateProgressBar');
 
+    // Resolume-Style Software Update Modal Elements
+    const softwareUpdateModal = document.getElementById('softwareUpdateModal');
+    const btnCloseSoftwareUpdateModal = document.getElementById('btnCloseSoftwareUpdateModal');
+    const modalCurrentVersionBadge = document.getElementById('modalCurrentVersionBadge');
+    const modalNewVersionBadge = document.getElementById('modalNewVersionBadge');
+    const modalUpdateSummary = document.getElementById('modalUpdateSummary');
+    const modalReleaseNotesList = document.getElementById('modalReleaseNotesList');
+    const modalDownloadProgressSection = document.getElementById('modalDownloadProgressSection');
+    const modalProgressStatusLabel = document.getElementById('modalProgressStatusLabel');
+    const modalProgressPercent = document.getElementById('modalProgressPercent');
+    const modalProgressBar = document.getElementById('modalProgressBar');
+    const modalProgressBytesLabel = document.getElementById('modalProgressBytesLabel');
+    const modalDownloadSuccessBanner = document.getElementById('modalDownloadSuccessBanner');
+    const btnModalDismissUpdate = document.getElementById('btnModalDismissUpdate');
+    const btnModalStartDownload = document.getElementById('btnModalStartDownload');
+    const btnModalInstallRestart = document.getElementById('btnModalInstallRestart');
+
+    // Desktop Shortcut Creator in About Modal
+    const btnCreateDesktopShortcut = document.getElementById('btnCreateDesktopShortcut');
+    const desktopShortcutStatusText = document.getElementById('desktopShortcutStatusText');
+
     let cachedReleaseUrl = 'https://github.com/SHARUNJOSEPH/pdf-presenter/releases';
     let downloadedInstallerPath = null;
     let isDownloadingUpdate = false;
     let availableDirectDownloadUrl = '';
+    let currentAppVersion = '1.2.3';
+    let detectedLatestVersion = '1.2.3';
+
+    // Helper: Open Resolume-Style Update Modal
+    const openSoftwareUpdateModal = (autoStart = false) => {
+      if (!softwareUpdateModal) return;
+      if (modalCurrentVersionBadge) modalCurrentVersionBadge.textContent = `v${currentAppVersion}`;
+      if (modalNewVersionBadge) modalNewVersionBadge.textContent = `v${detectedLatestVersion}`;
+
+      if (downloadedInstallerPath) {
+        if (modalDownloadSuccessBanner) modalDownloadSuccessBanner.style.display = 'block';
+        if (modalDownloadProgressSection) modalDownloadProgressSection.style.display = 'none';
+        if (btnModalStartDownload) btnModalStartDownload.style.display = 'none';
+        if (btnModalInstallRestart) btnModalInstallRestart.style.display = 'inline-flex';
+        if (btnModalDismissUpdate) btnModalDismissUpdate.textContent = 'Install Later';
+      } else if (isDownloadingUpdate) {
+        if (modalDownloadProgressSection) modalDownloadProgressSection.style.display = 'block';
+        if (modalDownloadSuccessBanner) modalDownloadSuccessBanner.style.display = 'none';
+        if (btnModalStartDownload) btnModalStartDownload.style.display = 'none';
+        if (btnModalInstallRestart) btnModalInstallRestart.style.display = 'none';
+      } else {
+        if (modalDownloadProgressSection) modalDownloadProgressSection.style.display = 'none';
+        if (modalDownloadSuccessBanner) modalDownloadSuccessBanner.style.display = 'none';
+        if (btnModalStartDownload) btnModalStartDownload.style.display = 'inline-flex';
+        if (btnModalInstallRestart) btnModalInstallRestart.style.display = 'none';
+        if (btnModalDismissUpdate) btnModalDismissUpdate.textContent = 'Remind Me Later';
+      }
+
+      softwareUpdateModal.style.display = 'flex';
+      setTimeout(() => {
+        softwareUpdateModal.classList.add('open');
+      }, 10);
+
+      if (autoStart && !isDownloadingUpdate && !downloadedInstallerPath) {
+        startUpdateDownload(availableDirectDownloadUrl);
+      }
+    };
+
+    // Helper: Close Resolume-Style Update Modal
+    const closeSoftwareUpdateModal = () => {
+      if (!softwareUpdateModal) return;
+      softwareUpdateModal.classList.remove('open');
+      setTimeout(() => {
+        softwareUpdateModal.style.display = 'none';
+      }, 200);
+    };
+
+    if (btnCloseSoftwareUpdateModal) btnCloseSoftwareUpdateModal.addEventListener('click', closeSoftwareUpdateModal);
+    if (btnModalDismissUpdate) btnModalDismissUpdate.addEventListener('click', closeSoftwareUpdateModal);
+    if (btnModalStartDownload) {
+      btnModalStartDownload.addEventListener('click', () => {
+        startUpdateDownload(availableDirectDownloadUrl);
+      });
+    }
 
     // Listen for real-time download progress from Electron main process
     if (window.electronAPI && window.electronAPI.onUpdateProgress) {
       window.electronAPI.onUpdateProgress((progress) => {
-        if (updateProgressContainer) updateProgressContainer.style.display = 'block';
         const pct = progress.percent || 0;
+        const rxMb = progress.receivedBytes ? (progress.receivedBytes / (1024 * 1024)).toFixed(1) : '0';
+        const totMb = progress.totalBytes ? (progress.totalBytes / (1024 * 1024)).toFixed(1) : '?';
+
+        // Update About Modal progress
+        if (updateProgressContainer) updateProgressContainer.style.display = 'block';
         if (updateProgressBar) updateProgressBar.style.width = `${pct}%`;
         if (updateProgressPercent) updateProgressPercent.textContent = `${pct}%`;
         if (updateProgressLabel) {
-          const rxMb = progress.receivedBytes ? (progress.receivedBytes / (1024 * 1024)).toFixed(1) : '0';
-          const totMb = progress.totalBytes ? (progress.totalBytes / (1024 * 1024)).toFixed(1) : '?';
           updateProgressLabel.textContent = `Downloading update... (${rxMb} MB / ${totMb} MB)`;
+        }
+
+        // Update Dedicated Resolume-Style Modal progress
+        if (modalDownloadProgressSection) modalDownloadProgressSection.style.display = 'block';
+        if (modalProgressBar) modalProgressBar.style.width = `${pct}%`;
+        if (modalProgressPercent) modalProgressPercent.textContent = `${pct}%`;
+        if (modalProgressBytesLabel) modalProgressBytesLabel.textContent = `${rxMb} MB / ${totMb} MB`;
+        if (modalProgressStatusLabel) {
+          modalProgressStatusLabel.textContent = pct >= 99 ? 'Verifying download package...' : 'Downloading update in background...';
         }
       });
     }
@@ -1003,6 +1089,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.electronAPI.onUpdateDownloaded((data) => {
         isDownloadingUpdate = false;
         downloadedInstallerPath = data.filePath;
+
+        // Update About Modal state
         if (updateProgressBar) {
           updateProgressBar.style.width = '100%';
           updateProgressBar.style.background = '#10b981';
@@ -1019,18 +1107,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (updateStatusText) {
           updateStatusText.innerHTML = '<span style="color: #34d399; font-weight: 600;">✓ Ready to install!</span> Click button to restart.';
         }
+
+        // Update Dedicated Resolume-Style Modal state
+        if (modalDownloadProgressSection) modalDownloadProgressSection.style.display = 'none';
+        if (modalDownloadSuccessBanner) modalDownloadSuccessBanner.style.display = 'block';
+        if (btnModalStartDownload) btnModalStartDownload.style.display = 'none';
+        if (btnModalInstallRestart) btnModalInstallRestart.style.display = 'inline-flex';
+        if (btnModalDismissUpdate) btnModalDismissUpdate.textContent = 'Install Later';
+
+        // Auto-focus or bring update modal to attention if closed
+        if (softwareUpdateModal && !softwareUpdateModal.classList.contains('open')) {
+          openSoftwareUpdateModal(false);
+        }
       });
     }
 
     const startUpdateDownload = async (directUrl) => {
       if (isDownloadingUpdate) return;
       isDownloadingUpdate = true;
+
+      // Update About Modal UI
       if (updateProgressContainer) updateProgressContainer.style.display = 'block';
       if (updateProgressLabel) updateProgressLabel.textContent = 'Connecting to update server...';
       if (btnCheckUpdates) {
         btnCheckUpdates.disabled = true;
         btnCheckUpdates.textContent = 'Downloading...';
       }
+
+      // Update Dedicated Modal UI
+      if (modalDownloadProgressSection) modalDownloadProgressSection.style.display = 'block';
+      if (modalDownloadSuccessBanner) modalDownloadSuccessBanner.style.display = 'none';
+      if (btnModalStartDownload) btnModalStartDownload.style.display = 'none';
+      if (modalProgressStatusLabel) modalProgressStatusLabel.textContent = 'Connecting to download mirror...';
 
       try {
         const res = await window.electronAPI.downloadUpdate(directUrl || availableDirectDownloadUrl);
@@ -1044,20 +1152,38 @@ document.addEventListener('DOMContentLoaded', async () => {
           updateProgressLabel.textContent = 'Download failed. Please check internet connection.';
           updateProgressLabel.style.color = '#ef4444';
         }
+        if (modalProgressStatusLabel) {
+          modalProgressStatusLabel.textContent = `Download failed: ${err.message || 'Network error'}`;
+          modalProgressStatusLabel.style.color = '#ef4444';
+        }
         if (btnCheckUpdates) {
           btnCheckUpdates.disabled = false;
           btnCheckUpdates.textContent = 'Retry Download';
         }
+        if (btnModalStartDownload) {
+          btnModalStartDownload.style.display = 'inline-flex';
+          btnModalStartDownload.innerHTML = '<span>🔄</span> Retry Download';
+        }
       }
     };
 
+    const handleInstallAndRestart = async (triggerBtn) => {
+      if (!downloadedInstallerPath) return;
+      if (triggerBtn) {
+        triggerBtn.disabled = true;
+        triggerBtn.innerHTML = '<span>⚡</span> Launching Installer & Restarting...';
+      }
+      if (modalProgressStatusLabel) {
+        modalProgressStatusLabel.textContent = 'Launching installer... Application will restart automatically.';
+      }
+      await window.electronAPI.installUpdate(downloadedInstallerPath);
+    };
+
     if (btnInstallUpdate) {
-      btnInstallUpdate.addEventListener('click', async () => {
-        if (!downloadedInstallerPath) return;
-        btnInstallUpdate.disabled = true;
-        btnInstallUpdate.textContent = 'Launching Installer...';
-        await window.electronAPI.installUpdate(downloadedInstallerPath);
-      });
+      btnInstallUpdate.addEventListener('click', () => handleInstallAndRestart(btnInstallUpdate));
+    }
+    if (btnModalInstallRestart) {
+      btnModalInstallRestart.addEventListener('click', () => handleInstallAndRestart(btnModalInstallRestart));
     }
 
     const performUpdateCheck = async (interactive = false) => {
@@ -1069,26 +1195,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       try {
         const info = await window.electronAPI.checkForUpdates();
+        if (info.currentVersion) currentAppVersion = info.currentVersion;
+        if (info.latestVersion) detectedLatestVersion = info.latestVersion;
         if (info.releaseUrl) cachedReleaseUrl = info.releaseUrl;
         if (info.directDownloadUrl) availableDirectDownloadUrl = info.directDownloadUrl;
 
         if (info.isStore) {
           if (updateStatusText) updateStatusText.textContent = 'Updates are handled automatically by the Microsoft Store.';
+          if (interactive && updateStatusText) {
+            updateStatusText.innerHTML = '<span style="color: #34d399;">✓ You are using the verified Microsoft Store edition.</span> Updates install automatically.';
+          }
         } else if (info.hasUpdate) {
           if (updateStatusText) {
             updateStatusText.innerHTML = `<span style="color: #38bdf8; font-weight: 600;">🎉 v${info.latestVersion} available!</span>`;
           }
           if (btnCheckUpdates) {
             btnCheckUpdates.disabled = false;
-            btnCheckUpdates.textContent = '⬇️ Download Update';
+            btnCheckUpdates.textContent = '⬇️ Update Available';
             btnCheckUpdates.style.background = 'linear-gradient(135deg, #0284c7, #2563eb)';
             btnCheckUpdates.style.color = '#ffffff';
             btnCheckUpdates.style.fontWeight = '700';
-            btnCheckUpdates.onclick = () => startUpdateDownload(availableDirectDownloadUrl);
+            btnCheckUpdates.onclick = () => openSoftwareUpdateModal(false);
           }
           if (updateBanner) {
             updateBanner.style.display = 'flex';
+            updateBanner.style.cursor = 'pointer';
             if (updateBannerTitle) updateBannerTitle.textContent = `A New Version (v${info.latestVersion}) is Available!`;
+          }
+
+          if (interactive) {
+            openSoftwareUpdateModal(false);
           }
         } else if (interactive) {
           if (updateStatusText) {
@@ -1114,19 +1250,77 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnCheckUpdates.addEventListener('click', () => {
         if (!availableDirectDownloadUrl || btnCheckUpdates.textContent === 'Check for Updates') {
           performUpdateCheck(true);
+        } else {
+          openSoftwareUpdateModal(false);
         }
       });
     }
 
     if (btnDownloadUpdate) {
-      btnDownloadUpdate.addEventListener('click', () => {
-        startUpdateDownload(availableDirectDownloadUrl);
+      btnDownloadUpdate.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openSoftwareUpdateModal(true);
+      });
+    }
+
+    if (updateBanner) {
+      updateBanner.addEventListener('click', (e) => {
+        if (e.target.closest('#btnDismissUpdate')) return;
+        openSoftwareUpdateModal(false);
       });
     }
 
     if (btnDismissUpdate && updateBanner) {
-      btnDismissUpdate.addEventListener('click', () => {
+      btnDismissUpdate.addEventListener('click', (e) => {
+        e.stopPropagation();
         updateBanner.style.display = 'none';
+      });
+    }
+
+    // Windows Desktop Shortcut Creator Button Listener
+    if (btnCreateDesktopShortcut) {
+      btnCreateDesktopShortcut.addEventListener('click', async () => {
+        btnCreateDesktopShortcut.disabled = true;
+        const origText = btnCreateDesktopShortcut.innerHTML;
+        btnCreateDesktopShortcut.innerHTML = '⏳ Creating...';
+        try {
+          if (window.electronAPI && window.electronAPI.createDesktopShortcut) {
+            const res = await window.electronAPI.createDesktopShortcut();
+            if (res && res.success) {
+              btnCreateDesktopShortcut.innerHTML = '✓ Created!';
+              btnCreateDesktopShortcut.style.background = 'rgba(16, 185, 129, 0.2)';
+              btnCreateDesktopShortcut.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+              btnCreateDesktopShortcut.style.color = '#34d399';
+              if (desktopShortcutStatusText) {
+                desktopShortcutStatusText.innerHTML = '<span style="color: #34d399; font-weight: 600;">✓ Shortcut placed on Windows Desktop!</span>';
+              }
+              setTimeout(() => {
+                btnCreateDesktopShortcut.innerHTML = origText;
+                btnCreateDesktopShortcut.style.background = '';
+                btnCreateDesktopShortcut.style.borderColor = '';
+                btnCreateDesktopShortcut.style.color = '';
+                btnCreateDesktopShortcut.disabled = false;
+              }, 3000);
+              return;
+            } else {
+              throw new Error((res && res.error) || 'Failed to create shortcut');
+            }
+          } else {
+            throw new Error('Desktop shortcut API unavailable');
+          }
+        } catch (err) {
+          console.warn('[Desktop Shortcut Error]', err);
+          btnCreateDesktopShortcut.innerHTML = '❌ Failed';
+          btnCreateDesktopShortcut.style.color = '#ef4444';
+          if (desktopShortcutStatusText) {
+            desktopShortcutStatusText.innerHTML = `<span style="color: #ef4444;">${err.message || 'Could not create shortcut'}</span>`;
+          }
+          setTimeout(() => {
+            btnCreateDesktopShortcut.innerHTML = origText;
+            btnCreateDesktopShortcut.style.color = '';
+            btnCreateDesktopShortcut.disabled = false;
+          }, 3000);
+        }
       });
     }
 
