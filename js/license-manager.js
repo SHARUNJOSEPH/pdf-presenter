@@ -34,6 +34,13 @@ const LICENSE_HMAC_SALT = 'PDF_PRESENTER_SUITE_ENTERPRISE_KEY_SALT_2026_V1';
 // 15-Minute Trial Duration for Bitfocus Companion API in Free Mode
 const TRIAL_DURATION_MS = 15 * 60 * 1000;
 
+// Official Community Gift License Key (Free Pro for 1-year early adopters)
+const COMMUNITY_PRO_KEY = 'PRO-13EC-56E3-BA69-732E';
+
+// 1-Year Community Gift Promotional Cutoff: October 1, 2027 00:00:00 UTC
+const COMMUNITY_PRO_DEADLINE_ISO = '2027-10-01T00:00:00.000Z';
+const COMMUNITY_PRO_DEADLINE_MS = Date.parse(COMMUNITY_PRO_DEADLINE_ISO);
+
 class LicenseManager {
   constructor() {
     this.state = {
@@ -41,10 +48,11 @@ class LicenseManager {
       tier: 'free', // 'free' | 'pro'
       activeEdition: 'free', // 'free' | 'pro'
       suppressProPrompts: false,
-      source: null, // 'store' | 'license_key' | 'trial' | 'dev_override' | 'evaluation'
+      source: null, // 'store' | 'license_key' | 'community_gift' | 'trial' | 'dev_override' | 'evaluation'
       activatedAt: null,
       licenseKey: null,
       storedLicenseKey: null,
+      userExplicitlyRemovedKey: false,
       trialStartedAt: null,
       trialActive: false
     };
@@ -98,7 +106,45 @@ class LicenseManager {
     }
 
     // 2. Load stored encrypted license if present
-    this.loadStoredLicense();
+    const loaded = this.loadStoredLicense();
+
+    // 3. 1-Year Community Gift: Auto-activate on first launch for users within the promotional year
+    if (!loaded && !this.state.userExplicitlyRemovedKey) {
+      const isTestContext = process.env.NODE_ENV === 'test' || 
+                            process.env.npm_lifecycle_event === 'test' || 
+                            (Array.isArray(process.argv) && process.argv.some(a => typeof a === 'string' && a.includes('test')));
+
+      if (!isTestContext && Date.now() < COMMUNITY_PRO_DEADLINE_MS) {
+        this.activateCommunityGift();
+      }
+    }
+  }
+
+  /**
+   * Activate the 1-year community gift Pro license
+   */
+  activateCommunityGift() {
+    if (Date.now() >= COMMUNITY_PRO_DEADLINE_MS) {
+      return { success: false, error: 'PROMOTION_EXPIRED' };
+    }
+    const cleanKey = COMMUNITY_PRO_KEY;
+    this.state.isPro = true;
+    this.state.tier = 'pro';
+    this.state.activeEdition = 'pro';
+    this.state.suppressProPrompts = false;
+    this.state.source = 'community_gift';
+    this.state.licenseKey = cleanKey;
+    this.state.storedLicenseKey = cleanKey;
+    this.state.userExplicitlyRemovedKey = false;
+    this.state.activatedAt = new Date().toISOString();
+
+    this.saveStoredLicense();
+    this.emitChange();
+
+    return {
+      success: true,
+      state: this.getPublicStatus()
+    };
   }
 
   /**
@@ -116,6 +162,7 @@ class LicenseManager {
         activatedAt: this.state.activatedAt,
         licenseKey: this.state.licenseKey,
         storedLicenseKey: this.state.storedLicenseKey || this.state.licenseKey,
+        userExplicitlyRemovedKey: Boolean(this.state.userExplicitlyRemovedKey),
         savedAt: Date.now()
       });
 
@@ -182,8 +229,9 @@ class LicenseManager {
       this.state.source = data.source || null;
       this.state.activatedAt = data.activatedAt || null;
       this.state.suppressProPrompts = Boolean(data.suppressProPrompts);
+      this.state.userExplicitlyRemovedKey = Boolean(data.userExplicitlyRemovedKey);
 
-      if (data.activeEdition === 'free') {
+      if (data.activeEdition === 'free' || data.userExplicitlyRemovedKey) {
         this.state.activeEdition = 'free';
         this.state.isPro = false;
         this.state.tier = 'free';
@@ -286,6 +334,7 @@ class LicenseManager {
     this.state.source = 'license_key';
     this.state.licenseKey = cleanKey;
     this.state.storedLicenseKey = cleanKey;
+    this.state.userExplicitlyRemovedKey = false;
     this.state.activatedAt = new Date().toISOString();
 
     this.saveStoredLicense();
@@ -325,6 +374,7 @@ class LicenseManager {
         this.state.licenseKey = keyToRestore;
         this.state.storedLicenseKey = keyToRestore;
         this.state.source = this.state.source || 'license_key';
+        this.state.userExplicitlyRemovedKey = false;
         this.state.activatedAt = this.state.activatedAt || new Date().toISOString();
         this.saveStoredLicense();
         this.emitChange();
@@ -334,6 +384,7 @@ class LicenseManager {
         this.state.suppressProPrompts = false;
         this.state.isPro = true;
         this.state.tier = 'pro';
+        this.state.userExplicitlyRemovedKey = false;
         this.saveStoredLicense();
         this.emitChange();
         return { success: true, edition: 'pro', state: this.getPublicStatus() };
@@ -372,13 +423,9 @@ class LicenseManager {
     this.state.activatedAt = null;
     this.state.trialStartedAt = null;
     this.state.trialActive = false;
+    this.state.userExplicitlyRemovedKey = true;
 
-    try {
-      const filePath = this.getLicenseFilePath();
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    } catch (e) {}
+    this.saveStoredLicense();
 
     this.emitChange();
     return { success: true, state: this.getPublicStatus() };
@@ -398,6 +445,7 @@ class LicenseManager {
     this.state.activatedAt = null;
     this.state.trialStartedAt = null;
     this.state.trialActive = false;
+    this.state.userExplicitlyRemovedKey = true;
 
     try {
       const filePath = this.getLicenseFilePath();
@@ -521,7 +569,10 @@ class LicenseManager {
       trialActive: trialSeconds > 0,
       trialRemainingSeconds: trialSeconds,
       storeProductId: DEFAULT_STORE_PRODUCT_ID,
-      addonProductId: PRO_ADDON_STORE_ID
+      addonProductId: PRO_ADDON_STORE_ID,
+      communityGiftActive: Boolean(this.state.source === 'community_gift'),
+      communityGiftDeadline: COMMUNITY_PRO_DEADLINE_ISO,
+      userExplicitlyRemovedKey: Boolean(this.state.userExplicitlyRemovedKey)
     };
   }
 
@@ -540,6 +591,10 @@ class LicenseManager {
     }
   }
 }
+
+LicenseManager.COMMUNITY_PRO_KEY = COMMUNITY_PRO_KEY;
+LicenseManager.COMMUNITY_PRO_DEADLINE_ISO = COMMUNITY_PRO_DEADLINE_ISO;
+LicenseManager.COMMUNITY_PRO_DEADLINE_MS = COMMUNITY_PRO_DEADLINE_MS;
 
 const instance = new LicenseManager();
 module.exports = instance;

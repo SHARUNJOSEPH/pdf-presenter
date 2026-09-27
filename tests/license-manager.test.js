@@ -193,5 +193,53 @@ describe('LicenseManager & In-App Purchase Entitlements', () => {
     assert.equal(status.tier, 'free');
     assert.equal(status.activeEdition, 'free');
   });
+
+  describe('1-Year Community Gift Pro License', () => {
+    it('verifies the official community key passes cryptographic HMAC-SHA256 validation', () => {
+      assert.equal(LicenseManager.COMMUNITY_PRO_KEY, 'PRO-13EC-56E3-BA69-732E');
+      assert.equal(manager.validateLicenseKey(LicenseManager.COMMUNITY_PRO_KEY), true);
+      assert.equal(LicenseManager.COMMUNITY_PRO_DEADLINE_ISO, '2027-10-01T00:00:00.000Z');
+      assert.ok(LicenseManager.COMMUNITY_PRO_DEADLINE_MS > Date.now());
+    });
+
+    it('activates Pro via activateCommunityGift() with lifetime persistence', () => {
+      const res = manager.activateCommunityGift();
+      assert.equal(res.success, true);
+      assert.equal(res.state.isPro, true);
+      assert.equal(res.state.tier, 'pro');
+      assert.equal(res.state.source, 'community_gift');
+      assert.equal(res.state.companionAuthorized, true);
+      assert.equal(res.state.communityGiftActive, true);
+
+      // Verify reloaded manager recovers Pro from encrypted disk storage
+      const reloaded = new LicenseManager();
+      const status = reloaded.getPublicStatus();
+      assert.equal(status.isPro, true);
+      assert.equal(status.tier, 'pro');
+    });
+
+    it('honors user decision when they explicitly remove the key and remains free until re-entered', () => {
+      manager.activateCommunityGift();
+      assert.equal(manager.getPublicStatus().isPro, true);
+
+      // User clicks Remove Key in the software
+      const forgetRes = manager.forgetStoredLicense();
+      assert.equal(forgetRes.success, true);
+      assert.equal(forgetRes.state.isPro, false);
+      assert.equal(forgetRes.state.userExplicitlyRemovedKey, true);
+
+      // Next app boot must respect that user explicitly removed the key
+      const nextBoot = new LicenseManager();
+      assert.equal(nextBoot.getPublicStatus().isPro, false);
+      assert.equal(nextBoot.getPublicStatus().userExplicitlyRemovedKey, true);
+
+      // User manually re-activates with the key
+      const reenterRes = nextBoot.activateLicenseKey(LicenseManager.COMMUNITY_PRO_KEY);
+      assert.equal(reenterRes.success, true);
+      assert.equal(reenterRes.state.isPro, true);
+      assert.equal(reenterRes.state.userExplicitlyRemovedKey, false);
+    });
+  });
 });
+
 
