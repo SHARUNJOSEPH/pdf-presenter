@@ -22,6 +22,7 @@
     "test:exhaustive": "electron tests/e2e-exhaustive-testing.js",
     "test:swarm": "electron tests/e2e-swarm-verification.js",
     "test:freemium": "electron tests/e2e-freemium-validation.js",
+    "test:updater": "electron . --simulate-update-version=1.2.2",
     "build:locales": "node scripts/build-locales.js",
     "verify": "node scripts/pre-flight-check.js",
     "web": "node server.js",

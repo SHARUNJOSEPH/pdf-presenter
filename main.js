@@ -1477,7 +1477,10 @@ function fetchLatestGithubRelease() {
 
 // GitHub Releases Update Checker IPC Handler
 ipcMain.handle('check-for-updates', async () => {
-  const currentVersion = app.getVersion();
+  const simArg = process.argv.find(a => typeof a === 'string' && a.startsWith('--simulate-update-version='));
+  const currentVersion = simArg
+    ? simArg.split('=')[1]
+    : (process.env.SIMULATE_UPDATE_VERSION || app.getVersion());
   const isStore = Boolean(process.windowsStore);
   if (isStore) {
     return {
