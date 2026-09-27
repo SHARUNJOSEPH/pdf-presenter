@@ -5,23 +5,26 @@
 ### Professional Dual-Screen Presentation Software for Keynotes, Conferences & AV Teams
 
 <p>
-  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest">
-    <img src="https://img.shields.io/badge/⬇️%20Download-Windows%20Setup%20(.exe)-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer" />
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.4/PDF.Presenter.Suite.Setup.1.2.4.exe">
+    <img src="https://img.shields.io/badge/⬇️%20Direct%20Download-Windows%20Setup%20(.exe)-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Direct Download Windows Installer" />
   </a>
-  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest">
-    <img src="https://img.shields.io/badge/🍎%20Download-macOS%20(.dmg)-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS Installer" />
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.4/PDF.Presenter.Suite-1.2.4-arm64.dmg">
+    <img src="https://img.shields.io/badge/🍎%20macOS%20(Apple%20Silicon)-.dmg-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS Apple Silicon" />
+  </a>
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.4/PDF.Presenter.Suite-1.2.4.dmg">
+    <img src="https://img.shields.io/badge/🍎%20macOS%20(Intel)-.dmg-333333?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS Intel" />
   </a>
   <a href="https://apps.microsoft.com/detail/9NS3LKFXHBXW">
     <img src="https://img.shields.io/badge/🛍️%20Get%20it%20from-Microsoft%20Store-0078D4?style=for-the-badge&logo=windows11&logoColor=white" alt="Microsoft Store" />
   </a>
-  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases">
-    <img src="https://img.shields.io/badge/📦%20GitHub-All%20Releases-2ea44f?style=for-the-badge&logo=github&logoColor=white" alt="All Releases" />
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest">
+    <img src="https://img.shields.io/badge/📦%20Browse-All%20Releases-2ea44f?style=for-the-badge&logo=github&logoColor=white" alt="All Releases" />
   </a>
 </p>
 
 <p>
   <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest">
-    <img src="https://img.shields.io/github/v/release/SHARUNJOSEPH/pdf-presenter?color=2ea44f&label=Latest%20Version" alt="Latest Version" />
+    <img src="https://img.shields.io/github/v/release/SHARUNJOSEPH/pdf-presenter?color=2ea44f&label=Latest%20Release" alt="Latest Release" />
   </a>
   <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases">
     <img src="https://img.shields.io/github/downloads/SHARUNJOSEPH/pdf-presenter/total?color=blue&label=Total%20Downloads" alt="Total Downloads" />
@@ -34,6 +37,8 @@
   </a>
 </p>
 
+> 🎁 **1-Year Community Pro Gift**: The Enterprise Pro edition is pre-activated by default for all users who download the app during the first year (until October 1, 2027) with key `PRO-13EC-56E3-BA69-732E`! Unlocks NDI IP broadcast, stage confidence monitors, Bitfocus Companion integration, and watermark branding for free.
+
 <br/>
 
 <img src="social-assets/screenshot-1-cockpit-setup-1920x1080.png" alt="PDF Presenter Suite - Presenter Cockpit & Dual-Screen Overview" width="95%" />
@@ -45,19 +50,21 @@
 
 ---
 
-## 📥 Quick Download & Installation
+## 📥 Direct Downloads & Installation Links
 
-Choose your preferred way to download and use **PDF Presenter Suite**:
+Choose your operating system to begin an immediate 1-click download:
 
-| Distribution Channel | Download Link | Notes |
-| :--- | :--- | :--- |
-| **Windows Setup Installer (.exe)** | [**⬇️ Click Here to Download (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) | **Recommended for Windows.** Multi-language NSIS installer, auto-detects system language, desktop & start menu shortcuts. |
-| **Windows Standalone Portable (.exe)** | [**📦 Browse All Releases**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases) | Zero-install standalone executable—run directly from an AV flash drive. |
-| **Microsoft Store** | [**🛍️ Get from Microsoft Store**](https://apps.microsoft.com/detail/9NS3LKFXHBXW) | Verified and certified by Microsoft with silent automatic background updates. |
-| **macOS Apple Disk Image (.dmg)** | [**🍎 Download for macOS (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) | Drag-and-drop macOS installer package. |
-| **macOS Portable (.zip)** | [**📦 Browse All Releases**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases) | Standalone macOS application archive. |
+| Operating System | Package Type | Direct 1-Click Download Link | Notes |
+| :--- | :--- | :--- | :--- |
+| **Windows 10 / 11** | Setup Installer | [**⬇️ Download Windows Setup (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.4/PDF.Presenter.Suite.Setup.1.2.4.exe) | **Recommended for Windows.** Multi-language installer, auto desktop shortcut, in-app updates. |
+| **Windows 10 / 11** | Standalone Portable | [**💾 Download Portable (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.4/PDF.Presenter.Suite.1.2.4.exe) | Zero installation required—run directly from an AV flash drive or external SSD. |
+| **Microsoft Store** | Certified Store App | [**🛍️ Install from Microsoft Store**](https://apps.microsoft.com/detail/9NS3LKFXHBXW) | Verified and signed by Microsoft Corporation with automatic silent updates. |
+| **macOS (Apple Silicon)** | M1 / M2 / M3 / M4 | [**🍎 Download Apple Silicon (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.4/PDF.Presenter.Suite-1.2.4-arm64.dmg) | Native ARM64 disk image for modern MacBooks, Mac mini, and Mac Studio. |
+| **macOS (Intel x64)** | Intel Core Macs | [**🍏 Download Intel Mac (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.4/PDF.Presenter.Suite-1.2.4.dmg) | Optimized for Intel-based Macs. |
+| **macOS Portable** | Universal Zip | [**📦 Download macOS (.zip)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.4/PDF.Presenter.Suite-1.2.4-arm64-mac.zip) | Standalone portable macOS application bundle. |
+| **All Releases & Assets** | GitHub Release Hub | [**🌐 Browse All Releases & Source Code**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) | View checksums, blockmaps, and previous versions. |
 
-> 💡 **Tip:** To manually find downloads on GitHub anytime, look at the **"Releases"** section on the right side of this page.
+> 💡 **Tip:** In-app updates are now built-in with Resolume Arena-style background downloads. Once installed, future updates download and install automatically within the app with zero browser redirects.
 
 ---
 
