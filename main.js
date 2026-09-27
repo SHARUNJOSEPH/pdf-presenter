@@ -1702,10 +1702,7 @@ function createDesktopShortcut() {
   }
 
   try {
-    const desktopPath = app.getPath('desktop');
-    const shortcutPath = path.join(desktopPath, 'PDF Presenter Suite.lnk');
     const isStore = Boolean(process.windowsStore);
-
     const target = isStore ? 'explorer.exe' : process.execPath;
     const args = isStore ? 'shell:AppsFolder\\JOSEPHSHARUN.PDFPresenterSuite_1zxrw60jqtf3j!PDFPresenterSuite' : '';
     const iconLocation = `${process.execPath},0`;
@@ -1713,22 +1710,26 @@ function createDesktopShortcut() {
 
     const psCommand = [
       `$WshShell = New-Object -ComObject WScript.Shell`,
-      `$Shortcut = $WshShell.CreateShortcut('${shortcutPath.replace(/'/g, "''")}')`,
+      `$Desktop = $WshShell.SpecialFolders('Desktop')`,
+      `$ShortcutPath = Join-Path $Desktop 'PDF Presenter Suite.lnk'`,
+      `$Shortcut = $WshShell.CreateShortcut($ShortcutPath)`,
       `$Shortcut.TargetPath = '${target.replace(/'/g, "''")}'`,
       args ? `$Shortcut.Arguments = '${args.replace(/'/g, "''")}'` : '',
       `$Shortcut.Description = 'PDF Presenter Suite - Professional Presentation Software'`,
       `$Shortcut.IconLocation = '${iconLocation.replace(/'/g, "''")}'`,
       `$Shortcut.WorkingDirectory = '${workingDir.replace(/'/g, "''")}'`,
-      `$Shortcut.Save()`
+      `$Shortcut.Save()`,
+      `Write-Output $ShortcutPath`
     ].filter(Boolean).join('; ');
 
-    child_process.execSync(`powershell.exe -NoProfile -NonInteractive -Command "${psCommand}"`, {
+    const createdPath = child_process.execSync(`powershell.exe -NoProfile -NonInteractive -Command "${psCommand}"`, {
       windowsHide: true,
+      encoding: 'utf8',
       timeout: 5000
-    });
+    }).trim();
 
-    console.log('[Desktop Shortcut] Successfully created/updated shortcut at:', shortcutPath);
-    return { success: true, path: shortcutPath };
+    console.log('[Desktop Shortcut] Successfully created/updated shortcut at:', createdPath);
+    return { success: true, path: createdPath };
   } catch (err) {
     console.warn('[Desktop Shortcut] Failed to create shortcut:', err.message);
     return { success: false, error: err.message };
@@ -1739,16 +1740,12 @@ function createDesktopShortcut() {
 function ensureDesktopShortcutOnFirstRun() {
   if (process.platform !== 'win32') return;
   try {
-    const desktopPath = app.getPath('desktop');
-    const shortcutPath = path.join(desktopPath, 'PDF Presenter Suite.lnk');
-    if (!fs.existsSync(shortcutPath)) {
-      const cfg = loadApiSettings();
-      if (!cfg.desktopShortcutCreated) {
-        const res = createDesktopShortcut();
-        if (res.success) {
-          cfg.desktopShortcutCreated = true;
-          saveApiSettings();
-        }
+    const cfg = loadApiSettings();
+    if (!cfg.desktopShortcutCreated) {
+      const res = createDesktopShortcut();
+      if (res.success) {
+        cfg.desktopShortcutCreated = true;
+        saveApiSettings();
       }
     }
   } catch (e) {
