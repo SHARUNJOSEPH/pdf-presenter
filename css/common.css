@@ -449,6 +449,8 @@ select option:checked {
   gap: 3px;
   white-space: nowrap;
   vertical-align: middle;
+.about-edition-box {
+  display: none !important;
 }
 
 /* Upgrade to Pro Modal */

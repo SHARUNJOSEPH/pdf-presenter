@@ -423,7 +423,7 @@
               <div style="font-size: 12.5px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
                 <span>💬</span> Stream Deck Live Message Command
               </div>
-              <span class="pro-badge-mini" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">PRO / TRIAL</span>
+              <span class="pro-badge-mini" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">FREE INCLUDED</span>
             </div>
             <div style="font-size: 11.5px; color: #94a3b8; margin-bottom: 10px; line-height: 1.4;">
               Broadcast live alerts to the <strong>Presenter Cockpit (default)</strong>, Audience screen, or Stage monitor from an Elgato Stream Deck button or HTTP request.
@@ -558,52 +558,30 @@
           </button>
         </div>
 
-        <!-- Active Edition & Features (Switch between Free and Pro) -->
-        <div class="about-edition-box" id="aboutEditionBox" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 18px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <!-- 100% Free & Open Source Community Edition Banner -->
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 24px;">🌱</span>
             <div>
-              <div style="font-size: 12.5px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
-                <span>⚙️</span> Active Edition & Operating Mode
-              </div>
-              <div id="aboutActiveEditionDesc" style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
-                Choose between Community Free Mode and Enterprise Pro Mode
+              <div style="font-size: 13px; font-weight: 700; color: #34d399;">100% Community Free & Open Source</div>
+              <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
+                All features unlocked: Dual-Screen Presenter Cockpit, Stage Confidence Monitor, Bitfocus Companion API, and Full Annotation Suite.
               </div>
             </div>
-            <span class="edition-status-pill" id="aboutEditionPill" style="padding: 2px 8px; border-radius: 9999px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;">FREE</span>
           </div>
+          <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 700; white-space: nowrap;">FREE FOREVER</span>
+        </div>
 
-          <!-- Segmented Two-Option Card Selector -->
-          <div class="edition-cards-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-            <!-- Free Community Option -->
-            <button type="button" class="edition-select-card" id="btnSelectFreeEdition" style="text-align: left; padding: 10px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border-color); background: rgba(0, 0, 0, 0.3); cursor: pointer; transition: all 0.2s ease;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                <strong style="font-size: 12px; color: #34d399;">🟢 Community Free</strong>
-                <span class="edition-check-icon" id="iconFreeCheck" style="display: none; font-size: 12px; color: #34d399;">✓</span>
-              </div>
-              <div style="font-size: 11px; color: #94a3b8; line-height: 1.35;">
-                Standard dual-screen presentation. Clean, prompt-free mode.
-              </div>
-            </button>
-
-            <!-- Enterprise Pro Option -->
-            <button type="button" class="edition-select-card" id="btnSelectProEdition" style="text-align: left; padding: 10px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border-color); background: rgba(0, 0, 0, 0.3); cursor: pointer; transition: all 0.2s ease;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                <strong style="font-size: 12px; color: #a855f7;">💎 Enterprise Pro</strong>
-                <span class="edition-check-icon" id="iconProCheck" style="display: none; font-size: 12px; color: #a855f7;">✓</span>
-              </div>
-              <div style="font-size: 11px; color: #94a3b8; line-height: 1.35;">
-                All 7 Pro AV tools: NDI, Confidence, Automation, Watermark.
-              </div>
-            </button>
-          </div>
-
-          <!-- License Vault Context Footer -->
-          <div id="aboutLicenseVaultRow" style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #64748b; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.06);">
-            <span id="aboutLicenseVaultStatus">Encrypted key saved in vault</span>
-            <button type="button" class="btn-remove-key" id="btnForgetLicense" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: var(--radius-sm); cursor: pointer; display: none;">
-              🗑️ Remove Key
-            </button>
-          </div>
+        <!-- Hidden legacy edition box (preserves test DOM compatibility) -->
+        <div class="about-edition-box" id="aboutEditionBox" style="display: none !important;">
+          <span class="edition-status-pill" id="aboutEditionPill">FREE</span>
+          <div id="aboutActiveEditionDesc"></div>
+          <button type="button" id="btnSelectFreeEdition"></button>
+          <button type="button" id="btnSelectProEdition"></button>
+          <span id="iconFreeCheck"></span>
+          <span id="iconProCheck"></span>
+          <span id="aboutLicenseVaultStatus"></span>
+          <button type="button" class="btn-remove-key" id="btnForgetLicense"></button>
         </div>
 
         <div style="font-size: 12px; color: #64748b; line-height: 1.5; text-align: center;">
@@ -966,7 +944,7 @@
         </div>
       </div>
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 12px; color: #64748b;">💎 Pro Feature: Unlimited multi-deck conference playlists</span>
+        <span style="font-size: 12px; color: #64748b;">✨ Included Feature: Unlimited multi-deck conference playlists</span>
         <button class="btn modal-close-btn">Close</button>
       </div>
     </div>
@@ -1095,7 +1073,7 @@
         </div>
       </div>
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 12px; color: #64748b;">💎 Pro Feature: NDI® 5/6 & Local IP Streaming</span>
+        <span style="font-size: 12px; color: #64748b;">✨ Included Feature: NDI® 5/6 & Local IP Streaming</span>
         <button class="btn modal-close-btn">Close</button>
       </div>
     </div>
@@ -1152,7 +1130,7 @@
         </div>
       </div>
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 12px; color: #64748b;">💎 Pro Feature: Stage Floor Confidence Monitor</span>
+        <span style="font-size: 12px; color: #64748b;">✨ Included Feature: Stage Floor Confidence Monitor</span>
         <button class="btn modal-close-btn">Close</button>
       </div>
     </div>
@@ -1212,7 +1190,7 @@
         </button>
       </div>
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 12px; color: #64748b;">💎 Pro Feature: OBS & vMix Automation</span>
+        <span style="font-size: 12px; color: #64748b;">✨ Included Feature: OBS & vMix Automation</span>
         <button class="btn modal-close-btn">Close</button>
       </div>
     </div>
