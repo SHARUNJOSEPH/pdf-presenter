@@ -48,6 +48,7 @@
       "js/**/*",
       "locales/**/*",
       "vendor/**/*",
+      "build/icon.ico",
       "package.json"
     ],
     "win": {

@@ -1012,7 +1012,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (modalCurrentVersionBadge) modalCurrentVersionBadge.textContent = `v${currentAppVersion}`;
       if (modalNewVersionBadge) modalNewVersionBadge.textContent = `v${detectedLatestVersion}`;
 
-      if (downloadedInstallerPath) {
+      if (!availableDirectDownloadUrl) {
+        if (modalUpdateSummary) {
+          modalUpdateSummary.textContent = `You are already running the latest version (v${currentAppVersion}). No update is needed!`;
+        }
+        if (modalDownloadProgressSection) modalDownloadProgressSection.style.display = 'none';
+        if (modalDownloadSuccessBanner) modalDownloadSuccessBanner.style.display = 'none';
+        if (btnModalStartDownload) btnModalStartDownload.style.display = 'none';
+        if (btnModalInstallRestart) btnModalInstallRestart.style.display = 'none';
+        if (btnModalDismissUpdate) btnModalDismissUpdate.textContent = 'Close';
+      } else if (downloadedInstallerPath) {
         if (modalDownloadSuccessBanner) modalDownloadSuccessBanner.style.display = 'block';
         if (modalDownloadProgressSection) modalDownloadProgressSection.style.display = 'none';
         if (btnModalStartDownload) btnModalStartDownload.style.display = 'none';
@@ -1024,6 +1033,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (btnModalStartDownload) btnModalStartDownload.style.display = 'none';
         if (btnModalInstallRestart) btnModalInstallRestart.style.display = 'none';
       } else {
+        if (modalUpdateSummary) {
+          modalUpdateSummary.textContent = 'A new version of PDF Presenter Suite is available with new features and improvements!';
+        }
         if (modalDownloadProgressSection) modalDownloadProgressSection.style.display = 'none';
         if (modalDownloadSuccessBanner) modalDownloadSuccessBanner.style.display = 'none';
         if (btnModalStartDownload) btnModalStartDownload.style.display = 'inline-flex';
@@ -1036,7 +1048,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         softwareUpdateModal.classList.add('open');
       }, 10);
 
-      if (autoStart && !isDownloadingUpdate && !downloadedInstallerPath) {
+      if (autoStart && availableDirectDownloadUrl && !isDownloadingUpdate && !downloadedInstallerPath) {
         startUpdateDownload(availableDirectDownloadUrl);
       }
     };
@@ -1138,10 +1150,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (modalDownloadProgressSection) modalDownloadProgressSection.style.display = 'block';
       if (modalDownloadSuccessBanner) modalDownloadSuccessBanner.style.display = 'none';
       if (btnModalStartDownload) btnModalStartDownload.style.display = 'none';
-      if (modalProgressStatusLabel) modalProgressStatusLabel.textContent = 'Connecting to download mirror...';
+      const downloadTarget = directUrl || availableDirectDownloadUrl;
+      if (!downloadTarget) {
+        isDownloadingUpdate = false;
+        if (updateStatusText) {
+          updateStatusText.innerHTML = `<span style="color: #34d399;">✓ You are already on the latest version (v${currentAppVersion}).</span>`;
+        }
+        return;
+      }
 
       try {
-        const res = await window.electronAPI.downloadUpdate(directUrl || availableDirectDownloadUrl);
+        const res = await window.electronAPI.downloadUpdate(downloadTarget);
         if (!res.success) {
           throw new Error(res.error || 'Download failed');
         }
@@ -1197,8 +1216,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const info = await window.electronAPI.checkForUpdates();
         if (info.currentVersion) currentAppVersion = info.currentVersion;
         if (info.latestVersion) detectedLatestVersion = info.latestVersion;
-        if (info.releaseUrl) cachedReleaseUrl = info.releaseUrl;
-        if (info.directDownloadUrl) availableDirectDownloadUrl = info.directDownloadUrl;
+        cachedReleaseUrl = info.hasUpdate ? (info.releaseUrl || '') : '';
+        availableDirectDownloadUrl = info.hasUpdate ? (info.directDownloadUrl || '') : null;
 
         if (info.isStore) {
           if (updateStatusText) updateStatusText.textContent = 'Updates are handled automatically by the Microsoft Store.';
@@ -1226,12 +1245,29 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (interactive) {
             openSoftwareUpdateModal(false);
           }
-        } else if (interactive) {
-          if (updateStatusText) {
-            updateStatusText.textContent = `✓ You are running the latest version (v${info.currentVersion}).`;
+        } else {
+          // Version is up to date or running a higher testing/preview version
+          if (updateBanner) {
+            updateBanner.style.display = 'none';
           }
           if (btnCheckUpdates) {
+            btnCheckUpdates.disabled = false;
             btnCheckUpdates.textContent = 'Check for Updates';
+            btnCheckUpdates.style.background = 'rgba(99, 102, 241, 0.2)';
+            btnCheckUpdates.style.color = '#818cf8';
+            btnCheckUpdates.style.fontWeight = 'normal';
+            btnCheckUpdates.onclick = null;
+          }
+          if (updateStatusText) {
+            const parseSem = (v) => (v || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
+            const [cMaj, cMin, cPat] = parseSem(info.currentVersion);
+            const [lMaj, lMin, lPat] = parseSem(info.latestVersion);
+            const isAhead = (cMaj > lMaj) || (cMaj === lMaj && cMin > lMin) || (cMaj === lMaj && cMin === lMin && cPat > lPat);
+            if (isAhead && info.latestVersion) {
+              updateStatusText.innerHTML = `<span style="color: #34d399;">✓ You are running a newer preview build (v${info.currentVersion}).</span> <span style="color: #94a3b8;">Latest release: v${info.latestVersion}.</span>`;
+            } else {
+              updateStatusText.innerHTML = `<span style="color: #34d399;">✓ You are running the latest version (v${info.currentVersion || currentAppVersion}).</span>`;
+            }
           }
         }
       } catch (err) {
@@ -1259,7 +1295,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnDownloadUpdate) {
       btnDownloadUpdate.addEventListener('click', (e) => {
         e.stopPropagation();
-        openSoftwareUpdateModal(true);
+        if (availableDirectDownloadUrl) {
+          openSoftwareUpdateModal(true);
+        } else {
+          performUpdateCheck(true);
+        }
       });
     }
 

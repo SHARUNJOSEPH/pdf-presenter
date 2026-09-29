@@ -1504,19 +1504,21 @@ ipcMain.handle('check-for-updates', async () => {
   const latestVersion = (result.release.tag_name || '').replace(/^v/, '');
   const hasUpdate = isNewerVersion(latestVersion, currentVersion);
 
-  // Extract direct platform-specific binary URL to bypass confusing GitHub releases page
+  // Extract direct platform-specific binary URL ONLY if an actual newer version is available
   let directDownloadUrl = '';
-  const assets = Array.isArray(result.release.assets) ? result.release.assets : [];
-  if (process.platform === 'win32') {
-    const setupAsset = assets.find(a => typeof a.name === 'string' && a.name.endsWith('.exe') && a.name.includes('Setup')) ||
-                       assets.find(a => typeof a.name === 'string' && a.name.endsWith('.exe'));
-    if (setupAsset) directDownloadUrl = setupAsset.browser_download_url;
-  } else if (process.platform === 'darwin') {
-    const isArm64 = process.arch === 'arm64';
-    const dmgAsset = isArm64 
-      ? (assets.find(a => typeof a.name === 'string' && a.name.includes('arm64') && a.name.endsWith('.dmg')) || assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg')))
-      : (assets.find(a => typeof a.name === 'string' && !a.name.includes('arm64') && a.name.endsWith('.dmg')) || assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg')));
-    if (dmgAsset) directDownloadUrl = dmgAsset.browser_download_url;
+  if (hasUpdate) {
+    const assets = Array.isArray(result.release.assets) ? result.release.assets : [];
+    if (process.platform === 'win32') {
+      const setupAsset = assets.find(a => typeof a.name === 'string' && a.name.endsWith('.exe') && a.name.includes('Setup')) ||
+                         assets.find(a => typeof a.name === 'string' && a.name.endsWith('.exe'));
+      if (setupAsset) directDownloadUrl = setupAsset.browser_download_url;
+    } else if (process.platform === 'darwin') {
+      const isArm64 = process.arch === 'arm64';
+      const dmgAsset = isArm64 
+        ? (assets.find(a => typeof a.name === 'string' && a.name.includes('arm64') && a.name.endsWith('.dmg')) || assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg')))
+        : (assets.find(a => typeof a.name === 'string' && !a.name.includes('arm64') && a.name.endsWith('.dmg')) || assets.find(a => typeof a.name === 'string' && a.name.endsWith('.dmg')));
+      if (dmgAsset) directDownloadUrl = dmgAsset.browser_download_url;
+    }
   }
 
   return {
@@ -1526,7 +1528,7 @@ ipcMain.handle('check-for-updates', async () => {
     latestVersion,
     releaseName: result.release.name || `v${latestVersion}`,
     releaseNotes: result.release.body || '',
-    releaseUrl: directDownloadUrl || result.release.html_url || 'https://github.com/SHARUNJOSEPH/pdf-presenter/releases',
+    releaseUrl: hasUpdate ? (directDownloadUrl || result.release.html_url || 'https://github.com/SHARUNJOSEPH/pdf-presenter/releases') : '',
     directDownloadUrl
   };
 });
@@ -1600,12 +1602,26 @@ function downloadFileWithProgress(targetUrl, destPath, onProgress) {
 // In-App Background Update Downloader IPC Handler
 ipcMain.handle('download-update', async (event, customUrl) => {
   try {
+    const simArg = process.argv.find(a => typeof a === 'string' && a.startsWith('--simulate-update-version='));
+    const currentVersion = simArg
+      ? simArg.split('=')[1]
+      : (process.env.SIMULATE_UPDATE_VERSION || app.getVersion());
+
+    const result = await fetchLatestGithubRelease();
+    if (!result.success || !result.release) {
+      throw new Error('Could not fetch release information from update server');
+    }
+
+    const latestVersion = (result.release.tag_name || '').replace(/^v/, '');
+    if (!isNewerVersion(latestVersion, currentVersion)) {
+      return {
+        success: false,
+        error: `No newer update available. Installed version (v${currentVersion}) is already up to date with or newer than latest release (v${latestVersion}).`
+      };
+    }
+
     let downloadUrl = customUrl;
     if (!downloadUrl) {
-      const result = await fetchLatestGithubRelease();
-      if (!result.success || !result.release) {
-        throw new Error('Could not fetch release information from update server');
-      }
       const assets = Array.isArray(result.release.assets) ? result.release.assets : [];
       if (process.platform === 'win32') {
         const setupAsset = assets.find(a => typeof a.name === 'string' && a.name.endsWith('.exe') && a.name.includes('Setup')) ||
@@ -1698,7 +1714,7 @@ ipcMain.handle('export-companion-config', async (event, options = {}) => {
   };
 });
 
-// Native Desktop Shortcut Creator for Windows (Microsoft Store & Standalone)
+// Native Desktop Shortcut Creator for Windows (Microsoft Store, Dev & Standalone)
 function createDesktopShortcut() {
   if (process.platform !== 'win32') {
     return { success: false, error: 'Desktop shortcuts are only supported on Windows.' };
@@ -1706,28 +1722,74 @@ function createDesktopShortcut() {
 
   try {
     const isStore = Boolean(process.windowsStore);
-    const target = isStore ? 'explorer.exe' : process.execPath;
-    const args = isStore ? 'shell:AppsFolder\\JOSEPHSHARUN.PDFPresenterSuite_1zxrw60jqtf3j!PDFPresenterSuite' : '';
-    const iconLocation = `${process.execPath},0`;
-    const workingDir = path.dirname(process.execPath);
+    const isPackaged = app.isPackaged;
+    const appDir = app.getAppPath();
+    const diskIcon = path.join(appDir, 'build', 'icon.ico');
 
-    const psCommand = [
+    // Cache icon in userData for reliable shell access (especially for Store / packaged environments)
+    let resolvedIconPath = '';
+    try {
+      const userDataIcon = path.join(app.getPath('userData'), 'app-icon.ico');
+      if (fs.existsSync(diskIcon)) {
+        if (!fs.existsSync(userDataIcon) || fs.statSync(diskIcon).size !== fs.statSync(userDataIcon).size) {
+          fs.copyFileSync(diskIcon, userDataIcon);
+        }
+        resolvedIconPath = userDataIcon;
+      } else if (fs.existsSync(userDataIcon)) {
+        resolvedIconPath = userDataIcon;
+      }
+    } catch (e) {
+      console.warn('[Desktop Shortcut] Icon cache notice:', e.message);
+    }
+
+    let target = '';
+    let args = '';
+    let workingDir = '';
+    let iconLocation = '';
+
+    if (isStore) {
+      // Microsoft Store UWP/AppX Package
+      target = 'explorer.exe';
+      args = 'shell:AppsFolder\\JOSEPHSHARUN.PDFPresenterSuite_1zxrw60jqtf3j!PDFPresenterSuite';
+      workingDir = path.dirname(process.execPath);
+      iconLocation = resolvedIconPath || (fs.existsSync(diskIcon) ? diskIcon : `${process.execPath},0`);
+    } else if (isPackaged) {
+      // Packaged Standalone / NSIS / Portable Executable
+      target = process.execPath;
+      args = '';
+      workingDir = path.dirname(process.execPath);
+      iconLocation = resolvedIconPath || `${process.execPath},0`;
+    } else {
+      // Development mode (running via electron / VS Code / npm start)
+      target = process.execPath;
+      args = `"${appDir}"`;
+      workingDir = appDir;
+      iconLocation = resolvedIconPath || (fs.existsSync(diskIcon) ? diskIcon : '');
+    }
+
+    const psQuote = (val) => {
+      if (!val) return "''";
+      return `'${String(val).replace(/'/g, "''")}'`;
+    };
+
+    const psScript = [
       `$WshShell = New-Object -ComObject WScript.Shell`,
       `$Desktop = $WshShell.SpecialFolders('Desktop')`,
       `$ShortcutPath = Join-Path $Desktop 'PDF Presenter Suite.lnk'`,
       `$Shortcut = $WshShell.CreateShortcut($ShortcutPath)`,
-      `$Shortcut.TargetPath = '${target.replace(/'/g, "''")}'`,
-      args ? `$Shortcut.Arguments = '${args.replace(/'/g, "''")}'` : '',
+      `$Shortcut.TargetPath = ${psQuote(target)}`,
+      `$Shortcut.Arguments = ${psQuote(args)}`,
       `$Shortcut.Description = 'PDF Presenter Suite - Professional Presentation Software'`,
-      `$Shortcut.IconLocation = '${iconLocation.replace(/'/g, "''")}'`,
-      `$Shortcut.WorkingDirectory = '${workingDir.replace(/'/g, "''")}'`,
+      iconLocation ? `$Shortcut.IconLocation = ${psQuote(iconLocation)}` : '',
+      workingDir ? `$Shortcut.WorkingDirectory = ${psQuote(workingDir)}` : '',
       `$Shortcut.Save()`,
       `Write-Output $ShortcutPath`
-    ].filter(Boolean).join('; ');
+    ].filter(Boolean).join('\n');
 
-    const createdPath = child_process.execSync(`powershell.exe -NoProfile -NonInteractive -Command "${psCommand}"`, {
-      windowsHide: true,
+    const createdPath = child_process.execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', '-'], {
+      input: psScript,
       encoding: 'utf8',
+      windowsHide: true,
       timeout: 5000
     }).trim();
 

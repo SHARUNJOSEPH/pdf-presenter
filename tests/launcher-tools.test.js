@@ -98,4 +98,18 @@ describe('Home Screen Launcher Pro Tools Dropdown & Pre-Flight Modals', () => {
     assert.ok(launcherJs.includes('function setupProToolsMenu()'), 'setupProToolsMenu function must be defined');
     assert.ok(launcherJs.includes('setupProToolsMenu();'), 'setupProToolsMenu must be invoked during setup');
   });
+
+  it('verifies Windows desktop shortcut assets and creation logic', () => {
+    const mainJs = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+    const iconPath = path.join(__dirname, '../build/icon.ico');
+
+    assert.ok(fs.existsSync(iconPath), 'build/icon.ico must exist as a dedicated branded Windows icon asset');
+    assert.ok(fs.statSync(iconPath).size > 10000, 'build/icon.ico must be a valid non-empty icon file');
+
+    assert.ok(mainJs.includes('function createDesktopShortcut()'), 'main.js must define createDesktopShortcut');
+    assert.ok(mainJs.includes('iconLocation'), 'createDesktopShortcut must specify iconLocation to prevent default Electron atom icon');
+    assert.ok(mainJs.includes('workingDir'), 'createDesktopShortcut must specify working directory');
+    assert.ok(mainJs.includes('app.getAppPath()'), 'createDesktopShortcut must pass app directory as launch argument in dev mode');
+    assert.ok(launcherHtml.includes('id="btnCreateDesktopShortcut"'), 'launcher.html must contain btnCreateDesktopShortcut button');
+  });
 });
