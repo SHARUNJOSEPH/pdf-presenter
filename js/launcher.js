@@ -1003,8 +1003,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let downloadedInstallerPath = null;
     let isDownloadingUpdate = false;
     let availableDirectDownloadUrl = '';
-    let currentAppVersion = '1.2.4';
-    let detectedLatestVersion = '1.2.4';
+    let currentAppVersion = '1.2.5';
+    let detectedLatestVersion = '1.2.5';
 
     // Helper: Open Resolume-Style Update Modal
     const openSoftwareUpdateModal = (autoStart = false) => {
@@ -1377,13 +1377,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    const isPro = () => Boolean(window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && window.UpgradeModal.isPro());
+    const isPro = () => Boolean(window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : true);
     const guardPro = (feature) => {
-      if (isPro()) return true;
-      if (window.UpgradeModal && typeof window.UpgradeModal.open === 'function') {
-        window.UpgradeModal.open(feature);
-      }
-      return false;
+      return true; // 100% Free for everyone
     };
 
     // 2. Multi-Deck Playlist Setup

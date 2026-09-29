@@ -1,6 +1,6 @@
 {
   "name": "pdf-presenter",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "Professional Dual-Screen Presentation Software for Keynotes, Conferences and AV Teams with Bitfocus Companion API",
   "main": "main.js",
   "author": {
@@ -72,7 +72,8 @@
       "identityName": "JOSEPHSHARUN.PDFPresenterSuite",
       "publisher": "CN=551A075B-7286-4B87-A119-02586E46BABD",
       "publisherDisplayName": "JOSEPH SHARUN",
-      "displayName": "PDF Presenter Suite"
+      "displayName": "PDF Presenter Suite",
+      "backgroundColor": "#0b0f19"
     },
     "nsis": {
       "oneClick": false,

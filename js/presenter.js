@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const EngineClass = window.TimerAnnotationEngine || (typeof TimerAnnotationEngine !== 'undefined' ? TimerAnnotationEngine : null);
   const timerEngine = EngineClass ? new EngineClass({
     syncBus: syncBus,
-    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : false),
+    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : true),
     onProRequired: (feature) => {
       if (window.UpgradeModal && typeof window.UpgradeModal.open === 'function') {
         window.UpgradeModal.open(feature === 'countdown' ? 'timer' : feature);
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const NdiClass = window.NdiBroadcastEngine || (typeof NdiBroadcastEngine !== 'undefined' ? NdiBroadcastEngine : null);
   const ndiEngine = NdiClass ? new NdiClass({
     syncBus: syncBus,
-    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : false),
+    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : true),
     onProRequired: () => {
       if (window.UpgradeModal && window.UpgradeModal.open) window.UpgradeModal.open('ndi');
     }
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const SpotlightClass = window.SpotlightEngine || (typeof SpotlightEngine !== 'undefined' ? SpotlightEngine : null);
   const spotlightEngine = SpotlightClass ? new SpotlightClass({
     syncBus: syncBus,
-    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : false),
+    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : true),
     onProRequired: () => {
       if (window.UpgradeModal && window.UpgradeModal.open) window.UpgradeModal.open('spotlight');
     }
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const AutomationClass = window.BroadcastAutomationEngine || (typeof BroadcastAutomationEngine !== 'undefined' ? BroadcastAutomationEngine : null);
   const automationEngine = AutomationClass ? new AutomationClass({
     syncBus: syncBus,
-    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : false),
+    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : true),
     onProRequired: () => {
       if (window.UpgradeModal && window.UpgradeModal.open) window.UpgradeModal.open('automation');
     }
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const PlaylistMetricsClass = window.PlaylistMetricsEngine || (typeof PlaylistMetricsEngine !== 'undefined' ? PlaylistMetricsEngine : null);
   const playlistEngine = PlaylistMetricsClass ? new PlaylistMetricsClass({
     syncBus: syncBus,
-    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : false),
+    isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : true),
     onDeckSwitch: async (targetDeck) => {
       try {
         if (targetDeck.pdfBuffer) {

@@ -20,85 +20,39 @@
    */
   function applyLicenseStatus(status) {
     if (!status) return;
-    currentLicenseStatus = status;
+    currentLicenseStatus = {
+      ...status,
+      isPro: true,
+      companionAuthorized: true
+    };
 
-    const isPro = Boolean(status.isPro);
+    const isPro = true;
 
     // 1. Header Buttons & Badges (Launcher & Presenter)
     const upgradeBtns = document.querySelectorAll('.btn-upgrade-pro');
     const proBadges = document.querySelectorAll('.pro-badge-pill');
 
     upgradeBtns.forEach(btn => {
-      btn.style.setProperty('display', isPro ? 'none' : 'inline-flex', 'important');
+      btn.style.setProperty('display', 'none', 'important');
     });
 
     proBadges.forEach(badge => {
-      badge.style.setProperty('display', isPro ? 'inline-flex' : 'none', 'important');
+      badge.style.setProperty('display', 'none', 'important');
     });
 
     // 2. Lock tags on Pro features
     const lockTags = document.querySelectorAll('.pro-tag-lock');
     lockTags.forEach(tag => {
-      tag.style.setProperty('display', isPro ? 'none' : 'inline-flex', 'important');
+      tag.style.setProperty('display', 'none', 'important');
     });
 
-    // 3. Companion Modal Trial & Pro indicator
+    // 3. Companion Modal: Keep completely clean, free AV control active
     const companionTrialContainer = document.getElementById('companionTrialContainer');
     if (companionTrialContainer) {
-      if (isPro) {
-        companionTrialContainer.innerHTML = `
-          <div class="pro-badge-pill" style="margin-bottom: 10px;">
-            <span>💎</span> <span>PRO LICENSE ACTIVE • UNRESTRICTED AV CONTROL</span>
-          </div>
-        `;
-      } else if (status.trialActive && status.trialRemainingSeconds > 0) {
-        const m = Math.floor(status.trialRemainingSeconds / 60);
-        const s = (status.trialRemainingSeconds % 60).toString().padStart(2, '0');
-        const trialBadgeText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('pro.trialBadge') : '15-Min Trial Active';
-        const upgradeBtnText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('pro.upgradeBtn') : 'Upgrade to Pro';
-        companionTrialContainer.innerHTML = `
-          <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #fef08a;">
-              <span>⏱️</span> <strong>${trialBadgeText}:</strong> <span>${m}:${s} remaining</span>
-            </div>
-            <button type="button" class="btn btn-upgrade-pro" style="padding: 4px 10px !important; font-size: 11.5px !important;" onclick="window.UpgradeModal.open('companion')">
-              <span>💎</span> ${upgradeBtnText}
-            </button>
-          </div>
-        `;
-      } else {
-        const startTrialText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('pro.startTrial') : 'Start 15-Min Trial';
-        const upgradeBtnText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('pro.upgradeBtn') : 'Upgrade to Pro';
-        companionTrialContainer.innerHTML = `
-          <div style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #cbd5e1;">
-              <span>🔒</span> <span>Pro Feature. Control slides from Elgato Stream Deck & Bitfocus Companion.</span>
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <button type="button" class="btn btn-secondary" id="btnStartTrialInner" style="padding: 5px 12px; font-size: 12px;">
-                <span>⏱️</span> ${startTrialText}
-              </button>
-              <button type="button" class="btn btn-upgrade-pro" style="padding: 5px 12px !important; font-size: 12px !important;" onclick="window.UpgradeModal.open('companion')">
-                <span>💎</span> ${upgradeBtnText}
-              </button>
-            </div>
-          </div>
-        `;
-
-        const btnStart = companionTrialContainer.querySelector('#btnStartTrialInner');
-        if (btnStart) {
-          btnStart.addEventListener('click', async () => {
-            if (window.electronAPI && window.electronAPI.startCompanionTrial) {
-              const res = await window.electronAPI.startCompanionTrial();
-              if (res && res.success) {
-                const refreshed = await window.electronAPI.getLicenseStatus();
-                applyLicenseStatus(refreshed);
-              }
-            }
-          });
-        }
-      }
+      companionTrialContainer.innerHTML = '';
+      companionTrialContainer.style.setProperty('display', 'none', 'important');
     }
+
 
     // 4. About Modal Edition Switcher Component
     const aboutEditionPill = document.getElementById('aboutEditionPill');
@@ -150,9 +104,8 @@
    * Open the Upgrade to Pro modal
    */
   function openModal(highlightReason = '', force = false) {
-    // If user explicitly switched to Free Community mode, suppress automatic sales prompts
-    if (!force && currentLicenseStatus.suppressProPrompts && highlightReason) {
-      console.log(`[Pro Feature] ${highlightReason} requested in Free Community Clean Mode.`);
+    // App is 100% free for everyone. Upgrade modal is permanently disabled.
+    if (!force) {
       return;
     }
 

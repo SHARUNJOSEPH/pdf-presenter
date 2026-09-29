@@ -108,15 +108,20 @@ class LicenseManager {
     // 2. Load stored encrypted license if present
     const loaded = this.loadStoredLicense();
 
-    // 3. 1-Year Community Gift: Auto-activate on first launch for users within the promotional year
-    if (!loaded && !this.state.userExplicitlyRemovedKey) {
-      const isTestContext = process.env.NODE_ENV === 'test' || 
-                            process.env.npm_lifecycle_event === 'test' || 
-                            (Array.isArray(process.argv) && process.argv.some(a => typeof a === 'string' && a.includes('test')));
+    // 3. 100% Free For Everyone: All users get full unlocked features permanently out of the box!
+    const isTestContext = process.env.NODE_ENV === 'test' || 
+                          process.env.npm_lifecycle_event === 'test' || 
+                          (Array.isArray(process.argv) && process.argv.some(a => typeof a === 'string' && a.includes('test')));
 
-      if (!isTestContext && Date.now() < COMMUNITY_PRO_DEADLINE_MS) {
-        this.activateCommunityGift();
-      }
+    if (!isTestContext) {
+      this.state.isPro = true;
+      this.state.tier = 'free';
+      this.state.activeEdition = 'unlimited';
+      this.state.suppressProPrompts = true;
+      this.state.source = 'free_for_everyone';
+      this.state.trialActive = false;
+      this.state.trialRemainingSeconds = -1;
+      this.state.activatedAt = this.state.activatedAt || new Date().toISOString();
     }
   }
 
