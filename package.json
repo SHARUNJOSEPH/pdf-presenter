@@ -30,7 +30,8 @@
     "dist:win": "electron-builder --win",
     "dist:appx": "electron-builder --win appx",
     "dist:mac": "electron-builder --mac",
-    "dist:portable": "electron-builder --win portable"
+    "dist:portable": "electron-builder --win portable",
+    "release": "node scripts/bump-version.js"
   },
   "build": {
     "appId": "com.josephsharun.pdfpresenter",
