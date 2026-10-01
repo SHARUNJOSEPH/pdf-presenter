@@ -10,6 +10,16 @@ const child_process = require('child_process');
 const { generateCompanionConfig } = require('./js/companion-presets.js');
 const licenseManager = require('./js/license-manager.js');
 
+// Aptabase Privacy-Friendly Analytics
+let aptabaseTrackEvent = null;
+try {
+  const { initialize, trackEvent } = require('@aptabase/electron/main');
+  initialize('A-US-1170232141');
+  aptabaseTrackEvent = trackEvent;
+} catch (e) {
+  console.warn('[Aptabase] Initialization warning:', e.message);
+}
+
 // Enforce Single-Instance Application Lock (Prevents duplicate instances, port 3000 collisions, and crashes)
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
@@ -1246,11 +1256,17 @@ ipcMain.handle('set-active-pdf-buffer', (event, { fileName, buffer }) => {
 
 ipcMain.handle('start-presentation', (event, config) => {
   startPresentationWindows(config);
+  if (aptabaseTrackEvent) {
+    try { aptabaseTrackEvent('presentation_started'); } catch (e) {}
+  }
   return { success: true };
 });
 
 ipcMain.handle('end-presentation', () => {
   endPresentation();
+  if (aptabaseTrackEvent) {
+    try { aptabaseTrackEvent('presentation_ended'); } catch (e) {}
+  }
   return { success: true };
 });
 
@@ -1824,6 +1840,13 @@ ipcMain.handle('create-desktop-shortcut', () => {
 
 // App Lifecycle
 app.whenReady().then(async () => {
+  if (aptabaseTrackEvent) {
+    try {
+      aptabaseTrackEvent('app_started', {
+        version: app.getVersion()
+      });
+    } catch (e) {}
+  }
   loadApiSettings();
   ensureDesktopShortcutOnFirstRun();
   if (apiSettings.enabled) {

@@ -49,6 +49,7 @@
       "locales/**/*",
       "vendor/**/*",
       "build/icon.ico",
+      "node_modules/@aptabase/**/*",
       "package.json"
     ],
     "win": {
@@ -121,5 +122,8 @@
   "devDependencies": {
     "electron": "^44.1.0",
     "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "@aptabase/electron": "^0.3.1"
   }
 }

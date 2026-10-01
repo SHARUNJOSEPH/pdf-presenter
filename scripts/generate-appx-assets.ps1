@@ -105,21 +105,45 @@ Save-ResizedSquare 50 50 "StoreLogo.png"
 Save-WideTile 310 150 "Wide310x150Logo.png" $true
 Save-WideTile 620 300 "SplashScreen.png" $true
 
-# 2. High-DPI Scaled Variations for Start Menu, Taskbar & Surface Laptop
+# 2. Base scale-100 explicit assets
+Save-ResizedSquare 44 44 "Square44x44Logo.scale-100.png"
+Save-ResizedSquare 150 150 "Square150x150Logo.scale-100.png"
+Save-ResizedSquare 310 310 "Square310x310Logo.scale-100.png"
+Save-ResizedSquare 50 50 "StoreLogo.scale-100.png"
+Save-WideTile 310 150 "Wide310x150Logo.scale-100.png" $true
+Save-WideTile 620 300 "SplashScreen.scale-100.png" $true
+
+# 3. High-DPI Scaled Variations for Start Menu, Taskbar & Surface Laptop (scale-200, scale-400)
 Save-ResizedSquare 88 88 "Square44x44Logo.scale-200.png"
 Save-ResizedSquare 176 176 "Square44x44Logo.scale-400.png"
+
+# Targetsize unplated (transparent background)
+Save-ResizedSquare 16 16 "Square44x44Logo.targetsize-16_altform-unplated.png"
 Save-ResizedSquare 24 24 "Square44x44Logo.targetsize-24_altform-unplated.png"
+Save-ResizedSquare 32 32 "Square44x44Logo.targetsize-32_altform-unplated.png"
 Save-ResizedSquare 44 44 "Square44x44Logo.targetsize-44_altform-unplated.png"
 Save-ResizedSquare 48 48 "Square44x44Logo.targetsize-48_altform-unplated.png"
 Save-ResizedSquare 256 256 "Square44x44Logo.targetsize-256_altform-unplated.png"
 
+# Targetsize plated (taskbar / start menu list)
+Save-ResizedSquare 16 16 "Square44x44Logo.targetsize-16.png"
+Save-ResizedSquare 24 24 "Square44x44Logo.targetsize-24.png"
+Save-ResizedSquare 32 32 "Square44x44Logo.targetsize-32.png"
+Save-ResizedSquare 44 44 "Square44x44Logo.targetsize-44.png"
+Save-ResizedSquare 48 48 "Square44x44Logo.targetsize-48.png"
+Save-ResizedSquare 256 256 "Square44x44Logo.targetsize-256.png"
+
+# Medium & Large Tile Scaled Variations (Surface Laptop high DPI)
 Save-ResizedSquare 300 300 "Square150x150Logo.scale-200.png"
 Save-ResizedSquare 600 600 "Square150x150Logo.scale-400.png"
+Save-ResizedSquare 620 620 "Square310x310Logo.scale-200.png"
 
+# Store & Wide Tile Scaled Variations
 Save-ResizedSquare 100 100 "StoreLogo.scale-200.png"
 Save-ResizedSquare 200 200 "StoreLogo.scale-400.png"
-
 Save-WideTile 620 300 "Wide310x150Logo.scale-200.png" $true
+Save-WideTile 1240 600 "Wide310x150Logo.scale-400.png" $true
+Save-WideTile 1240 600 "SplashScreen.scale-200.png" $true
 
 $sourceBitmap.Dispose()
 Write-Host "All Microsoft Store tile assets generated successfully in $outputDir"

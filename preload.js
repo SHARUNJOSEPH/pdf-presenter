@@ -89,5 +89,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const listener = (event, status) => callback(status);
     ipcRenderer.on('license-changed', listener);
     return () => ipcRenderer.removeListener('license-changed', listener);
-  }
+  },
+
+  // Analytics (Aptabase)
+  trackEvent: (eventName, props) => ipcRenderer.send('aptabase:trackEvent', eventName, props)
 });
