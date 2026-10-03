@@ -102,7 +102,16 @@ describe('Diagnostic Bug Report Generator & Flicker Analysis Suite', () => {
 
     // Presenter UI
     assert.ok(presenterHtml.includes('id="btnPresenterBugReport"'), 'presenter.html must contain btnPresenterBugReport');
+    assert.ok(presenterHtml.includes('id="btnAboutRunBugReport"'), 'presenter.html must contain btnAboutRunBugReport');
     assert.ok(presenterHtml.includes('id="bugReportModal"'), 'presenter.html must contain bugReportModal');
+
+    // Layout responsiveness & overlap protection
+    const launcherCss = fs.readFileSync(path.join(__dirname, '../css/launcher.css'), 'utf8');
+    const presenterCss = fs.readFileSync(path.join(__dirname, '../css/presenter.css'), 'utf8');
+    assert.ok(launcherCss.includes('.launcher-header-row'), 'launcher.css must define .launcher-header-row');
+    assert.ok(launcherCss.includes('.btn-header-action'), 'launcher.css must define .btn-header-action');
+    assert.ok(presenterCss.includes('.top-bar-center'), 'presenter.css must define .top-bar-center');
+    assert.ok(presenterCss.includes('overflow-x: auto'), 'presenter.css must allow horizontal overflow guard');
 
     // Preload
     assert.ok(preloadJs.includes('generateBugReport'), 'preload.js must expose generateBugReport');

@@ -1714,7 +1714,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     };
 
+    const btnAboutRunBugReport = document.getElementById('btnAboutRunBugReport');
     if (btnPresenterBugReport) btnPresenterBugReport.addEventListener('click', openBugReport);
+    if (btnAboutRunBugReport) btnAboutRunBugReport.addEventListener('click', openBugReport);
     if (btnCloseBugReportModal) btnCloseBugReportModal.addEventListener('click', closeBugReport);
     if (btnDoneBugReport) btnDoneBugReport.addEventListener('click', closeBugReport);
 

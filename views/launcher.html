@@ -19,8 +19,8 @@
   <div class="launcher-app">
     <!-- Header -->
     <header class="launcher-header">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-        <div>
+      <div class="launcher-header-row">
+        <div class="launcher-header-brand">
           <h1 class="launcher-title">
             <span>📽️</span> <span data-i18n="common.appName">PDF Presenter Suite</span>
           </h1>
@@ -28,7 +28,7 @@
             Native Multi-Screen Dual Display & Bitfocus Companion Presentation Controller
           </p>
         </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="launcher-header-actions">
           <!-- Pro Badge / Upgrade Button Container -->
           <div id="proHeaderContainer" style="display: none; align-items: center;">
             <button class="btn-upgrade-pro" id="btnHeaderUpgradePro" type="button" title="Upgrade to Pro" style="display: none;">
@@ -134,11 +134,11 @@
             <select id="languageSelect" class="lang-select-control" aria-label="Select Application Language">
             </select>
           </div>
-          <button class="btn btn-secondary" id="btnHeaderBugReport" type="button" title="Generate System Diagnostics & Bug Report" style="display: flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 13px; font-weight: 600; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-surface); cursor: pointer;">
-            <span style="color: #ef4444;">🐞</span> <span data-i18n="launcher.bugReport">Bug Report</span>
+          <button class="btn btn-secondary btn-header-action" id="btnHeaderBugReport" type="button" title="Generate System Diagnostics & Bug Report">
+            <span class="btn-icon-prefix" style="color: #ef4444;">🐞</span> <span class="btn-action-text" data-i18n="launcher.bugReport">Bug Report</span>
           </button>
-          <button class="btn btn-secondary" id="btnOpenAbout" style="display: flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 13px; font-weight: 600; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-surface); cursor: pointer;">
-            <span>ℹ️</span> <span data-i18n="launcher.aboutCreator">About & Creator</span>
+          <button class="btn btn-secondary btn-header-action" id="btnOpenAbout" type="button" title="About & Creator">
+            <span class="btn-icon-prefix">ℹ️</span> <span class="btn-action-text" data-i18n="launcher.aboutCreator">About & Creator</span>
           </button>
         </div>
       </div>
@@ -560,6 +560,9 @@
           </div>
           <button type="button" class="btn" id="btnCreateDesktopShortcut" style="font-size: 11.5px; padding: 6px 14px; white-space: nowrap; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; cursor: pointer; border-radius: 6px; font-weight: 600;">
             Create Shortcut
+          </button>
+        </div>
+
         <!-- Diagnostics & Bug Report Generator -->
         <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
           <div>

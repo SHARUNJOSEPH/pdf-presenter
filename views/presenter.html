@@ -216,6 +216,7 @@
         <button class="btn btn-danger" id="btnEndPresentation" title="End presentation, close audience projector, and return to launcher (Esc)" data-i18n-title="shortcuts.exit">
           🛑 <span data-i18n="presenter.exitBtn">End Presentation</span>
         </button>
+      </div>
     </header>
 
     <!-- Stream Deck & Live Message Alert Banner (Presenter Cockpit) -->
@@ -635,6 +636,21 @@
               </button>
             </div>
           </div>
+        </div>
+
+        <!-- Diagnostics & Bug Report Generator -->
+        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div>
+            <div style="font-size: 12.5px; font-weight: 700; color: #f87171; display: flex; align-items: center; gap: 6px;">
+              <span>🐞</span> <span data-i18n="launcher.bugReportTitle">Diagnostics & Bug Report Generator</span>
+            </div>
+            <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
+              Diagnose slide flickering, mixed-DPI scaling, and hardware acceleration
+            </div>
+          </div>
+          <button type="button" class="btn" id="btnAboutRunBugReport" style="font-size: 11.5px; padding: 6px 14px; white-space: nowrap; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; cursor: pointer; border-radius: 6px; font-weight: 600;">
+            Run Diagnostics
+          </button>
         </div>
 
         <!-- 100% Free & Open Source Community Edition Banner -->

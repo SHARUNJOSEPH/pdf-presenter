@@ -19,18 +19,40 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  gap: 16px;
+  padding: 0 16px;
+  gap: 12px;
   z-index: 100;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.top-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex-shrink: 0;
 }
 
-.top-bar-left,
-.top-bar-center,
+.top-bar-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .top-bar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .brand {
@@ -1454,6 +1476,49 @@ body.resizing-vertical * {
   background: rgba(239, 68, 68, 0.25);
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* ==========================================================================
+   Responsive Top Bar Controls & Overlap Elimination
+   ========================================================================== */
+@media (max-width: 1366px) {
+  .top-bar {
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .doc-info {
+    max-width: 140px;
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  .top-bar-right {
+    gap: 5px;
+  }
+  #audienceStatusBadge {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 1180px) {
+  #audienceStatusBadge #audienceStatusText {
+    display: none;
+  }
+  .top-bar-left .brand span {
+    display: none;
+  }
+  .doc-info {
+    max-width: 110px;
+  }
+  #btnGrid span:not(.pro-tag-lock) {
+    display: none;
+  }
+  #btnEndPresentation span {
+    display: none;
+  }
+  #btnEndPresentation {
+    padding: 6px 10px;
+  }
 }
 
 

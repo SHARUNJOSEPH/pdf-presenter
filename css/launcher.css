@@ -12,9 +12,31 @@
 }
 
 .launcher-header {
-  text-align: center;
   margin-bottom: clamp(10px, 2vh, 24px);
   flex-shrink: 0;
+  width: 100%;
+}
+
+.launcher-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.launcher-header-brand {
+  min-width: 0;
+  text-align: left;
+}
+
+.launcher-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .launcher-title {
@@ -26,7 +48,6 @@
   -webkit-text-fill-color: transparent;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
 }
 
@@ -34,6 +55,44 @@
   font-size: clamp(11.5px, 1.2vw, 13.5px);
   color: var(--text-secondary);
   margin-top: 4px;
+}
+
+.btn-header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-header-action:hover {
+  background: var(--bg-tertiary);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1100px) {
+  .btn-header-action .btn-action-text {
+    display: none;
+  }
+  .btn-header-action {
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 860px) {
+  .launcher-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 }
 
 /* 2-Column Setup Grid */
