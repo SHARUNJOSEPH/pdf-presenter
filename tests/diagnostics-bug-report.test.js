@@ -96,6 +96,7 @@ describe('Diagnostic Bug Report Generator & Flicker Analysis Suite', () => {
     // Launcher UI
     assert.ok(launcherHtml.includes('id="btnHeaderBugReport"'), 'launcher.html must contain btnHeaderBugReport');
     assert.ok(launcherHtml.includes('id="btnAboutRunBugReport"'), 'launcher.html must contain btnAboutRunBugReport');
+    assert.ok(launcherHtml.includes('id="btnModalRunBugReport"'), 'launcher.html must contain btnModalRunBugReport');
     assert.ok(launcherHtml.includes('id="bugReportModal"'), 'launcher.html must contain bugReportModal');
     assert.ok(launcherHtml.includes('id="btnCopyBugReport"'), 'launcher.html must contain btnCopyBugReport');
     assert.ok(launcherHtml.includes('id="btnSaveBugReport"'), 'launcher.html must contain btnSaveBugReport');
@@ -103,6 +104,7 @@ describe('Diagnostic Bug Report Generator & Flicker Analysis Suite', () => {
     // Presenter UI
     assert.ok(presenterHtml.includes('id="btnPresenterBugReport"'), 'presenter.html must contain btnPresenterBugReport');
     assert.ok(presenterHtml.includes('id="btnAboutRunBugReport"'), 'presenter.html must contain btnAboutRunBugReport');
+    assert.ok(presenterHtml.includes('id="btnModalRunBugReport"'), 'presenter.html must contain btnModalRunBugReport');
     assert.ok(presenterHtml.includes('id="bugReportModal"'), 'presenter.html must contain bugReportModal');
 
     // Layout responsiveness & overlap protection

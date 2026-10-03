@@ -1,19 +1,9 @@
 /**
- * Auto-generated Locales Bundle for PDF Presenter Suite
- * Supports instant, offline synchronous loading without CORS restrictions.
+ * js/locales.js
+ * Professional Multi-Language Internationalization (i18n) Dictionary for PDF Presenter Suite.
  */
-(function(root, factory) {
-  if (typeof define === "function" && define.amd) {
-    define([], factory);
-  } else if (typeof module === "object" && module.exports) {
-    const locs = factory();
-    module.exports = locs;
-    if (typeof root !== "undefined") root.I18N_LOCALES = locs;
-  } else {
-    root.I18N_LOCALES = factory();
-  }
-}(typeof self !== "undefined" ? self : this, function() {
-  return {
+
+const LOCALES = {
   "ar": {
     "common": {
       "appName": "PDF Presenter Suite",
@@ -57,7 +47,8 @@
       "bugReportTitle": "مولد تشخيصات وتقارير الأخطاء",
       "copyReport": "نسخ التقرير",
       "saveReport": "حفظ في ملف",
-      "reportGitHub": "إبلاغ على GitHub"
+      "reportGitHub": "إبلاغ على GitHub",
+      "runBugReport": "تشغيل تقرير الأخطاء"
     },
     "presenter": {
       "cockpitTitle": "لوحة تحكم المحاضر",
@@ -191,7 +182,8 @@
       "bugReportTitle": "Diagnose & Fehlerbericht-Generator",
       "copyReport": "Bericht Kopieren",
       "saveReport": "In Datei Speichern",
-      "reportGitHub": "Auf GitHub Melden"
+      "reportGitHub": "Auf GitHub Melden",
+      "runBugReport": "Fehlerbericht ausführen"
     },
     "presenter": {
       "cockpitTitle": "Referenten-Cockpit",
@@ -325,7 +317,8 @@
       "bugReportTitle": "Diagnostics & Bug Report Generator",
       "copyReport": "Copy Report",
       "saveReport": "Save to File",
-      "reportGitHub": "Report on GitHub"
+      "reportGitHub": "Report on GitHub",
+      "runBugReport": "Run Bug Report"
     },
     "presenter": {
       "cockpitTitle": "Presenter Cockpit",
@@ -459,7 +452,8 @@
       "bugReportTitle": "Diagnóstico e Informe de Errores",
       "copyReport": "Copiar Informe",
       "saveReport": "Guardar en Archivo",
-      "reportGitHub": "Reportar en GitHub"
+      "reportGitHub": "Reportar en GitHub",
+      "runBugReport": "Ejecutar Informe de Errores"
     },
     "presenter": {
       "cockpitTitle": "Consola del Presentador",
@@ -593,7 +587,8 @@
       "bugReportTitle": "Diagnostic et Rapport de Bogues",
       "copyReport": "Copier le Rapport",
       "saveReport": "Enregistrer dans un Fichier",
-      "reportGitHub": "Signaler sur GitHub"
+      "reportGitHub": "Signaler sur GitHub",
+      "runBugReport": "Lancer le Rapport de Bug"
     },
     "presenter": {
       "cockpitTitle": "Cockpit Présentateur",
@@ -727,7 +722,8 @@
       "bugReportTitle": "सिस्टम डायग्नोस्टिक्स और बग रिपोर्ट जनरेटर",
       "copyReport": "रिपोर्ट कॉपी करें",
       "saveReport": "फ़ाइल में सहेजें",
-      "reportGitHub": "GitHub पर रिपोर्ट करें"
+      "reportGitHub": "GitHub पर रिपोर्ट करें",
+      "runBugReport": "बग रिपोर्ट चलाएं"
     },
     "presenter": {
       "cockpitTitle": "प्रस्तुतकर्ता कॉकपिट",
@@ -861,7 +857,8 @@
       "bugReportTitle": "Diagnostica e Generatore di Segnalazioni Bug",
       "copyReport": "Copia Report",
       "saveReport": "Salva su File",
-      "reportGitHub": "Segnala su GitHub"
+      "reportGitHub": "Segnala su GitHub",
+      "runBugReport": "Esegui Segnalazione Bug"
     },
     "presenter": {
       "cockpitTitle": "Console del Relatore",
@@ -995,7 +992,8 @@
       "bugReportTitle": "システム診断＆バグ報告ジェネレーター",
       "copyReport": "レポートをコピー",
       "saveReport": "ファイルに保存",
-      "reportGitHub": "GitHubで報告"
+      "reportGitHub": "GitHubで報告",
+      "runBugReport": "バグ報告を実行"
     },
     "presenter": {
       "cockpitTitle": "発表者コックピット",
@@ -1129,7 +1127,8 @@
       "bugReportTitle": "Diagnóstico e Gerador de Relatório de Erros",
       "copyReport": "Copiar Relatório",
       "saveReport": "Salvar em Arquivo",
-      "reportGitHub": "Reportar no GitHub"
+      "reportGitHub": "Reportar no GitHub",
+      "runBugReport": "Executar Relatório de Erro"
     },
     "presenter": {
       "cockpitTitle": "Cockpit do Apresentador",
@@ -1263,7 +1262,8 @@
       "bugReportTitle": "Диагностика и генератор отчетов об ошибках",
       "copyReport": "Скопировать отчет",
       "saveReport": "Сохранить в файл",
-      "reportGitHub": "Сообщить на GitHub"
+      "reportGitHub": "Сообщить на GitHub",
+      "runBugReport": "Запустить отчет об ошибке"
     },
     "presenter": {
       "cockpitTitle": "Панель Докладчика",
@@ -1397,7 +1397,8 @@
       "bugReportTitle": "系统诊断与错误报告生成器",
       "copyReport": "复制报告",
       "saveReport": "保存到文件",
-      "reportGitHub": "在 GitHub 上提交"
+      "reportGitHub": "在 GitHub 上提交",
+      "runBugReport": "运行错误报告"
     },
     "presenter": {
       "cockpitTitle": "演讲者控制台",
@@ -1489,4 +1490,7 @@
     }
   }
 };
-}));
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = LOCALES;
+}

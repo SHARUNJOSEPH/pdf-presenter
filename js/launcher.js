@@ -928,13 +928,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentReportMarkdown = '';
 
-    const openBugReport = async () => {
+    const btnModalRunBugReport = document.getElementById('btnModalRunBugReport');
+    const btnModalRunBugReportText = document.getElementById('btnModalRunBugReportText');
+
+    const openBugReport = () => {
       if (aboutModal) aboutModal.classList.remove('open');
       if (bugReportModal) {
         bugReportModal.style.display = 'flex';
         bugReportModal.classList.add('open');
       }
-      if (bugReportPreText) bugReportPreText.textContent = 'Gathering hardware acceleration, display topology, and render logs...';
+      if (!currentReportMarkdown) {
+        if (bugReportPreText) {
+          bugReportPreText.textContent = 'Click "Run Bug Report" above to inspect your hardware acceleration, display topology, and runtime logs.';
+        }
+      }
+    };
+
+    const runBugReport = async () => {
+      if (btnModalRunBugReport) {
+        btnModalRunBugReport.disabled = true;
+      }
+      if (btnModalRunBugReportText) {
+        btnModalRunBugReportText.textContent = 'Generating...';
+      }
+      if (bugReportPreText) {
+        bugReportPreText.textContent = 'Gathering hardware acceleration, display topology, and render logs...';
+      }
 
       try {
         if (window.electronAPI && window.electronAPI.generateBugReport) {
@@ -959,6 +978,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } catch (err) {
         if (bugReportPreText) bugReportPreText.textContent = `Failed to generate report: ${err.message}`;
+      } finally {
+        if (btnModalRunBugReport) {
+          btnModalRunBugReport.disabled = false;
+        }
+        if (btnModalRunBugReportText) {
+          btnModalRunBugReportText.textContent = 'Run Bug Report';
+        }
       }
     };
 
@@ -970,7 +996,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     if (btnHeaderBugReport) btnHeaderBugReport.addEventListener('click', openBugReport);
-    if (btnAboutRunBugReport) btnAboutRunBugReport.addEventListener('click', openBugReport);
+    if (btnAboutRunBugReport) {
+      btnAboutRunBugReport.addEventListener('click', () => {
+        openBugReport();
+        runBugReport();
+      });
+    }
+    if (btnModalRunBugReport) btnModalRunBugReport.addEventListener('click', runBugReport);
     if (btnCloseBugReportModal) btnCloseBugReportModal.addEventListener('click', closeBugReport);
     if (btnDoneBugReport) btnDoneBugReport.addEventListener('click', closeBugReport);
 

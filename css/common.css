@@ -1210,5 +1210,38 @@ html[dir="rtl"] .pro-tools-menu-item:hover {
   border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
+.btn-run-diagnostics {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff !important;
+  font-weight: 700;
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-run-diagnostics:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.55);
+}
+
+.btn-run-diagnostics:active {
+  transform: translateY(0);
+}
+
+.btn-run-diagnostics:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
 
 
