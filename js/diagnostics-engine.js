@@ -66,19 +66,19 @@ function analyzeFlickerPotential(displays, gpuFeatures = {}, gpuInfo = {}) {
     const refreshRates = displays.map(d => Number(d.displayFrequency || 60)).filter(f => f > 0);
     const uniqueRates = [...new Set(refreshRates)];
     if (uniqueRates.length > 1) {
-      warnings.push(`Refresh Rate Mismatch: Displays have different refresh rates (${uniqueRates.map(r => r + 'Hz').join(' vs ')}). Pairing a 120Hz/144Hz laptop with a 59.94Hz/60Hz projector can cause DWM compositor stutter or frame drops during transitions.`);
-      recommendations.push(`Set primary display to 60Hz in Windows Advanced Display Settings while presenting to match projector VSync timing.`);
+      warnings.push(`Refresh Rate Mismatch: Displays have different refresh rates (${uniqueRates.map(r => r + 'Hz').join(' vs ')}). If an external screen or 4K TV/projector is running at 29Hz/30Hz, Windows DWM struggles to synchronize VSync with a 60Hz screen, resulting in noticeable stutter or flicker during slide changes.`);
+      recommendations.push(`Set your external display (LG HDR 4K) to 60Hz in Windows Display Settings > Advanced Display (or lower resolution from 4K to 1440p/1080p if HDMI cable bandwidth is capping it at 30Hz/29Hz).`);
     }
   }
 
   // 3. GPU Hardware Acceleration & Compositing
   if (gpuFeatures && typeof gpuFeatures === 'object') {
-    if (gpuFeatures['gpu_compositing'] && gpuFeatures['gpu_compositing'] !== 'enabled') {
+    if (gpuFeatures['gpu_compositing'] && !['enabled', 'enabled_on', 'enabled_force'].includes(gpuFeatures['gpu_compositing'])) {
       warnings.push(`GPU Compositing Status: "${gpuFeatures['gpu_compositing']}". Hardware compositing is disabled, forcing CPU software fallback which increases slide transition latency.`);
       recommendations.push(`Verify graphics driver updates or ensure hardware acceleration is enabled in Windows Graphics settings.`);
     }
-    if (gpuFeatures['rasterization'] && gpuFeatures['rasterization'] !== 'enabled') {
-      warnings.push(`GPU Rasterization: "${gpuFeatures['rasterization']}". 2D Canvas rasterization is not fully hardware-accelerated.`);
+    if (gpuFeatures['rasterization'] && !['enabled', 'enabled_on', 'enabled_force'].includes(gpuFeatures['rasterization'])) {
+      warnings.push(`GPU Rasterization: "${gpuFeatures['rasterization']}". 2D Canvas rasterization is falling back to software emulation.`);
     }
   }
 
