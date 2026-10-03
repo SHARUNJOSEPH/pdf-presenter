@@ -21,10 +21,9 @@
   justify-content: space-between;
   padding: 0 16px;
   gap: 12px;
-  z-index: 100;
+  z-index: 1000;
   flex-shrink: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: visible;
   scrollbar-width: none;
 }
 
@@ -1062,6 +1061,12 @@ body.resizing-vertical * {
   }
   .doc-info {
     display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-bar {
+    overflow-x: auto;
   }
 }
 
