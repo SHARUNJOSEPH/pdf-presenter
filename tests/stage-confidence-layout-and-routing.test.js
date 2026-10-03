@@ -1051,3 +1051,38 @@ describe('6. Stage Cue End-to-End Routing & Launcher Integration', () => {
     assert.ok(mainJs.includes("confidenceWindow.webContents.send('sync-event', data)"), 'main.js must relay to confidenceWindow');
   });
 });
+
+describe('7. Web Confidence Monitor (Browser & Tablet) HTTP & WebSocket Bootstrap', () => {
+  const confHtml = fs.readFileSync(path.join(__dirname, '../views/confidence.html'), 'utf8');
+  const confJs = fs.readFileSync(path.join(__dirname, '../js/confidence.js'), 'utf8');
+  const mainJs = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+
+  it('views/confidence.html CSP allows connect-src for HTTP and WebSocket LAN streaming', () => {
+    assert.ok(
+      confHtml.includes("connect-src 'self' http: https: ws: wss: file:"),
+      'confidence.html CSP must allow connect-src http/ws to connect to companion server over LAN'
+    );
+  });
+
+  it('main.js permits local RFC 1918 private network and host matching origins', () => {
+    assert.ok(
+      mainJs.includes("192.168.") && mainJs.includes("10.") && mainJs.includes("parsedOrigin.host === hostHeader"),
+      'main.js must permit LAN and same-host web origins for tablet & web confidence monitors'
+    );
+  });
+
+  it('js/confidence.js synchronizes STATE_SYNC and loads PDF stream when opened via browser link', () => {
+    assert.ok(
+      confJs.includes("case 'STATE_SYNC':"),
+      'confidence.js must handle STATE_SYNC from WebSocket to sync slide numbers and state'
+    );
+    assert.ok(
+      confJs.includes("fetch('/api/status')") || confJs.includes('fetch("/api/status")'),
+      'confidence.js must query /api/status on HTTP startup to fetch active presentation state'
+    );
+    assert.ok(
+      confJs.includes('/api/document/current.pdf'),
+      'confidence.js must request /api/document/current.pdf when loading active presentation in browser'
+    );
+  });
+});

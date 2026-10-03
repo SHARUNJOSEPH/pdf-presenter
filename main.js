@@ -341,12 +341,33 @@ function startCompanionServer(host = apiSettings.host, port = apiSettings.port) 
       const pathname = parsedUrl.pathname;
 
       // Origin validation: Protect against malicious external websites attempting CSRF/SSRF
+      // Allow localhost, local loopback, private local network IPs (RFC 1918), electron/webview, and same-host origins
       const origin = req.headers['origin'];
-      const isAllowedOrigin = !origin || 
+      const hostHeader = req.headers['host'];
+      let isAllowedOrigin = !origin || 
         origin.startsWith('http://localhost') || 
         origin.startsWith('http://127.0.0.1') || 
         origin.startsWith('vscode-webview://') ||
         origin.startsWith('file://');
+
+      if (!isAllowedOrigin && origin) {
+        try {
+          const parsedOrigin = new URL(origin);
+          const hostname = parsedOrigin.hostname;
+          if (
+            hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname === '::1' ||
+            hostname.startsWith('192.168.') ||
+            hostname.startsWith('10.') ||
+            /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
+            hostname.endsWith('.local') ||
+            (hostHeader && parsedOrigin.host === hostHeader)
+          ) {
+            isAllowedOrigin = true;
+          }
+        } catch (e) {}
+      }
 
       if (origin && !isAllowedOrigin) {
         console.warn(`[Security Alert] Blocked cross-origin request from unauthorized origin: ${origin}`);

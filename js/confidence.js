@@ -1394,6 +1394,27 @@
           }
           break;
 
+        case 'STATE_SYNC':
+          if (data.state) {
+            if (data.state.currentPage && Number(data.state.currentPage) !== currentPage) {
+              updateSlides(Number(data.state.currentPage));
+            }
+            if (data.state.totalPages) {
+              totalPages = data.state.totalPages;
+            }
+            if (data.state.timerFormatted) {
+              updateTimerUI({ timerDisplay: data.state.timerFormatted, timerPhase: 'normal' });
+            }
+            // If running in browser and engine is still on demo or not loaded yet, fetch document
+            if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+              if (engine && engine.isDemo && data.state.totalPages > 0 && !data.state.isDemo) {
+                const streamUrl = `/api/document/current.pdf?t=${Date.now()}`;
+                loadDocumentData(null, streamUrl, data.state.documentTitle || 'Presentation.pdf');
+              }
+            }
+          }
+          break;
+
         case 'LOAD_DOCUMENT':
           if (data.isDemo) {
             loadDemoDeck();
@@ -1413,6 +1434,7 @@
       syncBus.on('STAGE_CUE', handleSync);
       syncBus.on('SHOW_BANNER', handleSync);
       syncBus.on('LOAD_DOCUMENT', handleSync);
+      syncBus.on('STATE_SYNC', handleSync);
     }
 
     if (window.electronAPI && window.electronAPI.onSync) {
@@ -1421,17 +1443,33 @@
 
     // Connect WebSocket bridge if running in browser / tablet over HTTP
     if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
-      try {
-        const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProto}//${window.location.host}/ws`;
-        const ws = new WebSocket(wsUrl);
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            handleSync(data);
-          } catch (e) {}
-        };
-      } catch (e) {}
+      let ws = null;
+      let reconnectTimer = null;
+      const connectWs = () => {
+        try {
+          const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const wsUrl = `${wsProto}//${window.location.host}/ws`;
+          ws = new WebSocket(wsUrl);
+          ws.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              handleSync(data);
+            } catch (e) {}
+          };
+          ws.onclose = () => {
+            if (!reconnectTimer) {
+              reconnectTimer = setTimeout(() => {
+                reconnectTimer = null;
+                connectWs();
+              }, 3000);
+            }
+          };
+          ws.onerror = () => {
+            try { ws.close(); } catch (e) {}
+          };
+        } catch (e) {}
+      };
+      connectWs();
     }
   }
 
@@ -1495,6 +1533,31 @@
         }
       } catch (e) {
         console.warn('[Confidence Init Data Error]', e);
+      }
+    }
+
+    // If running in a web browser over HTTP/HTTPS, fetch current presentation status & PDF stream
+    if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+      try {
+        const res = await fetch('/api/status');
+        if (res.ok) {
+          const status = await res.json();
+          if (status) {
+            if (status.totalPages) totalPages = status.totalPages;
+            if (status.currentPage) currentPage = status.currentPage;
+            if (status.timerFormatted) {
+              updateTimerUI({ timerDisplay: status.timerFormatted, timerPhase: 'normal' });
+            }
+            if (status.totalPages > 0 && !status.isDemo) {
+              const streamUrl = `/api/document/current.pdf?t=${Date.now()}`;
+              await loadDocumentData(null, streamUrl, status.documentTitle || 'Presentation.pdf');
+              await updateSlides(currentPage);
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[Confidence HTTP Init Error]', e);
       }
     }
 
