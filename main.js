@@ -1881,8 +1881,8 @@ ipcMain.handle('generate-bug-report', async () => {
   };
 
   const presentation = {
-    hasDeck: Boolean(activePdfBuffer || activePdfPath),
-    slideCount: presentationData ? (presentationData.pageCount || 0) : 0,
+    hasDeck: Boolean(activePdfBuffer || activePdfPath || (currentPdfConfig && !currentPdfConfig.isDemo)),
+    slideCount: (currentPdfConfig && currentPdfConfig.totalPages) || (state && state.totalPages) || 0,
     currentSlide: (state && state.currentPage) || 1,
     transition: 'dissolve 1.0s',
     isAudienceActive: Boolean(audienceWindow && !audienceWindow.isDestroyed())

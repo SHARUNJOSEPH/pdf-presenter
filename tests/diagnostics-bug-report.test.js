@@ -120,5 +120,10 @@ describe('Diagnostic Bug Report Generator & Flicker Analysis Suite', () => {
     // CSS
     assert.ok(commonCss.includes('.modal-bug-report-card'), 'common.css must define .modal-bug-report-card');
     assert.ok(commonCss.includes('.bug-report-pre'), 'common.css must define .bug-report-pre');
+
+    // main.js IPC handler syntax verification
+    const mainJs = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+    assert.ok(mainJs.includes("ipcMain.handle('generate-bug-report'"), 'main.js must define generate-bug-report IPC handler');
+    assert.ok(!mainJs.includes('presentationData ?'), 'main.js must not reference undefined presentationData variable');
   });
 });
