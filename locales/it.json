@@ -36,7 +36,12 @@
     "launchBtn": "Avvia presentazione a doppio schermo",
     "companionApi": "Impostazioni API Bitfocus Companion e controllo remoto",
     "pageCount": "{count} diapositive",
-    "noRecentFiles": "Nessuna presentazione recente."
+    "noRecentFiles": "Nessuna presentazione recente.",
+    "bugReport": "Segnala Bug",
+    "bugReportTitle": "Diagnostica e Generatore di Segnalazioni Bug",
+    "copyReport": "Copia Report",
+    "saveReport": "Salva su File",
+    "reportGitHub": "Segnala su GitHub"
   },
   "presenter": {
     "cockpitTitle": "Console del Relatore",

@@ -36,7 +36,12 @@
     "launchBtn": "Запустить презентацию на двух экранах",
     "companionApi": "Настройки API дистанционного управления и Bitfocus Companion",
     "pageCount": "{count} слайдов",
-    "noRecentFiles": "Нет недавних презентаций."
+    "noRecentFiles": "Нет недавних презентаций.",
+    "bugReport": "Отчет об ошибке",
+    "bugReportTitle": "Диагностика и генератор отчетов об ошибках",
+    "copyReport": "Скопировать отчет",
+    "saveReport": "Сохранить в файл",
+    "reportGitHub": "Сообщить на GitHub"
   },
   "presenter": {
     "cockpitTitle": "Панель Докладчика",

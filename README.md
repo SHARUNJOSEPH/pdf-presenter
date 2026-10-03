@@ -70,6 +70,11 @@ Choose your operating system to begin an immediate 1-click download:
 
 ## 🌟 Key Features
 
+- **🐞 Native Diagnostic Bug Report Generator & Flicker Troubleshooting**:
+  - **1-Click Hardware & Display Compatibility Audit**: Generate a comprehensive system report from the Launcher header or Presenter Cockpit toolbar to troubleshoot hardware acceleration, mixed DPI scaling, and refresh rate disparities.
+  - **Slide Flicker Heuristic Analysis**: Automatically checks for mismatched display scale factors (e.g. 1.5x vs 1.0x) or refresh rate disparities (144Hz vs 60Hz) that trigger Chromium backbuffer surface re-allocations during slide transitions.
+  - **Instant Export & Privacy Sanitization**: Copy formatted GitHub Markdown or save directly to a `.md` file with all personal file paths automatically sanitized.
+
 - **🎬 Pro Studio Stage Confidence Display**:
   - **4 Instant Broadcast Templates**: Switch seamlessly between 🎬 **Dual Cinema** (balanced live/next split), 📝 **Prompter Focus** (expanded teleprompter), ⏱️ **Timekeeper Focus** (giant stage timer), and 🖥️ **Single Live Mirror** (full-width audience mirror).
   - **Optimized for Stage Distance**: High-contrast, glare-resistant typography and responsive multiviewer layout readable from 20 to 40+ feet away.

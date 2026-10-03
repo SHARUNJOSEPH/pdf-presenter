@@ -36,7 +36,12 @@
     "launchBtn": "بدء العرض التقديمي على شاشتين",
     "companionApi": "إعدادات التحكم عن بُعد و Bitfocus Companion API",
     "pageCount": "{count} شريحة",
-    "noRecentFiles": "لا توجد ملفات أخيرة حتى الآن."
+    "noRecentFiles": "لا توجد ملفات أخيرة حتى الآن.",
+    "bugReport": "تقرير الأخطاء",
+    "bugReportTitle": "مولد تشخيصات وتقارير الأخطاء",
+    "copyReport": "نسخ التقرير",
+    "saveReport": "حفظ في ملف",
+    "reportGitHub": "إبلاغ على GitHub"
   },
   "presenter": {
     "cockpitTitle": "لوحة تحكم المحاضر",

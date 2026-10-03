@@ -36,7 +36,12 @@
     "launchBtn": "启动双屏演示",
     "companionApi": "远程控制与 Bitfocus Companion API 设置",
     "pageCount": "{count} 页幻灯片",
-    "noRecentFiles": "暂无最近打开的演示文件。"
+    "noRecentFiles": "暂无最近打开的演示文件。",
+    "bugReport": "错误报告",
+    "bugReportTitle": "系统诊断与错误报告生成器",
+    "copyReport": "复制报告",
+    "saveReport": "保存到文件",
+    "reportGitHub": "在 GitHub 上提交"
   },
   "presenter": {
     "cockpitTitle": "演讲者控制台",

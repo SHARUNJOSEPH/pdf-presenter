@@ -36,7 +36,12 @@
     "launchBtn": "Iniciar Apresentação em Tela Dupla",
     "companionApi": "Configurações da API Bitfocus Companion e Controle Remoto",
     "pageCount": "{count} Slides",
-    "noRecentFiles": "Nenhuma apresentação recente ainda."
+    "noRecentFiles": "Nenhuma apresentação recente ainda.",
+    "bugReport": "Relatório de Erro",
+    "bugReportTitle": "Diagnóstico e Gerador de Relatório de Erros",
+    "copyReport": "Copiar Relatório",
+    "saveReport": "Salvar em Arquivo",
+    "reportGitHub": "Reportar no GitHub"
   },
   "presenter": {
     "cockpitTitle": "Cockpit do Apresentador",

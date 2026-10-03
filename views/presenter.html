@@ -199,6 +199,10 @@
           ⌨️
         </button>
 
+        <button class="btn btn-icon" id="btnPresenterBugReport" title="Generate Diagnostics & Bug Report" data-i18n-title="launcher.bugReport" style="color: #ef4444;">
+          🐞
+        </button>
+
         <button class="btn btn-icon" id="btnPresenterAbout" title="About & Creator" data-i18n-title="launcher.aboutCreator">
           ℹ️
         </button>
@@ -666,6 +670,71 @@
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
         <span style="font-size: 11.5px; color: #64748b;">© 2026 Joseph Sharun • MIT License</span>
         <button class="btn btn-secondary modal-close-btn" data-i18n="common.close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diagnostic Bug Report Generator Modal -->
+  <div class="modal-backdrop" id="bugReportModal" style="display: none; z-index: 10070;" role="dialog" aria-modal="true" aria-labelledby="bugReportModalTitle">
+    <div class="modal-card modal-bug-report-card">
+      <div class="modal-header">
+        <h3 id="bugReportModalTitle" style="display: flex; align-items: center; gap: 8px;">
+          <span>🐞</span> <span data-i18n="launcher.bugReportTitle">System Diagnostics & Bug Report Generator</span>
+        </h3>
+        <button class="modal-close" id="btnCloseBugReportModal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <!-- Header Banner & Flicker Risk Summary -->
+        <div class="bug-report-header-banner">
+          <div>
+            <div style="font-size: 13.5px; font-weight: 700; color: #f8fafc;">Hardware & Display Compatibility Audit</div>
+            <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">Scans for mixed-DPI scaling, refresh rate disparities, and GPU composition status.</div>
+          </div>
+          <div id="bugReportFlickerRiskContainer">
+            <span class="flicker-risk-badge risk-low" id="bugReportFlickerRiskBadge">🟢 LOW RISK</span>
+          </div>
+        </div>
+
+        <!-- Quick Metrics Grid -->
+        <div class="bug-report-quick-grid">
+          <div class="bug-report-stat-chip">
+            <div class="stat-label">Displays</div>
+            <div class="stat-value" id="diagDisplaysVal">-</div>
+          </div>
+          <div class="bug-report-stat-chip">
+            <div class="stat-label">GPU Acceleration</div>
+            <div class="stat-value" id="diagGpuVal">-</div>
+          </div>
+          <div class="bug-report-stat-chip">
+            <div class="stat-label">System Memory</div>
+            <div class="stat-value" id="diagRamVal">-</div>
+          </div>
+          <div class="bug-report-stat-chip">
+            <div class="stat-label">App Version</div>
+            <div class="stat-value" id="diagVersionVal">-</div>
+          </div>
+        </div>
+
+        <!-- Formatted Report Pre Box -->
+        <div style="position: relative;">
+          <pre class="bug-report-pre" id="bugReportPreText">Generating diagnostic report...</pre>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn" id="btnCopyBugReport" style="background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; font-weight: 600; padding: 7px 14px; font-size: 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <span>📋</span> <span id="btnCopyBugReportText" data-i18n="launcher.copyReport">Copy Report</span>
+            </button>
+            <button type="button" class="btn" id="btnSaveBugReport" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-weight: 600; padding: 7px 14px; font-size: 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <span>💾</span> <span data-i18n="launcher.saveReport">Save to File</span>
+            </button>
+            <button type="button" class="btn" id="btnOpenGitHubIssue" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); color: #f8fafc; font-weight: 600; padding: 7px 14px; font-size: 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <span>🌐</span> <span data-i18n="launcher.reportGitHub">Report on GitHub</span>
+            </button>
+          </div>
+          <button type="button" class="btn btn-secondary" id="btnDoneBugReport" style="padding: 7px 16px; font-size: 12px;">Close</button>
+        </div>
       </div>
     </div>
   </div>

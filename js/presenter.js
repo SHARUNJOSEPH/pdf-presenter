@@ -1655,6 +1655,115 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
+    // Diagnostic Bug Report Generator (Presenter Cockpit)
+    const bugReportModal = document.getElementById('bugReportModal');
+    const btnPresenterBugReport = document.getElementById('btnPresenterBugReport');
+    const btnCloseBugReportModal = document.getElementById('btnCloseBugReportModal');
+    const btnDoneBugReport = document.getElementById('btnDoneBugReport');
+    const btnCopyBugReport = document.getElementById('btnCopyBugReport');
+    const btnCopyBugReportText = document.getElementById('btnCopyBugReportText');
+    const btnSaveBugReport = document.getElementById('btnSaveBugReport');
+    const btnOpenGitHubIssue = document.getElementById('btnOpenGitHubIssue');
+    const bugReportPreText = document.getElementById('bugReportPreText');
+    const bugReportFlickerRiskBadge = document.getElementById('bugReportFlickerRiskBadge');
+    const diagDisplaysVal = document.getElementById('diagDisplaysVal');
+    const diagGpuVal = document.getElementById('diagGpuVal');
+    const diagRamVal = document.getElementById('diagRamVal');
+    const diagVersionVal = document.getElementById('diagVersionVal');
+
+    let currentReportMarkdown = '';
+
+    const openBugReport = async () => {
+      if (aboutModal) aboutModal.classList.remove('open');
+      if (bugReportModal) {
+        bugReportModal.style.display = 'flex';
+        bugReportModal.classList.add('open');
+      }
+      if (bugReportPreText) bugReportPreText.textContent = 'Gathering hardware acceleration, display topology, and render logs...';
+
+      try {
+        if (window.electronAPI && window.electronAPI.generateBugReport) {
+          const res = await window.electronAPI.generateBugReport();
+          if (res && res.success) {
+            currentReportMarkdown = res.markdown || '';
+            if (bugReportPreText) bugReportPreText.textContent = currentReportMarkdown;
+
+            const d = res.data;
+            if (diagDisplaysVal) diagDisplaysVal.textContent = `${d.displays.length} Connected`;
+            if (diagGpuVal) diagGpuVal.textContent = (d.gpu && d.gpu.features && d.gpu.features.gpu_compositing) ? d.gpu.features.gpu_compositing : 'Enabled';
+            if (diagRamVal) diagRamVal.textContent = `${d.system.freeMemoryMB} MB Free`;
+            if (diagVersionVal) diagVersionVal.textContent = `v${d.app.version}`;
+
+            if (bugReportFlickerRiskBadge && d.flickerAnalysis) {
+              const risk = d.flickerAnalysis.flickerRisk || 'LOW';
+              bugReportFlickerRiskBadge.className = `flicker-risk-badge risk-${risk.toLowerCase()}`;
+              const icon = risk === 'HIGH' ? '🔴' : (risk === 'MODERATE' ? '🟡' : '🟢');
+              bugReportFlickerRiskBadge.textContent = `${icon} ${risk} RISK`;
+            }
+          }
+        }
+      } catch (err) {
+        if (bugReportPreText) bugReportPreText.textContent = `Failed to generate report: ${err.message}`;
+      }
+    };
+
+    const closeBugReport = () => {
+      if (bugReportModal) {
+        bugReportModal.classList.remove('open');
+        bugReportModal.style.display = 'none';
+      }
+    };
+
+    if (btnPresenterBugReport) btnPresenterBugReport.addEventListener('click', openBugReport);
+    if (btnCloseBugReportModal) btnCloseBugReportModal.addEventListener('click', closeBugReport);
+    if (btnDoneBugReport) btnDoneBugReport.addEventListener('click', closeBugReport);
+
+    if (bugReportModal) {
+      bugReportModal.addEventListener('click', (e) => {
+        if (e.target === bugReportModal) closeBugReport();
+      });
+    }
+
+    if (btnCopyBugReport) {
+      btnCopyBugReport.addEventListener('click', async () => {
+        if (!currentReportMarkdown) return;
+        try {
+          await navigator.clipboard.writeText(currentReportMarkdown);
+          if (btnCopyBugReportText) btnCopyBugReportText.textContent = 'Copied!';
+          setTimeout(() => {
+            if (btnCopyBugReportText) btnCopyBugReportText.textContent = 'Copy Report';
+          }, 2000);
+        } catch (e) {
+          console.warn('Clipboard copy failed:', e);
+        }
+      });
+    }
+
+    if (btnSaveBugReport) {
+      btnSaveBugReport.addEventListener('click', async () => {
+        if (!currentReportMarkdown) return;
+        if (window.electronAPI && window.electronAPI.saveBugReport) {
+          const res = await window.electronAPI.saveBugReport(currentReportMarkdown);
+          if (res && res.success) {
+            alert(`Bug report saved successfully to:\n${res.filePath}`);
+          }
+        }
+      });
+    }
+
+    if (btnOpenGitHubIssue) {
+      btnOpenGitHubIssue.addEventListener('click', () => {
+        const issueUrl = 'https://github.com/SHARUNJOSEPH/pdf-presenter/issues/new?title=' +
+          encodeURIComponent('Bug: Slide Flicker or Display Issue') +
+          '&body=' + encodeURIComponent('### Description\n<!-- Describe what happened when you saw the issue -->\n\n### Diagnostics Report\n<!-- Click "Copy Report" in the app and paste it here -->\n\n');
+        if (window.electronAPI && window.electronAPI.openExternal) {
+          window.electronAPI.openExternal(issueUrl);
+        } else {
+          window.open(issueUrl, '_blank', 'noopener,noreferrer');
+        }
+      });
+    }
+
     document.querySelectorAll('.modal-close-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('open'));

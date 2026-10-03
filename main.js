@@ -9,6 +9,7 @@ const https = require('https');
 const child_process = require('child_process');
 const { generateCompanionConfig } = require('./js/companion-presets.js');
 const licenseManager = require('./js/license-manager.js');
+const diagnosticsEngine = require('./js/diagnostics-engine.js');
 
 // Aptabase Privacy-Friendly Analytics
 let aptabaseTrackEvent = null;
@@ -1118,6 +1119,7 @@ function relaySyncEvent(data) {
   console.log(`[IPC Relay] ${data.type} (page: ${data.page || state.currentPage})`);
   if (data.type === 'PAGE_CHANGED' || data.type === 'GOTO_PAGE') {
     state.currentPage = Number(data.page || state.currentPage);
+    diagnosticsEngine.recordLog('INFO', `Slide transition: Page ${data.page}`);
   }
   if (data.type === 'SET_BLANK') {
     state.blankMode = data.mode;
@@ -1836,6 +1838,121 @@ function ensureDesktopShortcutOnFirstRun() {
 
 ipcMain.handle('create-desktop-shortcut', () => {
   return createDesktopShortcut();
+});
+
+// Diagnostics & Bug Report Generator IPC Handlers
+ipcMain.handle('generate-bug-report', async () => {
+  diagnosticsEngine.recordLog('INFO', 'Generating diagnostic bug report');
+
+  let gpuFeatures = {};
+  let gpuInfo = {};
+  try {
+    gpuFeatures = app.getGPUFeatureStatus();
+  } catch (e) {
+    gpuFeatures = { error: e.message };
+  }
+  try {
+    gpuInfo = await app.getGPUInfo('basic');
+  } catch (e) {
+    gpuInfo = { error: e.message };
+  }
+
+  let displays = [];
+  try {
+    displays = screen.getAllDisplays().map((d) => {
+      const primary = screen.getPrimaryDisplay();
+      return {
+        id: d.id,
+        label: d.label || (d.id === primary.id ? 'Built-in Screen' : 'External Display'),
+        bounds: d.bounds,
+        scaleFactor: d.scaleFactor,
+        displayFrequency: d.displayFrequency || 60,
+        isPrimary: d.id === primary.id
+      };
+    });
+  } catch (e) {
+    displays = [];
+  }
+
+  const activeSwitches = {
+    gpuRasterization: 'enable-gpu-rasterization',
+    zeroCopy: 'enable-zero-copy',
+    disableOcclusion: 'CalculateNativeWinOcclusion'
+  };
+
+  const presentation = {
+    hasDeck: Boolean(activePdfBuffer || activePdfPath),
+    slideCount: presentationData ? (presentationData.pageCount || 0) : 0,
+    currentSlide: (state && state.currentPage) || 1,
+    transition: 'dissolve 1.0s',
+    isAudienceActive: Boolean(audienceWindow && !audienceWindow.isDestroyed())
+  };
+
+  const diagData = diagnosticsEngine.buildDiagnosticData({
+    appVersion: app.getVersion(),
+    isPackaged: app.isPackaged,
+    isStore: Boolean(process.windowsStore),
+    displays,
+    gpuFeatures,
+    gpuInfo,
+    activeSwitches,
+    presentation
+  });
+
+  const markdown = diagnosticsEngine.formatMarkdownReport(diagData);
+
+  if (aptabaseTrackEvent) {
+    try {
+      aptabaseTrackEvent('bug_report_generated', {
+        flickerRisk: diagData.flickerAnalysis.flickerRisk,
+        displaysCount: displays.length
+      });
+    } catch (e) {}
+  }
+
+  return {
+    success: true,
+    data: diagData,
+    markdown
+  };
+});
+
+ipcMain.handle('save-bug-report', async (event, markdownContent) => {
+  try {
+    const defaultFilename = `pdf-presenter-bug-report-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.md`;
+    const targetWin = BrowserWindow.fromWebContents(event.sender) || launcherWindow;
+    let defaultDir = '';
+    try {
+      defaultDir = app.getPath('downloads');
+    } catch (e) {
+      defaultDir = os.homedir();
+    }
+
+    const { canceled, filePath } = await dialog.showSaveDialog(targetWin, {
+      title: 'Save Diagnostics Bug Report',
+      defaultPath: path.join(defaultDir, defaultFilename),
+      filters: [
+        { name: 'Markdown Report', extensions: ['md'] },
+        { name: 'Text Document', extensions: ['txt'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+
+    if (canceled || !filePath) {
+      return { success: false, canceled: true };
+    }
+
+    fs.writeFileSync(filePath, markdownContent, 'utf8');
+    diagnosticsEngine.recordLog('INFO', `Bug report saved to file: ${diagnosticsEngine.sanitizePath(filePath)}`);
+    return { success: true, filePath };
+  } catch (err) {
+    console.error('[Save Bug Report Error]', err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.on('record-diagnostic-log', (event, { level, message, meta } = {}) => {
+  diagnosticsEngine.recordLog(level || 'INFO', message, meta);
 });
 
 // App Lifecycle

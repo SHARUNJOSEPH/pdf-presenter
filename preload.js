@@ -92,5 +92,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Analytics (Aptabase)
-  trackEvent: (eventName, props) => ipcRenderer.send('aptabase:trackEvent', eventName, props)
+  trackEvent: (eventName, props) => ipcRenderer.send('aptabase:trackEvent', eventName, props),
+
+  // Diagnostics & Bug Report Generator
+  generateBugReport: () => ipcRenderer.invoke('generate-bug-report'),
+  saveBugReport: (markdownContent) => ipcRenderer.invoke('save-bug-report', markdownContent),
+  recordDiagnosticLog: (level, message, meta) => ipcRenderer.send('record-diagnostic-log', { level, message, meta })
 });

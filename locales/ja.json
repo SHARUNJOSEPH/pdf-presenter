@@ -36,7 +36,12 @@
     "launchBtn": "デュアルスクリーンプレゼンテーションを開始",
     "companionApi": "リモート制御＆Bitfocus Companion API設定",
     "pageCount": "{count} スライド",
-    "noRecentFiles": "最近開いたプレゼンテーションはありません。"
+    "noRecentFiles": "最近開いたプレゼンテーションはありません。",
+    "bugReport": "バグ報告",
+    "bugReportTitle": "システム診断＆バグ報告ジェネレーター",
+    "copyReport": "レポートをコピー",
+    "saveReport": "ファイルに保存",
+    "reportGitHub": "GitHubで報告"
   },
   "presenter": {
     "cockpitTitle": "発表者コックピット",

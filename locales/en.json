@@ -36,7 +36,12 @@
     "launchBtn": "Launch Dual-Screen Presentation",
     "companionApi": "Remote Control & Bitfocus Companion API Settings",
     "pageCount": "{count} Slides",
-    "noRecentFiles": "No recent presentations opened yet."
+    "noRecentFiles": "No recent presentations opened yet.",
+    "bugReport": "Bug Report",
+    "bugReportTitle": "Diagnostics & Bug Report Generator",
+    "copyReport": "Copy Report",
+    "saveReport": "Save to File",
+    "reportGitHub": "Report on GitHub"
   },
   "presenter": {
     "cockpitTitle": "Presenter Cockpit",

@@ -36,7 +36,12 @@
     "launchBtn": "डुअल-स्क्रीन प्रेजेंटेशन शुरू करें",
     "companionApi": "रिमोट कंट्रोल और Bitfocus Companion API सेटिंग्स",
     "pageCount": "{count} स्लाइड्स",
-    "noRecentFiles": "अभी तक कोई हालिया प्रेजेंटेशन नहीं खोली गई है।"
+    "noRecentFiles": "अभी तक कोई हालिया प्रेजेंटेशन नहीं खोली गई है।",
+    "bugReport": "बग रिपोर्ट",
+    "bugReportTitle": "सिस्टम डायग्नोस्टिक्स और बग रिपोर्ट जनरेटर",
+    "copyReport": "रिपोर्ट कॉपी करें",
+    "saveReport": "फ़ाइल में सहेजें",
+    "reportGitHub": "GitHub पर रिपोर्ट करें"
   },
   "presenter": {
     "cockpitTitle": "प्रस्तुतकर्ता कॉकपिट",

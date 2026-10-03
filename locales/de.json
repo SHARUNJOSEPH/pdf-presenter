@@ -36,7 +36,12 @@
     "launchBtn": "Dual-Screen Präsentation starten",
     "companionApi": "Bitfocus Companion & Fernsteuerungs-API Einstellungen",
     "pageCount": "{count} Folien",
-    "noRecentFiles": "Noch keine kürzlich geöffneten Präsentationen."
+    "noRecentFiles": "Noch keine kürzlich geöffneten Präsentationen.",
+    "bugReport": "Fehlerbericht",
+    "bugReportTitle": "Diagnose & Fehlerbericht-Generator",
+    "copyReport": "Bericht Kopieren",
+    "saveReport": "In Datei Speichern",
+    "reportGitHub": "Auf GitHub Melden"
   },
   "presenter": {
     "cockpitTitle": "Referenten-Cockpit",

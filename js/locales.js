@@ -52,7 +52,12 @@
       "launchBtn": "بدء العرض التقديمي على شاشتين",
       "companionApi": "إعدادات التحكم عن بُعد و Bitfocus Companion API",
       "pageCount": "{count} شريحة",
-      "noRecentFiles": "لا توجد ملفات أخيرة حتى الآن."
+      "noRecentFiles": "لا توجد ملفات أخيرة حتى الآن.",
+      "bugReport": "تقرير الأخطاء",
+      "bugReportTitle": "مولد تشخيصات وتقارير الأخطاء",
+      "copyReport": "نسخ التقرير",
+      "saveReport": "حفظ في ملف",
+      "reportGitHub": "إبلاغ على GitHub"
     },
     "presenter": {
       "cockpitTitle": "لوحة تحكم المحاضر",
@@ -181,7 +186,12 @@
       "launchBtn": "Dual-Screen Präsentation starten",
       "companionApi": "Bitfocus Companion & Fernsteuerungs-API Einstellungen",
       "pageCount": "{count} Folien",
-      "noRecentFiles": "Noch keine kürzlich geöffneten Präsentationen."
+      "noRecentFiles": "Noch keine kürzlich geöffneten Präsentationen.",
+      "bugReport": "Fehlerbericht",
+      "bugReportTitle": "Diagnose & Fehlerbericht-Generator",
+      "copyReport": "Bericht Kopieren",
+      "saveReport": "In Datei Speichern",
+      "reportGitHub": "Auf GitHub Melden"
     },
     "presenter": {
       "cockpitTitle": "Referenten-Cockpit",
@@ -310,7 +320,12 @@
       "launchBtn": "Launch Dual-Screen Presentation",
       "companionApi": "Remote Control & Bitfocus Companion API Settings",
       "pageCount": "{count} Slides",
-      "noRecentFiles": "No recent presentations opened yet."
+      "noRecentFiles": "No recent presentations opened yet.",
+      "bugReport": "Bug Report",
+      "bugReportTitle": "Diagnostics & Bug Report Generator",
+      "copyReport": "Copy Report",
+      "saveReport": "Save to File",
+      "reportGitHub": "Report on GitHub"
     },
     "presenter": {
       "cockpitTitle": "Presenter Cockpit",
@@ -439,7 +454,12 @@
       "launchBtn": "Iniciar presentación en doble pantalla",
       "companionApi": "Configuración de API de Bitfocus Companion y control remoto",
       "pageCount": "{count} Diapositivas",
-      "noRecentFiles": "Aún no hay presentaciones recientes."
+      "noRecentFiles": "Aún no hay presentaciones recientes.",
+      "bugReport": "Informe de Error",
+      "bugReportTitle": "Diagnóstico e Informe de Errores",
+      "copyReport": "Copiar Informe",
+      "saveReport": "Guardar en Archivo",
+      "reportGitHub": "Reportar en GitHub"
     },
     "presenter": {
       "cockpitTitle": "Consola del Presentador",
@@ -568,7 +588,12 @@
       "launchBtn": "Lancer la présentation double écran",
       "companionApi": "Paramètres de l'API de contrôle Bitfocus Companion",
       "pageCount": "{count} Diapositives",
-      "noRecentFiles": "Aucune présentation récente pour le moment."
+      "noRecentFiles": "Aucune présentation récente pour le moment.",
+      "bugReport": "Rapport de Bug",
+      "bugReportTitle": "Diagnostic et Rapport de Bogues",
+      "copyReport": "Copier le Rapport",
+      "saveReport": "Enregistrer dans un Fichier",
+      "reportGitHub": "Signaler sur GitHub"
     },
     "presenter": {
       "cockpitTitle": "Cockpit Présentateur",
@@ -697,7 +722,12 @@
       "launchBtn": "डुअल-स्क्रीन प्रेजेंटेशन शुरू करें",
       "companionApi": "रिमोट कंट्रोल और Bitfocus Companion API सेटिंग्स",
       "pageCount": "{count} स्लाइड्स",
-      "noRecentFiles": "अभी तक कोई हालिया प्रेजेंटेशन नहीं खोली गई है।"
+      "noRecentFiles": "अभी तक कोई हालिया प्रेजेंटेशन नहीं खोली गई है।",
+      "bugReport": "बग रिपोर्ट",
+      "bugReportTitle": "सिस्टम डायग्नोस्टिक्स और बग रिपोर्ट जनरेटर",
+      "copyReport": "रिपोर्ट कॉपी करें",
+      "saveReport": "फ़ाइल में सहेजें",
+      "reportGitHub": "GitHub पर रिपोर्ट करें"
     },
     "presenter": {
       "cockpitTitle": "प्रस्तुतकर्ता कॉकपिट",
@@ -826,7 +856,12 @@
       "launchBtn": "Avvia presentazione a doppio schermo",
       "companionApi": "Impostazioni API Bitfocus Companion e controllo remoto",
       "pageCount": "{count} diapositive",
-      "noRecentFiles": "Nessuna presentazione recente."
+      "noRecentFiles": "Nessuna presentazione recente.",
+      "bugReport": "Segnala Bug",
+      "bugReportTitle": "Diagnostica e Generatore di Segnalazioni Bug",
+      "copyReport": "Copia Report",
+      "saveReport": "Salva su File",
+      "reportGitHub": "Segnala su GitHub"
     },
     "presenter": {
       "cockpitTitle": "Console del Relatore",
@@ -955,7 +990,12 @@
       "launchBtn": "デュアルスクリーンプレゼンテーションを開始",
       "companionApi": "リモート制御＆Bitfocus Companion API設定",
       "pageCount": "{count} スライド",
-      "noRecentFiles": "最近開いたプレゼンテーションはありません。"
+      "noRecentFiles": "最近開いたプレゼンテーションはありません。",
+      "bugReport": "バグ報告",
+      "bugReportTitle": "システム診断＆バグ報告ジェネレーター",
+      "copyReport": "レポートをコピー",
+      "saveReport": "ファイルに保存",
+      "reportGitHub": "GitHubで報告"
     },
     "presenter": {
       "cockpitTitle": "発表者コックピット",
@@ -1084,7 +1124,12 @@
       "launchBtn": "Iniciar Apresentação em Tela Dupla",
       "companionApi": "Configurações da API Bitfocus Companion e Controle Remoto",
       "pageCount": "{count} Slides",
-      "noRecentFiles": "Nenhuma apresentação recente ainda."
+      "noRecentFiles": "Nenhuma apresentação recente ainda.",
+      "bugReport": "Relatório de Erro",
+      "bugReportTitle": "Diagnóstico e Gerador de Relatório de Erros",
+      "copyReport": "Copiar Relatório",
+      "saveReport": "Salvar em Arquivo",
+      "reportGitHub": "Reportar no GitHub"
     },
     "presenter": {
       "cockpitTitle": "Cockpit do Apresentador",
@@ -1213,7 +1258,12 @@
       "launchBtn": "Запустить презентацию на двух экранах",
       "companionApi": "Настройки API дистанционного управления и Bitfocus Companion",
       "pageCount": "{count} слайдов",
-      "noRecentFiles": "Нет недавних презентаций."
+      "noRecentFiles": "Нет недавних презентаций.",
+      "bugReport": "Отчет об ошибке",
+      "bugReportTitle": "Диагностика и генератор отчетов об ошибках",
+      "copyReport": "Скопировать отчет",
+      "saveReport": "Сохранить в файл",
+      "reportGitHub": "Сообщить на GitHub"
     },
     "presenter": {
       "cockpitTitle": "Панель Докладчика",
@@ -1342,7 +1392,12 @@
       "launchBtn": "启动双屏演示",
       "companionApi": "远程控制与 Bitfocus Companion API 设置",
       "pageCount": "{count} 页幻灯片",
-      "noRecentFiles": "暂无最近打开的演示文件。"
+      "noRecentFiles": "暂无最近打开的演示文件。",
+      "bugReport": "错误报告",
+      "bugReportTitle": "系统诊断与错误报告生成器",
+      "copyReport": "复制报告",
+      "saveReport": "保存到文件",
+      "reportGitHub": "在 GitHub 上提交"
     },
     "presenter": {
       "cockpitTitle": "演讲者控制台",
