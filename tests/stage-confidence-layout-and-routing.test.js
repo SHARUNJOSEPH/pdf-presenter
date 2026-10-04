@@ -1086,3 +1086,47 @@ describe('7. Web Confidence Monitor (Browser & Tablet) HTTP & WebSocket Bootstra
     );
   });
 });
+
+describe('8. Stage Confidence Monitor Feed Output Enable / Disable Controls', () => {
+  const launcherHtml = fs.readFileSync(path.join(__dirname, '../views/launcher.html'), 'utf8');
+  const presenterHtml = fs.readFileSync(path.join(__dirname, '../views/presenter.html'), 'utf8');
+  const confHtml = fs.readFileSync(path.join(__dirname, '../views/confidence.html'), 'utf8');
+  const confCss = fs.readFileSync(path.join(__dirname, '../css/confidence.css'), 'utf8');
+  const confJs = fs.readFileSync(path.join(__dirname, '../js/confidence.js'), 'utf8');
+  const launcherJs = fs.readFileSync(path.join(__dirname, '../js/launcher.js'), 'utf8');
+  const presenterJs = fs.readFileSync(path.join(__dirname, '../js/presenter.js'), 'utf8');
+  const mainJs = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+  const serverJs = fs.readFileSync(path.join(__dirname, '../server.js'), 'utf8');
+
+  it('views contain btnToggleConfidenceFeed and views/confidence.html contains confFeedCurtain', () => {
+    assert.ok(launcherHtml.includes('id="btnToggleConfidenceFeed"'), 'launcher.html must have btnToggleConfidenceFeed');
+    assert.ok(presenterHtml.includes('id="btnToggleConfidenceFeed"'), 'presenter.html must have btnToggleConfidenceFeed');
+    assert.ok(confHtml.includes('id="btnToggleFeed"'), 'confidence.html must have btnToggleFeed toolbar button');
+    assert.ok(confHtml.includes('id="confFeedCurtain"'), 'confidence.html must have confFeedCurtain overlay curtain');
+  });
+
+  it('css/confidence.css provides styles for .conf-feed-curtain and .feed-disabled state', () => {
+    assert.ok(confCss.includes('.conf-feed-curtain'), 'confidence.css must style .conf-feed-curtain');
+    assert.ok(confCss.includes('.btn-conf-tool.feed-disabled'), 'confidence.css must style .feed-disabled on toolbar button');
+  });
+
+  it('js/confidence.js implements setConfidenceFeedEnabled, broadcasts and responds to SET_CONFIDENCE_FEED', () => {
+    assert.ok(confJs.includes('setConfidenceFeedEnabled'), 'confidence.js must have setConfidenceFeedEnabled function');
+    assert.ok(confJs.includes("case 'SET_CONFIDENCE_FEED':"), 'confidence.js must handle SET_CONFIDENCE_FEED event');
+    assert.ok(confJs.includes("setFeedEnabled: setConfidenceFeedEnabled"), 'ConfidenceMonitor export must include setFeedEnabled');
+  });
+
+  it('main.js and server.js manage confidenceFeedEnabled state and relay SET_CONFIDENCE_FEED', () => {
+    assert.ok(mainJs.includes('confidenceFeedEnabled'), 'main.js state must track confidenceFeedEnabled');
+    assert.ok(mainJs.includes("if (data.type === 'SET_CONFIDENCE_FEED')"), 'main.js relaySyncEvent must handle SET_CONFIDENCE_FEED');
+    assert.ok(serverJs.includes('confidenceFeedEnabled'), 'server.js state must track confidenceFeedEnabled');
+    assert.ok(serverJs.includes("case 'confidence/feed':"), 'server.js companion api must support /api/confidence/feed');
+  });
+
+  it('js/launcher.js and js/presenter.js bind btnToggleConfidenceFeed and sync feed state', () => {
+    assert.ok(launcherJs.includes('btnToggleConfidenceFeed'), 'launcher.js must bind btnToggleConfidenceFeed');
+    assert.ok(launcherJs.includes("type: 'SET_CONFIDENCE_FEED'"), 'launcher.js must emit SET_CONFIDENCE_FEED');
+    assert.ok(presenterJs.includes('btnToggleConfidenceFeed'), 'presenter.js must bind btnToggleConfidenceFeed');
+    assert.ok(presenterJs.includes("type: 'SET_CONFIDENCE_FEED'"), 'presenter.js must emit SET_CONFIDENCE_FEED');
+  });
+});

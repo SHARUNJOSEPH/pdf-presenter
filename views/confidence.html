@@ -95,6 +95,7 @@
           </div>
         </div>
         <button type="button" class="btn-conf-tool" id="btnEditTabSizes" title="Open Interactive Tab Size Editor (Width & Height Sliders)">📐 Tab Sizes</button>
+        <button type="button" class="btn-conf-tool" id="btnToggleFeed" title="Toggle Stage Confidence Monitor Feed Output">⏸️ Feed Active</button>
         <button type="button" class="btn-conf-tool" id="btnLockDashboard" title="Toggle Lock Dashboard (Prevents Accidental Dragging on Stage)">🔓 Unlock</button>
         <button type="button" class="btn-conf-tool" id="btnResetLayout" title="Reset to Factory Watchout Layout">🔄 Reset Layout</button>
         <button type="button" class="btn-conf-tool" id="btnFullscreenConf" title="Toggle Fullscreen (F11)">⤢ Fullscreen</button>
@@ -451,6 +452,15 @@
       <section class="conf-slides-section" id="confSlidesSection" style="display: none;"></section>
       <section class="conf-notes-section" id="confNotesSection" style="display: none;"></section>
     </main>
+
+    <!-- Stage Confidence Feed Disabled Curtain (Mutes output when disabled) -->
+    <div class="conf-feed-curtain" id="confFeedCurtain" style="display: none;" role="status" aria-live="polite">
+      <div class="conf-feed-curtain-card">
+        <div class="conf-feed-curtain-icon">⏸️</div>
+        <div class="conf-feed-curtain-title">STAGE MONITOR FEED DISABLED</div>
+        <div class="conf-feed-curtain-subtitle">Output feed is paused by the presentation director. Telemetry and stage sync will resume when re-enabled.</div>
+      </div>
+    </div>
   </div>
 
   <script src="../js/sync-channel.js"></script>

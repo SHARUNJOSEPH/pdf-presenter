@@ -115,6 +115,7 @@ const state = {
   laserActive: false,
   audienceConnected: false,
   presenterConnected: false,
+  confidenceFeedEnabled: true,
   lastUpdated: Date.now()
 };
 
@@ -254,6 +255,7 @@ function getPublicState() {
     audienceConnected: !!audienceWindow && !audienceWindow.isDestroyed(),
     presenterConnected: !!presenterWindow && !presenterWindow.isDestroyed(),
     confidenceConnected: !!confidenceWindow && !confidenceWindow.isDestroyed(),
+    confidenceFeedEnabled: state.confidenceFeedEnabled !== false,
     isPro: licenseManager.state.isPro,
     tier: licenseManager.state.tier,
     companionAuthorized: licenseManager.isCompanionApiAuthorized(),
@@ -639,6 +641,31 @@ function handleCompanionApi(req, res, pathname, query) {
       }
 
       return processBanner(bannerMsg, bannerDur);
+    }
+
+    case 'confidence/feed': {
+      let enableFeed = null;
+      if (req.method === 'DELETE' || query.action === 'disable' || query.enabled === 'false' || query.enabled === '0') {
+        enableFeed = false;
+      } else if (query.action === 'enable' || query.enabled === 'true' || query.enabled === '1') {
+        enableFeed = true;
+      } else {
+        enableFeed = !state.confidenceFeedEnabled;
+      }
+
+      state.confidenceFeedEnabled = enableFeed;
+      relaySyncEvent({
+        type: 'SET_CONFIDENCE_FEED',
+        enabled: enableFeed,
+        source: 'companion_api'
+      });
+      broadcastState('API_CONFIDENCE_FEED');
+      return jsonResponse({
+        success: true,
+        confidenceFeedEnabled: state.confidenceFeedEnabled,
+        message: state.confidenceFeedEnabled ? 'Confidence feed enabled' : 'Confidence feed disabled',
+        state: getPublicState()
+      });
     }
 
     case 'cue':
@@ -1147,6 +1174,9 @@ function relaySyncEvent(data) {
   }
   if (data.type === 'STAGE_CUE') {
     state.activeStageCue = data.message || null;
+  }
+  if (data.type === 'SET_CONFIDENCE_FEED') {
+    state.confidenceFeedEnabled = Boolean(data.enabled !== false);
   }
 
   if (presenterWindow && !presenterWindow.isDestroyed()) {

@@ -62,6 +62,10 @@
   const btnScaleReset = document.getElementById('btnScaleReset');
   const btnScaleUp = document.getElementById('btnScaleUp');
 
+  const btnToggleFeed = document.getElementById('btnToggleFeed');
+  const confFeedCurtain = document.getElementById('confFeedCurtain');
+  let isFeedEnabled = true;
+
   const btnWidgetsMenu = document.getElementById('btnWidgetsMenu');
   const confWidgetsDropdown = document.getElementById('confWidgetsDropdown');
   const btnEditTabSizes = document.getElementById('btnEditTabSizes');
@@ -131,6 +135,43 @@
       } else {
         btnFullscreenConf.textContent = '⤢ Fullscreen';
       }
+    });
+  }
+
+  // =========================================================================
+  // 1.8. STAGE CONFIDENCE FEED OUTPUT ENABLE / DISABLE
+  // =========================================================================
+  function setConfidenceFeedEnabled(enabled, broadcast = false) {
+    isFeedEnabled = Boolean(enabled);
+    if (confFeedCurtain) {
+      confFeedCurtain.style.display = isFeedEnabled ? 'none' : 'flex';
+    }
+    if (btnToggleFeed) {
+      btnToggleFeed.textContent = isFeedEnabled ? '⏸️ Feed Active' : '▶️ Feed Muted';
+      btnToggleFeed.classList.toggle('feed-disabled', !isFeedEnabled);
+      btnToggleFeed.title = isFeedEnabled
+        ? 'Stage Confidence Feed is Active (Click to Mute/Disable)'
+        : 'Stage Confidence Feed is Muted (Click to Enable/Resume)';
+    }
+
+    if (broadcast) {
+      const payload = {
+        type: 'SET_CONFIDENCE_FEED',
+        enabled: isFeedEnabled,
+        source: 'confidence_monitor'
+      };
+      if (window.electronAPI && window.electronAPI.sendSync) {
+        window.electronAPI.sendSync(payload);
+      }
+      if (typeof syncBus !== 'undefined' && syncBus && syncBus.send) {
+        syncBus.send(payload);
+      }
+    }
+  }
+
+  if (btnToggleFeed) {
+    btnToggleFeed.addEventListener('click', () => {
+      setConfidenceFeedEnabled(!isFeedEnabled, true);
     });
   }
 
@@ -1394,8 +1435,15 @@
           }
           break;
 
+        case 'SET_CONFIDENCE_FEED':
+          setConfidenceFeedEnabled(data.enabled !== false, false);
+          break;
+
         case 'STATE_SYNC':
           if (data.state) {
+            if (data.state.confidenceFeedEnabled !== undefined) {
+              setConfidenceFeedEnabled(data.state.confidenceFeedEnabled !== false, false);
+            }
             if (data.state.currentPage && Number(data.state.currentPage) !== currentPage) {
               updateSlides(Number(data.state.currentPage));
             }
@@ -1433,6 +1481,7 @@
       syncBus.on('TIMER_CONTROL', handleSync);
       syncBus.on('STAGE_CUE', handleSync);
       syncBus.on('SHOW_BANNER', handleSync);
+      syncBus.on('SET_CONFIDENCE_FEED', handleSync);
       syncBus.on('LOAD_DOCUMENT', handleSync);
       syncBus.on('STATE_SYNC', handleSync);
     }
@@ -1517,6 +1566,9 @@
         if (data && data.config) {
           totalPages = data.config.totalPages || 6;
           if (data.state) {
+            if (data.state.confidenceFeedEnabled !== undefined) {
+              setConfidenceFeedEnabled(data.state.confidenceFeedEnabled !== false, false);
+            }
             currentPage = data.state.currentPage || 1;
             if (data.state.timerFormatted) {
               updateTimerUI({ timerDisplay: data.state.timerFormatted, timerPhase: 'normal' });
@@ -1543,6 +1595,9 @@
         if (res.ok) {
           const status = await res.json();
           if (status) {
+            if (status.confidenceFeedEnabled !== undefined) {
+              setConfidenceFeedEnabled(status.confidenceFeedEnabled !== false, false);
+            }
             if (status.totalPages) totalPages = status.totalPages;
             if (status.currentPage) currentPage = status.currentPage;
             if (status.timerFormatted) {
@@ -1579,6 +1634,8 @@
 
   // Expose ConfidenceMonitor API on window
   window.ConfidenceMonitor = {
+    setFeedEnabled: setConfidenceFeedEnabled,
+    isFeedEnabled: () => isFeedEnabled,
     setStageCue: handleStageCue,
     updateTimer: updateTimerUI,
     updateSlides: updateSlides,

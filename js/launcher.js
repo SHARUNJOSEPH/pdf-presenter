@@ -1970,9 +1970,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnConfidenceMonitor = document.getElementById('btnConfidenceMonitor');
     const confidenceModal = document.getElementById('confidenceModal');
     const btnLaunchConfidenceWindow = document.getElementById('btnLaunchConfidenceWindow');
+    const btnToggleConfidenceFeed = document.getElementById('btnToggleConfidenceFeed');
     const btnCopyConfidenceWebUrl = document.getElementById('btnCopyConfidenceWebUrl');
     const selConfidenceDisplay = document.getElementById('selConfidenceDisplay');
     const btnRefreshConfidenceDisplays = document.getElementById('btnRefreshConfidenceDisplays');
+    let isConfidenceFeedActive = true;
+
+    function updateConfidenceFeedToggleUI(enabled) {
+      isConfidenceFeedActive = Boolean(enabled);
+      if (btnToggleConfidenceFeed) {
+        btnToggleConfidenceFeed.textContent = isConfidenceFeedActive ? '⏸️ Disable Feed' : '▶️ Enable Feed';
+        btnToggleConfidenceFeed.style.background = isConfidenceFeedActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)';
+        btnToggleConfidenceFeed.style.borderColor = isConfidenceFeedActive ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)';
+        btnToggleConfidenceFeed.style.color = isConfidenceFeedActive ? '#fca5a5' : '#6ee7b7';
+      }
+    }
 
     async function populateConfidenceDisplays() {
       if (!selConfidenceDisplay) return;
@@ -2132,6 +2144,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
     });
+
+    if (btnToggleConfidenceFeed) {
+      btnToggleConfidenceFeed.addEventListener('click', () => {
+        const nextState = !isConfidenceFeedActive;
+        updateConfidenceFeedToggleUI(nextState);
+        const payload = {
+          type: 'SET_CONFIDENCE_FEED',
+          enabled: nextState,
+          source: 'launcher'
+        };
+        if (window.electronAPI && window.electronAPI.sendSync) {
+          window.electronAPI.sendSync(payload);
+        }
+        if (launcherSyncBus && launcherSyncBus.send) {
+          launcherSyncBus.send(payload);
+        }
+      });
+    }
+
+    const handleLauncherFeedSync = (data) => {
+      if (!data) return;
+      if (data.type === 'SET_CONFIDENCE_FEED') {
+        updateConfidenceFeedToggleUI(data.enabled !== false);
+      } else if (data.type === 'STATE_SYNC' && data.state && data.state.confidenceFeedEnabled !== undefined) {
+        updateConfidenceFeedToggleUI(data.state.confidenceFeedEnabled !== false);
+      }
+    };
+
+    if (launcherSyncBus && launcherSyncBus.on) {
+      launcherSyncBus.on('SET_CONFIDENCE_FEED', handleLauncherFeedSync);
+      launcherSyncBus.on('STATE_SYNC', handleLauncherFeedSync);
+    }
+    if (window.electronAPI && window.electronAPI.onSync) {
+      window.electronAPI.onSync(handleLauncherFeedSync);
+    }
+
+    // Fetch initial status if available
+    if (window.electronAPI && window.electronAPI.getPresentationData) {
+      window.electronAPI.getPresentationData().then(res => {
+        if (res && res.state && res.state.confidenceFeedEnabled !== undefined) {
+          updateConfidenceFeedToggleUI(res.state.confidenceFeedEnabled !== false);
+        }
+      }).catch(() => {});
+    }
 
     // 7. OBS & vMix Automation Modal
     const btnBroadcastAutomation = document.getElementById('btnBroadcastAutomation');

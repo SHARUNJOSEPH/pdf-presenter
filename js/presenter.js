@@ -1013,6 +1013,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           const dur = data.duration !== undefined ? Number(data.duration) : 10000;
           showPresenterCockpitAlert(data.message, dur, 'STAGE ALERT');
         }
+      } else if (data.type === 'SET_CONFIDENCE_FEED') {
+        updateConfidenceFeedToggleUI(data.enabled !== false);
+      } else if (data.type === 'STATE_SYNC' && data.state && data.state.confidenceFeedEnabled !== undefined) {
+        updateConfidenceFeedToggleUI(data.state.confidenceFeedEnabled !== false);
       }
     };
 
@@ -1040,6 +1044,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       syncBus.on('PRESENTER_ALERT', handleRemoteEvent);
       syncBus.on('CLEAR_PRESENTER_ALERT', handleRemoteEvent);
       syncBus.on('STAGE_CUE', handleRemoteEvent);
+      syncBus.on('SET_CONFIDENCE_FEED', handleRemoteEvent);
+      syncBus.on('STATE_SYNC', handleRemoteEvent);
+    }
+    if (window.electronAPI && window.electronAPI.getPresentationData) {
+      window.electronAPI.getPresentationData().then(res => {
+        if (res && res.state && res.state.confidenceFeedEnabled !== undefined) {
+          updateConfidenceFeedToggleUI(res.state.confidenceFeedEnabled !== false);
+        }
+      }).catch(() => {});
     }
   }
 
@@ -1273,12 +1286,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnConfidenceMonitor = document.getElementById('btnConfidenceMonitor');
     const confidenceModal = document.getElementById('confidenceModal');
     const btnLaunchConfidenceWindow = document.getElementById('btnLaunchConfidenceWindow');
+    const btnToggleConfidenceFeed = document.getElementById('btnToggleConfidenceFeed');
     const btnCopyConfidenceWebUrl = document.getElementById('btnCopyConfidenceWebUrl');
     const txtStageCueMessage = document.getElementById('txtStageCueMessage');
     const btnSendStageCue = document.getElementById('btnSendStageCue');
     const btnClearStageCue = document.getElementById('btnClearStageCue');
     const selConfidenceDisplay = document.getElementById('selConfidenceDisplay');
     const btnRefreshConfidenceDisplays = document.getElementById('btnRefreshConfidenceDisplays');
+    let isConfidenceFeedActive = true;
+
+    function updateConfidenceFeedToggleUI(enabled) {
+      isConfidenceFeedActive = Boolean(enabled);
+      if (btnToggleConfidenceFeed) {
+        btnToggleConfidenceFeed.textContent = isConfidenceFeedActive ? '⏸️ Disable Feed' : '▶️ Enable Feed';
+        btnToggleConfidenceFeed.style.background = isConfidenceFeedActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)';
+        btnToggleConfidenceFeed.style.borderColor = isConfidenceFeedActive ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)';
+        btnToggleConfidenceFeed.style.color = isConfidenceFeedActive ? '#fca5a5' : '#6ee7b7';
+      }
+    }
 
     async function populateConfidenceDisplays() {
       if (!selConfidenceDisplay) return;
@@ -1419,6 +1444,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
     });
+
+    if (btnToggleConfidenceFeed) {
+      btnToggleConfidenceFeed.addEventListener('click', () => {
+        const nextState = !isConfidenceFeedActive;
+        updateConfidenceFeedToggleUI(nextState);
+        emitSync({
+          type: 'SET_CONFIDENCE_FEED',
+          enabled: nextState,
+          source: 'presenter'
+        });
+      });
+    }
 
     // Spotlight Button & Mouse Viewport Tracker
     const btnSpotlight = document.getElementById('btnSpotlight');

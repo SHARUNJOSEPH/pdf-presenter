@@ -32,6 +32,7 @@ const state = {
   laserActive: false,
   audienceConnected: false,
   presenterConnected: false,
+  confidenceFeedEnabled: true,
   lastUpdated: Date.now()
 };
 
@@ -149,6 +150,7 @@ function getPublicState() {
     laserActive: state.laserActive,
     audienceConnected: state.audienceConnected,
     presenterConnected: state.presenterConnected,
+    confidenceFeedEnabled: state.confidenceFeedEnabled !== false,
     lastUpdated: state.lastUpdated
   };
 }
@@ -779,6 +781,34 @@ function handleApiRequest(req, res, pathname, query) {
             alphaSnapshot: `http://localhost:${PORT}/api/stream/alpha/snapshot`
           }
         });
+
+      case 'confidence/feed': {
+        let enableFeed = null;
+        if (req.method === 'DELETE' || query.action === 'disable' || query.enabled === 'false' || query.enabled === '0') {
+          enableFeed = false;
+        } else if (query.action === 'enable' || query.enabled === 'true' || query.enabled === '1') {
+          enableFeed = true;
+        } else if (parsedBody && parsedBody.enabled !== undefined) {
+          enableFeed = Boolean(parsedBody.enabled);
+        } else {
+          // Toggle if unspecified
+          enableFeed = !state.confidenceFeedEnabled;
+        }
+
+        state.confidenceFeedEnabled = enableFeed;
+        broadcastWs({
+          type: 'SET_CONFIDENCE_FEED',
+          enabled: enableFeed,
+          source: 'companion_api'
+        });
+        broadcastState('API_CONFIDENCE_FEED');
+        return jsonResponse({
+          success: true,
+          confidenceFeedEnabled: state.confidenceFeedEnabled,
+          message: state.confidenceFeedEnabled ? 'Confidence feed enabled' : 'Confidence feed disabled',
+          state: getPublicState()
+        });
+      }
 
       case 'stage/cue': {
         if (req.method === 'DELETE' || query.action === 'clear') {
