@@ -180,6 +180,14 @@ class DemoSlideDeck {
     this.drawSlideFooter(ctx, pageNumber, this.totalPages, BASE_W, BASE_H);
 
     ctx.restore();
+
+    // Atomically paint finished frame to targetCanvas without clearing texture
+    if (targetCanvas) {
+      if (targetCanvas.width !== targetWidth) targetCanvas.width = targetWidth;
+      if (targetCanvas.height !== targetHeight) targetCanvas.height = targetHeight;
+      const destCtx = targetCanvas.getContext('2d');
+      if (destCtx) destCtx.drawImage(buffer, 0, 0);
+    }
   }
 
   drawSlideHeader(ctx, slide, width, height) {
@@ -500,12 +508,6 @@ class DemoSlideDeck {
     ctx.fillStyle = '#a5b4fc';
     ctx.font = '20px -apple-system, sans-serif';
     ctx.fillText('💡 Pro Tip: Press "G" to toggle the slide grid or "?" for the full keyboard shortcuts cheat sheet.', cardX + 90, stepY + 68);
-
-    // Atomically paint finished frame to targetCanvas without clearing texture
-    if (targetCanvas.width !== targetWidth) targetCanvas.width = targetWidth;
-    if (targetCanvas.height !== targetHeight) targetCanvas.height = targetHeight;
-    const destCtx = targetCanvas.getContext('2d');
-    destCtx.drawImage(buffer, 0, 0);
   }
 
   // Canvas Helper: Rounded Rectangles

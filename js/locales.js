@@ -1494,3 +1494,11 @@ const LOCALES = {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = LOCALES;
 }
+
+if (typeof window !== 'undefined') {
+  window.I18N_LOCALES = LOCALES;
+  window.LOCALES = LOCALES;
+} else if (typeof globalThis !== 'undefined') {
+  globalThis.I18N_LOCALES = LOCALES;
+  globalThis.LOCALES = LOCALES;
+}

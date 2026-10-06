@@ -5,12 +5,13 @@
   if (typeof define === 'function' && define.amd) {
     define(['./locales'], factory);
   } else if (typeof module === 'object' && module.exports) {
-    const locales = (typeof root !== 'undefined' && root.I18N_LOCALES) ? root.I18N_LOCALES : require('./locales');
-    const engine = factory(locales);
+    const loc = (typeof root !== 'undefined' && (root.I18N_LOCALES || root.LOCALES)) ? (root.I18N_LOCALES || root.LOCALES) : require('./locales');
+    const engine = factory(loc);
     module.exports = engine;
     if (typeof root !== 'undefined') root.i18n = engine;
   } else {
-    root.i18n = factory(root.I18N_LOCALES);
+    const loc = (typeof root !== 'undefined' && (root.I18N_LOCALES || root.LOCALES)) ? (root.I18N_LOCALES || root.LOCALES) : (typeof LOCALES !== 'undefined' ? LOCALES : {});
+    root.i18n = factory(loc);
   }
 }(typeof self !== 'undefined' ? self : this, function(I18N_LOCALES) {
   'use strict';
