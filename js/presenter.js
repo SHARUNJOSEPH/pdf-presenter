@@ -1911,6 +1911,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
+    // PowerPoint-style Direct Slide Number Jump Buffer ([N] + Enter)
+    let slideJumpBuffer = '';
+    let slideJumpTimer = null;
+    const slideJumpHud = document.getElementById('slideJumpHud');
+    const slideJumpHudVal = document.getElementById('slideJumpHudVal');
+
+    function updateSlideJumpHud() {
+      if (!slideJumpHud) return;
+      if (slideJumpBuffer.length > 0) {
+        if (slideJumpHudVal) slideJumpHudVal.textContent = slideJumpBuffer;
+        slideJumpHud.style.display = 'flex';
+      } else {
+        slideJumpHud.style.display = 'none';
+      }
+    }
+
+    function clearSlideJumpBuffer() {
+      slideJumpBuffer = '';
+      if (slideJumpTimer) {
+        clearTimeout(slideJumpTimer);
+        slideJumpTimer = null;
+      }
+      updateSlideJumpHud();
+    }
+
     window.addEventListener('keydown', (e) => {
       const openModal = document.querySelector('.modal-backdrop.open');
 
@@ -1946,7 +1971,64 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (openModal && e.key !== 'Tab') return;
       }
 
-      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ' || e.key === 'Enter') {
+      // Check for numeric digit keys (0-9) to buffer slide jump like PowerPoint / Keynote
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        // Disallow leading zeros unless buffer already has digits
+        if (slideJumpBuffer === '' && e.key === '0') {
+          return;
+        }
+        if (slideJumpBuffer.length < 4) { // Up to 9999 slides
+          slideJumpBuffer += e.key;
+          updateSlideJumpHud();
+          if (slideJumpTimer) clearTimeout(slideJumpTimer);
+          slideJumpTimer = setTimeout(() => {
+            clearSlideJumpBuffer();
+          }, 3500);
+        }
+        return;
+      }
+
+      // Enter key: If numeric buffer exists, execute direct slide jump
+      if (e.key === 'Enter') {
+        if (slideJumpBuffer.length > 0) {
+          e.preventDefault();
+          const targetPage = parseInt(slideJumpBuffer, 10);
+          clearSlideJumpBuffer();
+          if (!isNaN(targetPage) && targetPage >= 1 && targetPage <= totalPages) {
+            goToPage(targetPage);
+          } else if (targetPage > totalPages) {
+            // Clamp to last slide or show feedback
+            goToPage(totalPages);
+          }
+          return;
+        }
+        // If no number was buffered, Enter advances to next slide (standard presentation behavior)
+        e.preventDefault();
+        nextPage();
+        return;
+      }
+
+      // Backspace: if numeric buffer exists, remove last digit
+      if (e.key === 'Backspace' && slideJumpBuffer.length > 0) {
+        e.preventDefault();
+        slideJumpBuffer = slideJumpBuffer.slice(0, -1);
+        updateSlideJumpHud();
+        if (slideJumpTimer) clearTimeout(slideJumpTimer);
+        if (slideJumpBuffer.length > 0) {
+          slideJumpTimer = setTimeout(() => {
+            clearSlideJumpBuffer();
+          }, 3500);
+        }
+        return;
+      }
+
+      // Any navigation or action clears the jump buffer
+      if (slideJumpBuffer.length > 0 && e.key !== 'Shift') {
+        clearSlideJumpBuffer();
+      }
+
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
         e.preventDefault();
         nextPage();
       } else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace') {
@@ -1984,6 +2066,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (e.key === '?') {
         shortcutsModal.classList.toggle('open');
       } else if (e.key === 'Escape') {
+        if (slideJumpBuffer.length > 0) {
+          clearSlideJumpBuffer();
+          return;
+        }
         if (proToolsMenuPopover && proToolsMenuPopover.style.display !== 'none') {
           proToolsMenuPopover.style.display = 'none';
           if (btnProToolsMenu) {

@@ -281,12 +281,49 @@
     } else if ((e.key === '0') && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       applyStageScale(1.0);
+    } else if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key >= '0' && e.key <= '9') {
+      // Direct numeric slide jump buffer
+      if (confJumpBuffer === '' && e.key === '0') return;
+      e.preventDefault();
+      if (confJumpBuffer.length < 4) {
+        confJumpBuffer += e.key;
+        if (confJumpTimer) clearTimeout(confJumpTimer);
+        confJumpTimer = setTimeout(() => { confJumpBuffer = ''; }, 3500);
+      }
+    } else if (e.key === 'Enter') {
+      if (confJumpBuffer.length > 0) {
+        e.preventDefault();
+        const target = parseInt(confJumpBuffer, 10);
+        confJumpBuffer = '';
+        if (confJumpTimer) clearTimeout(confJumpTimer);
+        if (!isNaN(target) && target >= 1 && target <= totalPages) {
+          navigateSlide(target);
+        } else if (target > totalPages) {
+          navigateSlide(totalPages);
+        }
+        return;
+      }
+      if (currentPage < totalPages) navigateSlide(currentPage + 1);
+    } else if (e.key === 'Backspace' && confJumpBuffer.length > 0) {
+      e.preventDefault();
+      confJumpBuffer = confJumpBuffer.slice(0, -1);
+      if (confJumpTimer) clearTimeout(confJumpTimer);
+      if (confJumpBuffer.length > 0) {
+        confJumpTimer = setTimeout(() => { confJumpBuffer = ''; }, 3500);
+      }
     } else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+      confJumpBuffer = '';
       if (currentPage < totalPages) navigateSlide(currentPage + 1);
     } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      confJumpBuffer = '';
       if (currentPage > 1) navigateSlide(currentPage - 1);
+    } else if (e.key === 'Escape') {
+      confJumpBuffer = '';
     }
   });
+
+  let confJumpBuffer = '';
+  let confJumpTimer = null;
 
   function navigateSlide(targetPage) {
     updateSlides(targetPage);

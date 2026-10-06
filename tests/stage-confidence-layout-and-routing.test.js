@@ -1130,3 +1130,37 @@ describe('8. Stage Confidence Monitor Feed Output Enable / Disable Controls', ()
     assert.ok(presenterJs.includes("type: 'SET_CONFIDENCE_FEED'"), 'presenter.js must emit SET_CONFIDENCE_FEED');
   });
 });
+
+describe('9. PowerPoint-Style Direct Numeric Slide Jump ([N] + Enter)', () => {
+  const presenterHtml = fs.readFileSync(path.join(__dirname, '../views/presenter.html'), 'utf8');
+  const presenterCss = fs.readFileSync(path.join(__dirname, '../css/presenter.css'), 'utf8');
+  const presenterJs = fs.readFileSync(path.join(__dirname, '../js/presenter.js'), 'utf8');
+  const audienceJs = fs.readFileSync(path.join(__dirname, '../js/audience.js'), 'utf8');
+  const confJs = fs.readFileSync(path.join(__dirname, '../js/confidence.js'), 'utf8');
+
+  it('views/presenter.html includes #slideJumpHud and #slideJumpHudVal elements', () => {
+    assert.ok(presenterHtml.includes('id="slideJumpHud"'), 'presenter.html must have slideJumpHud');
+    assert.ok(presenterHtml.includes('id="slideJumpHudVal"'), 'presenter.html must have slideJumpHudVal');
+    assert.ok(presenterHtml.includes('Jump to Specific Slide'), 'Shortcuts modal must document numeric jump');
+  });
+
+  it('css/presenter.css styles .slide-jump-hud toast with glassmorphism', () => {
+    assert.ok(presenterCss.includes('.slide-jump-hud'), 'presenter.css must style .slide-jump-hud');
+    assert.ok(presenterCss.includes('.slide-jump-hud-value'), 'presenter.css must style .slide-jump-hud-value');
+    assert.ok(presenterCss.includes('.slide-jump-hud-enter-badge'), 'presenter.css must style .slide-jump-hud-enter-badge');
+  });
+
+  it('js/presenter.js buffers numbers 0-9 and executes goToPage upon Enter', () => {
+    assert.ok(presenterJs.includes('slideJumpBuffer'), 'presenter.js must declare slideJumpBuffer');
+    assert.ok(presenterJs.includes("e.key >= '0' && e.key <= '9'"), 'presenter.js must buffer digits 0-9');
+    assert.ok(presenterJs.includes("parseInt(slideJumpBuffer, 10)"), 'presenter.js must parse target page number');
+    assert.ok(presenterJs.includes("clearSlideJumpBuffer()"), 'presenter.js must clear buffer after navigation or timeout');
+  });
+
+  it('js/audience.js and js/confidence.js support direct numeric slide jumps', () => {
+    assert.ok(audienceJs.includes('audienceJumpBuffer'), 'audience.js must buffer digits');
+    assert.ok(audienceJs.includes("parseInt(audienceJumpBuffer, 10)"), 'audience.js must parse and jump to page');
+    assert.ok(confJs.includes('confJumpBuffer'), 'confidence.js must buffer digits');
+    assert.ok(confJs.includes("parseInt(confJumpBuffer, 10)"), 'confidence.js must parse and jump to page');
+  });
+});

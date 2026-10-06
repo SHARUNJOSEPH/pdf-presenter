@@ -258,6 +258,14 @@
           <div class="nav-zone nav-zone-prev" id="navZonePrev" title="Previous Slide (Left Arrow / PageUp)">‹</div>
           <div class="nav-zone nav-zone-next" id="navZoneNext" title="Next Slide (Right Arrow / Space / PageDown)">›</div>
 
+          <!-- Direct Numeric Slide Jump HUD (PowerPoint/Keynote-style: Type [N] + Enter) -->
+          <div class="slide-jump-hud" id="slideJumpHud" style="display: none;" role="status" aria-live="polite">
+            <span class="slide-jump-hud-icon">🔢</span>
+            <span class="slide-jump-hud-label">Go to Slide:</span>
+            <span class="slide-jump-hud-value" id="slideJumpHudVal">1</span>
+            <span class="slide-jump-hud-enter-badge">↵ Enter</span>
+          </div>
+
           <!-- Floating Presentation Controls -->
           <div class="floating-toolbar">
             <button class="btn btn-icon" id="btnPrev" title="Previous Slide (← / PageUp)" data-i18n-title="presenter.prev">◀</button>
@@ -545,6 +553,10 @@
           <div class="shortcut-item">
             <span data-i18n="shortcuts.firstLast">First / Last Slide</span>
             <div><span class="kbd-badge">Home</span> / <span class="kbd-badge">End</span></div>
+          </div>
+          <div class="shortcut-item">
+            <span>Jump to Specific Slide</span>
+            <div><span class="kbd-badge">[Number]</span> + <span class="kbd-badge">Enter</span></div>
           </div>
           <div class="shortcut-item">
             <span data-i18n="shortcuts.laser">Toggle Laser Pointer</span>

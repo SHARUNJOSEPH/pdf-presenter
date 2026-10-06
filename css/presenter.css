@@ -342,6 +342,73 @@
   min-height: 0;
 }
 
+/* Direct Numeric Slide Jump HUD (PowerPoint/Keynote-style) */
+.slide-jump-hud {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7), 0 0 24px rgba(56, 189, 248, 0.25);
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  z-index: 100;
+  pointer-events: none;
+  animation: slideJumpFadeIn 0.15s ease-out;
+}
+
+@keyframes slideJumpFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.slide-jump-hud-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.slide-jump-hud-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.slide-jump-hud-value {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 1px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.slide-jump-hud-enter-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #7dd3fc;
+  border-radius: 6px;
+  margin-left: 4px;
+  letter-spacing: 0.5px;
+}
+
 :root {
   --transition-duration: 0.4s;
 }

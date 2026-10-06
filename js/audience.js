@@ -636,5 +636,90 @@ document.addEventListener('DOMContentLoaded', async () => {
     resetTimer();
   }
 
+  // Keyboard navigation & numeric jump if audience window has keyboard focus
+  let audienceJumpBuffer = '';
+  let audienceJumpTimer = null;
+
+  function clearAudienceJumpBuffer() {
+    audienceJumpBuffer = '';
+    if (audienceJumpTimer) {
+      clearTimeout(audienceJumpTimer);
+      audienceJumpTimer = null;
+    }
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.target && e.target.matches && e.target.matches('input, textarea, select')) return;
+
+    // Direct numeric jump: 0-9 then Enter
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key >= '0' && e.key <= '9') {
+      e.preventDefault();
+      if (audienceJumpBuffer === '' && e.key === '0') return;
+      if (audienceJumpBuffer.length < 4) {
+        audienceJumpBuffer += e.key;
+        if (audienceJumpTimer) clearTimeout(audienceJumpTimer);
+        audienceJumpTimer = setTimeout(clearAudienceJumpBuffer, 3500);
+      }
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      if (audienceJumpBuffer.length > 0) {
+        e.preventDefault();
+        const targetPage = parseInt(audienceJumpBuffer, 10);
+        clearAudienceJumpBuffer();
+        if (!isNaN(targetPage) && targetPage >= 1 && targetPage <= totalPages) {
+          syncBus.send({ type: 'GOTO_PAGE', page: targetPage });
+        } else if (targetPage > totalPages) {
+          syncBus.send({ type: 'GOTO_PAGE', page: totalPages });
+        }
+        return;
+      }
+      e.preventDefault();
+      if (currentPage < totalPages) {
+        syncBus.send({ type: 'GOTO_PAGE', page: currentPage + 1 });
+      }
+      return;
+    }
+
+    if (e.key === 'Backspace' && audienceJumpBuffer.length > 0) {
+      e.preventDefault();
+      audienceJumpBuffer = audienceJumpBuffer.slice(0, -1);
+      if (audienceJumpTimer) clearTimeout(audienceJumpTimer);
+      if (audienceJumpBuffer.length > 0) {
+        audienceJumpTimer = setTimeout(clearAudienceJumpBuffer, 3500);
+      }
+      return;
+    }
+
+    if (audienceJumpBuffer.length > 0 && e.key !== 'Shift') {
+      clearAudienceJumpBuffer();
+    }
+
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault();
+      if (currentPage < totalPages) {
+        syncBus.send({ type: 'GOTO_PAGE', page: currentPage + 1 });
+      }
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace') {
+      e.preventDefault();
+      if (currentPage > 1) {
+        syncBus.send({ type: 'GOTO_PAGE', page: currentPage - 1 });
+      }
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      syncBus.send({ type: 'GOTO_PAGE', page: 1 });
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      syncBus.send({ type: 'GOTO_PAGE', page: totalPages });
+    } else if (e.key === 'b' || e.key === 'B') {
+      syncBus.send({ type: 'SET_BLANK', mode: screenCurtain && screenCurtain.classList.contains('active') ? 'none' : 'black' });
+    } else if (e.key === 'w' || e.key === 'W') {
+      syncBus.send({ type: 'SET_BLANK', mode: screenCurtain && screenCurtain.classList.contains('active') ? 'none' : 'white' });
+    } else if (e.key === 'Escape') {
+      clearAudienceJumpBuffer();
+    }
+  });
+
   await init();
 });
