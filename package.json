@@ -1,6 +1,6 @@
 {
   "name": "pdf-presenter",
-  "version": "1.2.5",
+  "version": "1.2.6-beta",
   "description": "Professional Dual-Screen Presentation Software for Keynotes, Conferences and AV Teams with Bitfocus Companion API",
   "main": "main.js",
   "author": {

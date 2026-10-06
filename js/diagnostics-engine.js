@@ -103,7 +103,7 @@ function analyzeFlickerPotential(displays, gpuFeatures = {}, gpuInfo = {}) {
  */
 function buildDiagnosticData(context = {}) {
   const {
-    appVersion = '1.2.5',
+    appVersion = '1.2.6-beta',
     isPackaged = false,
     isStore = false,
     displays = [],
