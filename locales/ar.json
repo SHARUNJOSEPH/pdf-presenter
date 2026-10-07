@@ -63,7 +63,8 @@
     "next": "التالي",
     "slideCounter": "شريحة {current} من {total}",
     "timerToggle": "تشغيل/إيقاف المؤقت",
-    "timerReset": "إعادة ضبط المؤقت"
+    "timerReset": "إعادة ضبط المؤقت",
+    "toolsMenu": "الأدوات"
   },
   "companion": {
     "modalTitle": "إعدادات Bitfocus Companion و Stream Deck",

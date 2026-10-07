@@ -464,3 +464,65 @@ describe('PlaylistMetricsEngine - Static Utility Functions', () => {
     assert.equal(PlaylistMetricsEngine.generateHeatmapColor(0.95), '#ef4444'); // Red
   });
 });
+
+describe('Live Presentation Deck Switching & Cross-Window State Sync', () => {
+  it('switchDeck triggers syncBus.send with LOAD_DOCUMENT and onDeckSwitch callback', async () => {
+    const sentEvents = [];
+    const mockSyncBus = {
+      send: (evt) => sentEvents.push(evt)
+    };
+
+    let switchedTargetDeck = null;
+    const engine = new PlaylistMetricsEngine({
+      isPro: true,
+      syncBus: mockSyncBus,
+      onDeckSwitch: async (deck) => {
+        switchedTargetDeck = deck;
+      }
+    });
+
+    engine.addDeck({
+      id: 'deck-1',
+      title: 'Deck One',
+      slideCount: 5,
+      active: true
+    });
+
+    const dummyBuf = new Uint8Array([1, 2, 3, 4]).buffer;
+    engine.addDeck({
+      id: 'deck-2',
+      title: 'Deck Two',
+      slideCount: 12,
+      pdfBuffer: dummyBuf,
+      active: false
+    });
+
+    const res = await engine.switchDeck('deck-2');
+    assert.equal(res.success, true);
+    assert.equal(engine.getActiveDeck().id, 'deck-2');
+    assert.equal(switchedTargetDeck.id, 'deck-2');
+    assert.equal(switchedTargetDeck.title, 'Deck Two');
+
+    assert.equal(sentEvents.length, 1);
+    assert.equal(sentEvents[0].type, 'LOAD_DOCUMENT');
+    assert.equal(sentEvents[0].deckId, 'deck-2');
+    assert.equal(sentEvents[0].title, 'Deck Two');
+    assert.equal(sentEvents[0].preserveAudienceWindow, true);
+  });
+
+  it('preserves playlist queue modifications across presentation end', () => {
+    const engine = new PlaylistMetricsEngine({ isPro: true });
+    engine.addDeck({ id: 'deck-1', title: 'Deck 1', slideCount: 5 });
+    engine.addDeck({ id: 'deck-2', title: 'Deck 2', slideCount: 10 });
+    engine.addDeck({ id: 'deck-3', title: 'Deck 3', slideCount: 15 });
+
+    const exported = engine.getPlaylist();
+    assert.equal(exported.length, 3);
+
+    // Simulate launcher receiving synced playlist
+    const launcherEngine = new PlaylistMetricsEngine({ isPro: true });
+    launcherEngine.playlist = exported;
+    assert.equal(launcherEngine.getPlaylist().length, 3);
+    assert.equal(launcherEngine.getPlaylist()[1].title, 'Deck 2');
+  });
+});

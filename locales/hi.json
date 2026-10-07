@@ -63,7 +63,8 @@
     "next": "अगला",
     "slideCounter": "स्लाइड {current} / {total}",
     "timerToggle": "टाइमर शुरू / रोकें",
-    "timerReset": "टाइमर रीसेट करें"
+    "timerReset": "टाइमर रीसेट करें",
+    "toolsMenu": "टूल्स"
   },
   "companion": {
     "modalTitle": "Bitfocus Companion और Stream Deck सेटअप",

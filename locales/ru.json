@@ -63,7 +63,8 @@
     "next": "Вперед",
     "slideCounter": "Слайд {current} из {total}",
     "timerToggle": "Старт/Пауза таймера",
-    "timerReset": "Сброс таймера"
+    "timerReset": "Сброс таймера",
+    "toolsMenu": "Инструменты"
   },
   "companion": {
     "modalTitle": "Настройка Bitfocus Companion и Stream Deck",

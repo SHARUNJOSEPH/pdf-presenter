@@ -63,7 +63,8 @@
     "next": "下一页",
     "slideCounter": "第 {current} 页，共 {total} 页",
     "timerToggle": "开始/暂停计时器",
-    "timerReset": "重置计时器"
+    "timerReset": "重置计时器",
+    "toolsMenu": "工具"
   },
   "companion": {
     "modalTitle": "Bitfocus Companion 与 Stream Deck 配置",

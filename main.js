@@ -1137,7 +1137,9 @@ function endPresentation() {
   if (launcherWindow && !launcherWindow.isDestroyed()) {
     launcherWindow.show();
     launcherWindow.focus();
-    launcherWindow.webContents.send('presentation-ended');
+    launcherWindow.webContents.send('presentation-ended', {
+      playlist: currentPdfConfig ? currentPdfConfig.playlist : null
+    });
   } else {
     createLauncherWindow();
   }
@@ -1168,6 +1170,17 @@ function relaySyncEvent(data) {
   if (data.type === 'PAGE_CHANGED' || data.type === 'GOTO_PAGE') {
     state.currentPage = Number(data.page || state.currentPage);
     diagnosticsEngine.recordLog('INFO', `Slide transition: Page ${data.page}`);
+  }
+  if (data.type === 'LOAD_DOCUMENT') {
+    state.currentPage = 1;
+    if (data.title) state.documentTitle = data.title;
+    if (data.totalPages || data.slideCount) state.totalPages = Number(data.totalPages || data.slideCount);
+    if (currentPdfConfig) {
+      if (data.title) currentPdfConfig.title = data.title;
+      if (data.path) currentPdfConfig.filePath = data.path;
+      if (data.totalPages || data.slideCount) currentPdfConfig.totalPages = Number(data.totalPages || data.slideCount);
+    }
+    diagnosticsEngine.recordLog('INFO', `Deck switch: ${data.title || 'Document'} (${state.totalPages} slides)`);
   }
   if (data.type === 'SET_BLANK') {
     state.blankMode = data.mode;
@@ -1300,11 +1313,23 @@ ipcMain.handle('set-active-pdf-buffer', (event, { fileName, buffer }) => {
   if (buffer && (buffer.length > 0 || buffer.byteLength > 0)) {
     activePdfBuffer = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer.buffer || buffer);
     activePdfPath = null;
+    if (fileName && currentPdfConfig) {
+      currentPdfConfig.title = fileName;
+      state.documentTitle = fileName;
+    }
   }
   return {
     success: true,
     streamUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/api/document/current.pdf` : null
   };
+});
+
+ipcMain.handle('sync-playlist', (event, playlist) => {
+  if (Array.isArray(playlist)) {
+    if (!currentPdfConfig) currentPdfConfig = {};
+    currentPdfConfig.playlist = playlist;
+  }
+  return { success: true };
 });
 
 ipcMain.handle('start-presentation', (event, config) => {

@@ -35,7 +35,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .top-bar-center {
@@ -52,6 +53,7 @@
   gap: 6px;
   flex-shrink: 1;
   min-width: 0;
+  justify-content: flex-end;
 }
 
 .brand {
@@ -1083,21 +1085,65 @@ body.resizing-vertical * {
   font-size: 11px !important;
 }
 
-/* Responsive Top Bar Layout Guards */
-@media (max-width: 1400px) {
+/* ==========================================================================
+   Responsive Top Bar Layout Guards & Adaptive Controls
+   Graduated collapse ensuring zero overlap from 4K down to 768px / 1024px laptops
+   and when window is unmaximized / resized
+   ========================================================================== */
+
+/* Large screens / wide laptops (<= 1440px) */
+@media (max-width: 1440px) {
+  .top-bar {
+    padding: 0 12px;
+    gap: 10px;
+  }
   .doc-info {
-    max-width: 180px;
+    max-width: 170px;
+    font-size: 12px;
+    padding: 5px 10px;
   }
   .top-bar-left,
   .top-bar-center,
   .top-bar-right {
-    gap: 8px;
+    gap: 6px;
   }
 }
 
-@media (max-width: 1200px) {
+/* Standard laptops & unmaximized windows (<= 1366px) */
+@media (max-width: 1366px) {
+  .top-bar {
+    padding: 0 10px;
+    gap: 6px;
+  }
   .doc-info {
-    max-width: 130px;
+    max-width: 120px;
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  #audienceStatusText {
+    display: none;
+  }
+  #audienceStatusBadge {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+  .clock-display {
+    display: none;
+  }
+  .timer-widget {
+    padding: 3px 8px;
+    gap: 6px;
+  }
+  .timer-display {
+    font-size: 16px;
+    min-width: 50px;
+  }
+}
+
+/* Medium windows (<= 1250px) */
+@media (max-width: 1250px) {
+  .brand span {
+    display: none;
   }
   #btnEndPresentation span {
     display: none;
@@ -1105,35 +1151,71 @@ body.resizing-vertical * {
   #btnEndPresentation {
     padding: 6px 10px;
   }
+  .lang-select-control {
+    max-width: 90px;
+    text-overflow: ellipsis;
+  }
+  .lang-selector-wrapper {
+    padding: 4px 6px;
+  }
 }
 
-@media (max-width: 1080px) {
-  #audienceStatusText {
-    display: none;
-  }
-  .doc-info {
-    max-width: 100px;
-  }
+/* Compact unmaximized windows & tablets (<= 1100px) */
+@media (max-width: 1100px) {
   #btnGrid span:not(.pro-tag-lock) {
     display: none;
+  }
+  #btnGrid {
+    padding: 6px 8px;
   }
   .tools-menu-text {
     display: none;
   }
-}
-
-@media (max-width: 900px) {
-  .brand span {
+  .btn-tools-menu {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+  #btnPresenterUpgradePro span:not(:first-child) {
     display: none;
   }
+  #btnPresenterUpgradePro {
+    padding: 5px 8px !important;
+  }
+  .doc-info {
+    max-width: 90px;
+  }
+  .top-bar-left,
+  .top-bar-center,
+  .top-bar-right {
+    gap: 4px;
+  }
+}
+
+/* Half-screen / Split windows (<= 950px) */
+@media (max-width: 950px) {
   .doc-info {
     display: none;
   }
+  .lang-select-control {
+    max-width: 50px;
+  }
+  .timer-widget {
+    padding: 3px 6px;
+    gap: 4px;
+  }
+  .timer-controls .timer-btn {
+    padding: 2px;
+  }
+  .btn {
+    padding: 5px 8px;
+  }
 }
 
+/* Small windows / Extreme shrink guard (<= 768px) */
 @media (max-width: 768px) {
   .top-bar {
     overflow-x: auto;
+    overflow-y: visible;
   }
 }
 
@@ -1549,49 +1631,4 @@ body.resizing-vertical * {
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.5);
 }
-
-/* ==========================================================================
-   Responsive Top Bar Controls & Overlap Elimination
-   ========================================================================== */
-@media (max-width: 1366px) {
-  .top-bar {
-    padding: 0 12px;
-    gap: 8px;
-  }
-  .doc-info {
-    max-width: 140px;
-    font-size: 12px;
-    padding: 4px 8px;
-  }
-  .top-bar-right {
-    gap: 5px;
-  }
-  #audienceStatusBadge {
-    padding: 3px 8px;
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 1180px) {
-  #audienceStatusBadge #audienceStatusText {
-    display: none;
-  }
-  .top-bar-left .brand span {
-    display: none;
-  }
-  .doc-info {
-    max-width: 110px;
-  }
-  #btnGrid span:not(.pro-tag-lock) {
-    display: none;
-  }
-  #btnEndPresentation span {
-    display: none;
-  }
-  #btnEndPresentation {
-    padding: 6px 10px;
-  }
-}
-
-
 

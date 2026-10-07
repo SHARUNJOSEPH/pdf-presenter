@@ -63,7 +63,8 @@
     "next": "Weiter",
     "slideCounter": "Folie {current} von {total}",
     "timerToggle": "Stoppuhr Start/Pause",
-    "timerReset": "Stoppuhr zurücksetzen"
+    "timerReset": "Stoppuhr zurücksetzen",
+    "toolsMenu": "Tools"
   },
   "companion": {
     "modalTitle": "Bitfocus Companion & Stream Deck Konfiguration",

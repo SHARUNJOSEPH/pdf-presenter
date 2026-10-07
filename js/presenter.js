@@ -131,20 +131,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     isPro: () => (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : true),
     onDeckSwitch: async (targetDeck) => {
       try {
-        if (targetDeck.pdfBuffer) {
-          await engine.loadPDFData(targetDeck.pdfBuffer, targetDeck.title);
+        const buf = (targetDeck.pdfBuffer && targetDeck.pdfBuffer.byteLength > 0)
+          ? targetDeck.pdfBuffer.slice(0)
+          : null;
+
+        // 1. Sync active PDF buffer with main process so HTTP streaming / api server updates
+        if (buf && window.electronAPI && window.electronAPI.setActivePdfBuffer) {
+          try {
+            await window.electronAPI.setActivePdfBuffer({ fileName: targetDeck.title, buffer: buf });
+          } catch (e) {
+            console.warn('[onDeckSwitch] setActivePdfBuffer error:', e);
+          }
+        }
+
+        // 2. Load PDF into presenter document engine
+        if (buf) {
+          await engine.loadPDFData(buf, targetDeck.title);
         } else if (targetDeck.path) {
           await engine.loadPDFFromUrl(targetDeck.path, targetDeck.title);
         } else {
           await engine.loadDemo();
         }
+
+        // 3. Update presenter state & UI
         documentTitle = targetDeck.title;
-        docTitleEl.textContent = documentTitle;
         totalPages = engine.totalPages;
         currentPage = 1;
+        updateDocumentHeader();
+        updateSlideCounterBadge();
         await renderAllSlidesUI();
         announceA11y(`Switched presentation to ${targetDeck.title}`);
         renderPlaylistQueue();
+
+        // 4. Broadcast LOAD_DOCUMENT to Audience display & Confidence monitor via IPC & SyncBus
+        const syncPayload = {
+          type: 'LOAD_DOCUMENT',
+          deckId: targetDeck.id,
+          title: targetDeck.title,
+          path: targetDeck.path || null,
+          pdfData: buf ? buf.slice(0) : null,
+          pdfBuffer: buf ? buf.slice(0) : null,
+          totalPages: totalPages,
+          slideCount: totalPages,
+          preserveAudienceWindow: true,
+          timestamp: Date.now()
+        };
+        emitSync(syncPayload);
+
+        // 5. Sync active playlist state back to main process
+        if (window.electronAPI && window.electronAPI.syncPlaylist) {
+          try {
+            await window.electronAPI.syncPlaylist(playlistEngine.getPlaylist());
+          } catch (e) {}
+        }
       } catch (err) {
         console.error('Error switching presentation deck:', err);
       }
@@ -1575,36 +1614,62 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    if (btnAddDeck && playlistFileInput) {
-      btnAddDeck.addEventListener('click', () => {
-        if (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && !window.UpgradeModal.isPro() && playlistEngine && playlistEngine.getPlaylist().length >= 1) {
-          window.UpgradeModal.open('playlist');
-          return;
-        }
-        playlistFileInput.click();
-      });
-
-      playlistFileInput.addEventListener('change', async (e) => {
-        const files = Array.from(e.target.files || []);
-        if (files.length === 0) return;
-
+    if (btnAddDeck) {
+      async function handleAddFilesToPlaylist(files) {
+        if (!files || files.length === 0 || !playlistEngine) return;
         try {
-          for (const file of files) {
-            const buffer = await file.arrayBuffer();
-            let slideCount = 1;
-            try {
-              if (typeof pdfjsLib !== 'undefined' && pdfjsLib.getDocument) {
-                const tempDoc = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
-                slideCount = tempDoc.numPages;
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const title = (file.fileName || file.name || (file.filePath ? file.filePath.split(/[/\\]/).pop() : `Deck ${playlistEngine.getPlaylist().length + 1}`)).replace(/\.[^/.]+$/, '');
+            let p = file.filePath || file.path || '';
+            if (!p && window.electronAPI && window.electronAPI.getPathForFile) {
+              try { p = window.electronAPI.getPathForFile(file) || ''; } catch (e) {}
+            }
+
+            let buffer = null;
+            if (file.pdfBuffer) {
+              buffer = file.pdfBuffer;
+            } else if (file.pdfData) {
+              buffer = file.pdfData;
+            } else if (typeof file.arrayBuffer === 'function') {
+              try {
+                buffer = await file.arrayBuffer();
+              } catch (e) {
+                console.warn('Could not read arrayBuffer from file:', title, e);
               }
-            } catch (pdfErr) {
-              console.warn('Could not read slide count for file:', file.name, pdfErr);
+            }
+
+            // If we have a file path on disk but no buffer yet, read it via loadRecentPdf
+            if (!buffer && p && window.electronAPI && window.electronAPI.loadRecentPdf) {
+              try {
+                const res = await window.electronAPI.loadRecentPdf(p);
+                if (res && res.pdfData) {
+                  buffer = res.pdfData;
+                }
+              } catch (e) {}
+            }
+
+            let slideCount = file.slideCount || 1;
+            if (buffer) {
+              try {
+                const copy = buffer.slice ? buffer.slice(0) : new Uint8Array(buffer);
+                if (typeof pdfjsLib !== 'undefined' && pdfjsLib.getDocument) {
+                  const tempDoc = await pdfjsLib.getDocument({
+                    data: copy,
+                    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                    cMapPacked: true
+                  }).promise;
+                  slideCount = tempDoc.numPages || 1;
+                }
+              } catch (pdfErr) {
+                console.warn('Could not read slide count for file:', title, pdfErr);
+              }
             }
 
             const res = playlistEngine.addDeck({
-              title: file.name.replace(/\.[^/.]+$/, ''),
-              path: file.path || '',
-              pdfBuffer: buffer,
+              title: title,
+              path: p,
+              pdfBuffer: buffer ? (buffer.slice ? buffer.slice(0) : new Uint8Array(buffer)) : null,
               slideCount: slideCount,
               active: false,
               speaker: `Speaker ${playlistEngine.getPlaylist().length + 1}`
@@ -1615,13 +1680,53 @@ document.addEventListener('DOMContentLoaded', async () => {
               break;
             }
           }
+
+          if (window.electronAPI && window.electronAPI.syncPlaylist) {
+            try { await window.electronAPI.syncPlaylist(playlistEngine.getPlaylist()); } catch (e) {}
+          }
           renderPlaylistQueue();
         } catch (err) {
           alert('Could not load PDF files into playlist: ' + err.message);
-        } finally {
-          playlistFileInput.value = '';
+        }
+      }
+
+      btnAddDeck.addEventListener('click', async () => {
+        if (window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' && !window.UpgradeModal.isPro() && playlistEngine && playlistEngine.getPlaylist().length >= 1) {
+          window.UpgradeModal.open('playlist');
+          return;
+        }
+
+        if (window.electronAPI && window.electronAPI.selectPdfFile) {
+          try {
+            const res = await window.electronAPI.selectPdfFile({ multiple: true });
+            if (res && !res.canceled) {
+              const filesToAdd = res.files || [{ filePath: res.filePath, fileName: res.fileName, pdfData: res.pdfData }];
+              await handleAddFilesToPlaylist(filesToAdd);
+              return;
+            } else if (res && res.canceled) {
+              return;
+            }
+          } catch (e) {
+            console.warn('[Presenter btnAddDeck] Native dialog failed, falling back to input:', e);
+          }
+        }
+
+        if (playlistFileInput) {
+          playlistFileInput.click();
         }
       });
+
+      if (playlistFileInput) {
+        playlistFileInput.addEventListener('change', async (e) => {
+          const files = Array.from(e.target.files || []);
+          if (files.length === 0) return;
+          try {
+            await handleAddFilesToPlaylist(files);
+          } finally {
+            playlistFileInput.value = '';
+          }
+        });
+      }
     }
 
     const btnExportMetricsCsv = document.getElementById('btnExportMetricsCsv');
@@ -2323,9 +2428,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     playlistQueueList.querySelectorAll('.btn-remove-deck').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = btn.dataset.id;
         playlistEngine.removeDeck(id);
+        if (window.electronAPI && window.electronAPI.syncPlaylist) {
+          try { await window.electronAPI.syncPlaylist(playlistEngine.getPlaylist()); } catch (e) {}
+        }
         renderPlaylistQueue();
       });
     });

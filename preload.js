@@ -31,8 +31,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startPresentation: (config) => ipcRenderer.invoke('start-presentation', config),
   endPresentation: () => ipcRenderer.invoke('end-presentation'),
   getPresentationData: () => ipcRenderer.invoke('get-presentation-data'),
+  syncPlaylist: (playlist) => ipcRenderer.invoke('sync-playlist', playlist),
   onPresentationEnded: (callback) => {
-    const listener = () => callback();
+    const listener = (event, data) => callback(data);
     ipcRenderer.on('presentation-ended', listener);
     return () => ipcRenderer.removeListener('presentation-ended', listener);
   },

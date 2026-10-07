@@ -234,10 +234,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           break;
 
         case 'LOAD_DOCUMENT':
+          finishTransitionImmediately();
+          isFirstRender = true;
           if (data.isDemo) {
             await loadDemo();
           } else if (data.pdfData || data.pdfBuffer || data.path) {
-            await loadDocumentConfig({ title: data.title }, null, data.pdfData || data.pdfBuffer || null);
+            await loadDocumentConfig({ title: data.title, filePath: data.path }, null, data.pdfData || data.pdfBuffer || null);
           } else {
             await loadDemo();
           }

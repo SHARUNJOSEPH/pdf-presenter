@@ -62,6 +62,283 @@ document.addEventListener('DOMContentLoaded', async () => {
   const RECENT_KEY = 'pdf_presenter_recent_decks_v1';
   let launcherPlaylistEngine = null;
 
+  // Multi-Deck Playlist Elements & State
+  const btnPlaylist = document.getElementById('btnPlaylist');
+  const playlistModal = document.getElementById('playlistModal');
+  const playlistQueueList = document.getElementById('playlistQueueList');
+  const btnAddDeck = document.getElementById('btnAddDeck');
+  const playlistFileInput = document.getElementById('playlistFileInput');
+  const launcherPlaylistSection = document.getElementById('launcherPlaylistSection');
+  const launcherPlaylistCards = document.getElementById('launcherPlaylistCards');
+  const launcherPlaylistCount = document.getElementById('launcherPlaylistCount');
+  const btnLauncherAddDeck = document.getElementById('btnLauncherAddDeck');
+  const btnLauncherClearPlaylist = document.getElementById('btnLauncherClearPlaylist');
+
+  const isPro = () => Boolean(window.UpgradeModal && typeof window.UpgradeModal.isPro === 'function' ? window.UpgradeModal.isPro() : true);
+  const guardPro = (feature) => true;
+
+  async function selectActiveDeck(deckId) {
+    if (!launcherPlaylistEngine) return;
+    launcherPlaylistEngine.switchDeck(deckId);
+    const activeDeck = launcherPlaylistEngine.getActiveDeck();
+    if (activeDeck) {
+      if (activeDeck.path && window.electronAPI && window.electronAPI.loadRecentPdf) {
+        try {
+          const res = await window.electronAPI.loadRecentPdf(activeDeck.path);
+          if (res && res.success) {
+            if (res.pdfData && !activeDeck.pdfBuffer) {
+              activeDeck.pdfBuffer = res.pdfData;
+            }
+            await handleSelectedPdf(res.filePath, res.fileName, res.streamUrl, res.pdfData);
+          } else {
+            await handleSelectedPdf(activeDeck.path, activeDeck.title, null, activeDeck.pdfBuffer || null);
+          }
+        } catch (e) {
+          await handleSelectedPdf(activeDeck.path, activeDeck.title, null, activeDeck.pdfBuffer || null);
+        }
+      } else if (activeDeck.pdfBuffer) {
+        if (window.electronAPI && window.electronAPI.setActivePdfBuffer) {
+          try {
+            await window.electronAPI.setActivePdfBuffer({ fileName: activeDeck.title, buffer: activeDeck.pdfBuffer });
+          } catch (e) {
+            console.warn('[selectActiveDeck] setActivePdfBuffer error:', e);
+          }
+        }
+        const bufCopy = activeDeck.pdfBuffer.slice ? activeDeck.pdfBuffer.slice(0) : new Uint8Array(activeDeck.pdfBuffer);
+        await handleSelectedPdf(activeDeck.path || null, activeDeck.title, null, bufCopy);
+      } else if (activeDeck.path) {
+        await handleSelectedPdf(activeDeck.path, activeDeck.title);
+      } else {
+        currentDocConfig = { isDemo: false, title: activeDeck.title, filePath: null, totalPages: activeDeck.slideCount || 1, pdfBuffer: null };
+        updateDocPreviewUI();
+      }
+    }
+    renderLauncherPlaylist();
+  }
+
+  async function resetToDemoFallback() {
+    loadInitialDemoDeck();
+    currentDocConfig = {
+      isDemo: true,
+      title: 'Interactive Presentation Showcase.pdf',
+      filePath: null,
+      totalPages: 6,
+      pdfBuffer: null
+    };
+    resetLaunchButton();
+    updateDocPreviewUI();
+  }
+
+  async function handleMultipleSelectedPdfs(files) {
+    if (!files || files.length === 0) return;
+    if (!launcherPlaylistEngine && typeof PlaylistMetricsEngine !== 'undefined') {
+      launcherPlaylistEngine = new PlaylistMetricsEngine({ isPro: () => isPro() });
+    }
+    if (!launcherPlaylistEngine) return;
+
+    if (!isPro() && files.length > 1) {
+      if (window.UpgradeModal) window.UpgradeModal.open('playlist');
+      const first = files[0];
+      let p = first.filePath || first.path || '';
+      if (!p && window.electronAPI && window.electronAPI.getPathForFile) {
+        p = window.electronAPI.getPathForFile(first) || '';
+      }
+      let buf = null;
+      if (typeof first.arrayBuffer === 'function') {
+        try { buf = await first.arrayBuffer(); } catch (e) {}
+      }
+      await handleSelectedPdf(p || null, first.fileName || first.name || 'Deck 1', null, buf);
+      return;
+    }
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const title = file.fileName || file.name || (file.filePath ? file.filePath.split(/[/\\]/).pop() : `Deck ${i + 1}`);
+      let p = file.filePath || file.path || '';
+      if (!p && window.electronAPI && window.electronAPI.getPathForFile) {
+        p = window.electronAPI.getPathForFile(file) || '';
+      }
+
+      let buffer = null;
+      if (file.pdfBuffer) {
+        buffer = file.pdfBuffer;
+      } else if (typeof file.arrayBuffer === 'function') {
+        try {
+          buffer = await file.arrayBuffer();
+        } catch (e) {
+          console.warn('Could not read arrayBuffer from file:', e);
+        }
+      }
+
+      let slideCount = file.slideCount || 1;
+      if (buffer && window.pdfjsLib) {
+        try {
+          const copy = buffer.slice ? buffer.slice(0) : new Uint8Array(buffer);
+          const loadingTask = window.pdfjsLib.getDocument({
+            data: copy,
+            cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+            cMapPacked: true
+          });
+          const doc = await loadingTask.promise;
+          slideCount = doc.numPages || 1;
+        } catch (err) {
+          console.warn('Could not determine page count from buffer for', title, err);
+        }
+      }
+
+      await launcherPlaylistEngine.addDeck({
+        title: title,
+        path: p,
+        pdfBuffer: buffer,
+        slideCount: slideCount,
+        speaker: `Speaker ${(launcherPlaylistEngine.getPlaylist().length + 1)}`
+      });
+    }
+
+    renderLauncherPlaylist();
+
+    const playlist = launcherPlaylistEngine.getPlaylist();
+    const activeDeck = playlist.find(d => d.active) || playlist[0];
+    if (activeDeck) {
+      await selectActiveDeck(activeDeck.id);
+    }
+  }
+
+  function renderHomeScreenPlaylist() {
+    if (!launcherPlaylistSection || !launcherPlaylistCards || !launcherPlaylistEngine) return;
+    const playlist = launcherPlaylistEngine.getPlaylist();
+
+    if (playlist.length === 0) {
+      launcherPlaylistSection.style.display = 'none';
+      return;
+    }
+
+    launcherPlaylistSection.style.display = 'block';
+    if (launcherPlaylistCount) {
+      launcherPlaylistCount.textContent = playlist.length;
+    }
+
+    launcherPlaylistCards.innerHTML = '';
+    playlist.forEach((deck, idx) => {
+      const item = document.createElement('div');
+      item.className = `launcher-deck-item ${deck.active ? 'is-active' : ''}`;
+      item.dataset.id = deck.id;
+      item.style.cursor = 'pointer';
+      item.setAttribute('role', 'button');
+      item.setAttribute('tabindex', '0');
+      item.setAttribute('title', `Click to make "${deck.title}" the active starting deck`);
+      item.innerHTML = `
+        <div class="launcher-deck-left">
+          <div class="launcher-deck-idx">${idx + 1}</div>
+          <div class="launcher-deck-details">
+            <div class="launcher-deck-name" title="${deck.title}">${deck.title}</div>
+            <div class="launcher-deck-meta">
+              <span class="launcher-deck-speaker">${deck.speaker || `Speaker ${idx + 1}`}</span>
+              ${deck.active ? '<span class="launcher-deck-badge-active">● Active Starting Deck</span>' : ''}
+            </div>
+          </div>
+        </div>
+        <div class="launcher-deck-actions">
+          ${!deck.active ? `<button type="button" class="btn-deck-set-active" data-id="${deck.id}" title="Make this presentation the active starting deck">Make Active</button>` : ''}
+          <button type="button" class="btn-deck-remove" data-id="${deck.id}" title="Remove Deck from Queue">✕</button>
+        </div>
+      `;
+
+      item.addEventListener('click', async (e) => {
+        if (e.target.closest('.btn-deck-remove')) return;
+        await selectActiveDeck(deck.id);
+      });
+
+      launcherPlaylistCards.appendChild(item);
+    });
+
+    launcherPlaylistCards.querySelectorAll('.btn-deck-set-active').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await selectActiveDeck(btn.dataset.id);
+      });
+    });
+
+    launcherPlaylistCards.querySelectorAll('.btn-deck-remove').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        launcherPlaylistEngine.removeDeck(btn.dataset.id);
+        const remaining = launcherPlaylistEngine.getPlaylist();
+        if (remaining.length === 0) {
+          await resetToDemoFallback();
+        } else {
+          const active = launcherPlaylistEngine.getActiveDeck() || remaining[0];
+          if (active) await selectActiveDeck(active.id);
+        }
+        renderLauncherPlaylist();
+      });
+    });
+  }
+
+  function renderLauncherPlaylist() {
+    renderHomeScreenPlaylist();
+    if (!playlistQueueList || !launcherPlaylistEngine) return;
+    playlistQueueList.innerHTML = '';
+    const playlist = launcherPlaylistEngine.getPlaylist();
+
+    if (playlist.length === 0) {
+      playlistQueueList.innerHTML = `
+        <div style="text-align: center; padding: 24px; color: #94a3b8; font-size: 13px;">
+          No presentations queued. Click "+ Add PDF Deck" to queue speaker decks in advance.
+        </div>
+      `;
+      return;
+    }
+
+    playlist.forEach((deck, idx) => {
+      const card = document.createElement('div');
+      card.className = `playlist-item-card ${deck.active ? 'active' : ''}`;
+      card.dataset.id = deck.id;
+      card.style.cursor = 'pointer';
+      card.setAttribute('title', `Click to make "${deck.title}" the active presentation`);
+      card.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+          <span style="font-size: 20px;">${deck.active ? '▶️' : '📄'}</span>
+          <div style="min-width: 0; flex: 1;">
+            <div style="font-weight: 700; font-size: 13.5px; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${deck.title}
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-top: 3px;">
+              <span class="playlist-speaker-pill">${deck.speaker || `Speaker ${idx + 1}`}</span>
+              <span style="font-size: 11.5px; color: #94a3b8;">${deck.slideCount} slides</span>
+              ${deck.active ? '<span style="font-size: 11px; color: #38bdf8; font-weight: 700;">● Active Deck</span>' : ''}
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" class="btn btn-icon btn-remove-deck" data-id="${deck.id}" title="Remove Deck" style="padding: 4px 8px; font-size: 12px; color: #ef4444;">✕</button>
+        </div>
+      `;
+
+      card.addEventListener('click', async (e) => {
+        if (e.target.closest('.btn-remove-deck')) return;
+        await selectActiveDeck(deck.id);
+      });
+
+      playlistQueueList.appendChild(card);
+    });
+
+    playlistQueueList.querySelectorAll('.btn-remove-deck').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        launcherPlaylistEngine.removeDeck(btn.dataset.id);
+        const remaining = launcherPlaylistEngine.getPlaylist();
+        if (remaining.length === 0) {
+          await resetToDemoFallback();
+        } else {
+          const active = launcherPlaylistEngine.getActiveDeck() || remaining[0];
+          if (active) await selectActiveDeck(active.id);
+        }
+        renderLauncherPlaylist();
+      });
+    });
+  }
+
   // =========================================================================
   // 1. INITIALIZATION & SCREEN ENUMERATION
   // =========================================================================
@@ -657,9 +934,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Presentation lifecycle reset listeners & window focus display check
     if (window.electronAPI && window.electronAPI.onPresentationEnded) {
-      window.electronAPI.onPresentationEnded(() => {
+      window.electronAPI.onPresentationEnded(async (data) => {
         resetLaunchButton();
         detectAndRenderScreens(false);
+        if (data && Array.isArray(data.playlist) && data.playlist.length > 0) {
+          if (!launcherPlaylistEngine && typeof PlaylistMetricsEngine !== 'undefined') {
+            launcherPlaylistEngine = new PlaylistMetricsEngine({ isPro: () => isPro() });
+          }
+          if (launcherPlaylistEngine) {
+            launcherPlaylistEngine.playlist = data.playlist;
+            const active = data.playlist.find(d => d.active) || data.playlist[0];
+            if (active) {
+              launcherPlaylistEngine.activeDeckId = active.id;
+              await selectActiveDeck(active.id);
+            }
+            renderLauncherPlaylist();
+          }
+        }
       });
     }
     window.addEventListener('focus', () => {
@@ -1566,282 +1857,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // 2. Multi-Deck Playlist Setup
-    const btnPlaylist = document.getElementById('btnPlaylist');
-    const playlistModal = document.getElementById('playlistModal');
-    const playlistQueueList = document.getElementById('playlistQueueList');
-    const btnAddDeck = document.getElementById('btnAddDeck');
-    const playlistFileInput = document.getElementById('playlistFileInput');
-    const launcherPlaylistSection = document.getElementById('launcherPlaylistSection');
-    const launcherPlaylistCards = document.getElementById('launcherPlaylistCards');
-    const launcherPlaylistCount = document.getElementById('launcherPlaylistCount');
-    const btnLauncherAddDeck = document.getElementById('btnLauncherAddDeck');
-    const btnLauncherClearPlaylist = document.getElementById('btnLauncherClearPlaylist');
-
     if (!launcherPlaylistEngine && typeof PlaylistMetricsEngine !== 'undefined') {
       launcherPlaylistEngine = new PlaylistMetricsEngine({
         isPro: () => isPro()
-      });
-    }
-
-    async function selectActiveDeck(deckId) {
-      if (!launcherPlaylistEngine) return;
-      launcherPlaylistEngine.switchDeck(deckId);
-      const activeDeck = launcherPlaylistEngine.getActiveDeck();
-      if (activeDeck) {
-        if (activeDeck.path && window.electronAPI && window.electronAPI.loadRecentPdf) {
-          try {
-            const res = await window.electronAPI.loadRecentPdf(activeDeck.path);
-            if (res && res.success) {
-              if (res.pdfData && !activeDeck.pdfBuffer) {
-                activeDeck.pdfBuffer = res.pdfData;
-              }
-              await handleSelectedPdf(res.filePath, res.fileName, res.streamUrl, res.pdfData);
-            } else {
-              await handleSelectedPdf(activeDeck.path, activeDeck.title, null, activeDeck.pdfBuffer || null);
-            }
-          } catch (e) {
-            await handleSelectedPdf(activeDeck.path, activeDeck.title, null, activeDeck.pdfBuffer || null);
-          }
-        } else if (activeDeck.pdfBuffer) {
-          if (window.electronAPI && window.electronAPI.setActivePdfBuffer) {
-            try {
-              await window.electronAPI.setActivePdfBuffer({ fileName: activeDeck.title, buffer: activeDeck.pdfBuffer });
-            } catch (e) {
-              console.warn('[selectActiveDeck] setActivePdfBuffer error:', e);
-            }
-          }
-          const bufCopy = activeDeck.pdfBuffer.slice ? activeDeck.pdfBuffer.slice(0) : new Uint8Array(activeDeck.pdfBuffer);
-          await handleSelectedPdf(activeDeck.path || null, activeDeck.title, null, bufCopy);
-        } else if (activeDeck.path) {
-          await handleSelectedPdf(activeDeck.path, activeDeck.title);
-        } else {
-          currentDocConfig = { isDemo: false, title: activeDeck.title, filePath: null, totalPages: activeDeck.slideCount || 1, pdfBuffer: null };
-          updateDocPreviewUI();
-        }
-      }
-      renderLauncherPlaylist();
-    }
-
-    async function resetToDemoFallback() {
-      loadInitialDemoDeck();
-      currentDocConfig = {
-        isDemo: true,
-        title: 'Interactive Presentation Showcase.pdf',
-        filePath: null,
-        totalPages: 6,
-        pdfBuffer: null
-      };
-      resetLaunchButton();
-      updateDocPreviewUI();
-    }
-
-    async function handleMultipleSelectedPdfs(files) {
-      if (!files || files.length === 0) return;
-      if (!launcherPlaylistEngine && typeof PlaylistMetricsEngine !== 'undefined') {
-        launcherPlaylistEngine = new PlaylistMetricsEngine({ isPro: () => isPro() });
-      }
-      if (!launcherPlaylistEngine) return;
-
-      if (!isPro() && files.length > 1) {
-        if (window.UpgradeModal) window.UpgradeModal.open('playlist');
-        const first = files[0];
-        let p = first.filePath || first.path || '';
-        if (!p && window.electronAPI && window.electronAPI.getPathForFile) {
-          p = window.electronAPI.getPathForFile(first) || '';
-        }
-        let buf = null;
-        if (typeof first.arrayBuffer === 'function') {
-          try { buf = await first.arrayBuffer(); } catch (e) {}
-        }
-        await handleSelectedPdf(p || null, first.fileName || first.name || 'Deck 1', null, buf);
-        return;
-      }
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const title = file.fileName || file.name || (file.filePath ? file.filePath.split(/[/\\]/).pop() : `Deck ${i + 1}`);
-        let p = file.filePath || file.path || '';
-        if (!p && window.electronAPI && window.electronAPI.getPathForFile) {
-          p = window.electronAPI.getPathForFile(file) || '';
-        }
-
-        let buffer = null;
-        if (file.pdfBuffer) {
-          buffer = file.pdfBuffer;
-        } else if (typeof file.arrayBuffer === 'function') {
-          try {
-            buffer = await file.arrayBuffer();
-          } catch (e) {
-            console.warn('Could not read arrayBuffer from file:', e);
-          }
-        }
-
-        let slideCount = file.slideCount || 1;
-        if (buffer && window.pdfjsLib) {
-          try {
-            const copy = buffer.slice ? buffer.slice(0) : new Uint8Array(buffer);
-            const loadingTask = window.pdfjsLib.getDocument({
-              data: copy,
-              cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-              cMapPacked: true
-            });
-            const doc = await loadingTask.promise;
-            slideCount = doc.numPages || 1;
-          } catch (err) {
-            console.warn('Could not determine page count from buffer for', title, err);
-          }
-        }
-
-        await launcherPlaylistEngine.addDeck({
-          title: title,
-          path: p,
-          pdfBuffer: buffer,
-          slideCount: slideCount,
-          speaker: `Speaker ${(launcherPlaylistEngine.getPlaylist().length + 1)}`
-        });
-      }
-
-      renderLauncherPlaylist();
-
-      const playlist = launcherPlaylistEngine.getPlaylist();
-      const activeDeck = playlist.find(d => d.active) || playlist[0];
-      if (activeDeck) {
-        await selectActiveDeck(activeDeck.id);
-      }
-    }
-
-    function renderHomeScreenPlaylist() {
-      if (!launcherPlaylistSection || !launcherPlaylistCards || !launcherPlaylistEngine) return;
-      const playlist = launcherPlaylistEngine.getPlaylist();
-
-      if (playlist.length === 0) {
-        launcherPlaylistSection.style.display = 'none';
-        return;
-      }
-
-      launcherPlaylistSection.style.display = 'block';
-      if (launcherPlaylistCount) {
-        launcherPlaylistCount.textContent = playlist.length;
-      }
-
-      launcherPlaylistCards.innerHTML = '';
-      playlist.forEach((deck, idx) => {
-        const item = document.createElement('div');
-        item.className = `launcher-deck-item ${deck.active ? 'is-active' : ''}`;
-        item.dataset.id = deck.id;
-        item.style.cursor = 'pointer';
-        item.setAttribute('role', 'button');
-        item.setAttribute('tabindex', '0');
-        item.setAttribute('title', `Click to make "${deck.title}" the active starting deck`);
-        item.innerHTML = `
-          <div class="launcher-deck-left">
-            <div class="launcher-deck-idx">${idx + 1}</div>
-            <div class="launcher-deck-details">
-              <div class="launcher-deck-name" title="${deck.title}">${deck.title}</div>
-              <div class="launcher-deck-meta">
-                <span class="launcher-deck-speaker">${deck.speaker || `Speaker ${idx + 1}`}</span>
-                ${deck.active ? '<span class="launcher-deck-badge-active">● Active Starting Deck</span>' : ''}
-              </div>
-            </div>
-          </div>
-          <div class="launcher-deck-actions">
-            ${!deck.active ? `<button type="button" class="btn-deck-set-active" data-id="${deck.id}" title="Make this presentation the active starting deck">Make Active</button>` : ''}
-            <button type="button" class="btn-deck-remove" data-id="${deck.id}" title="Remove Deck from Queue">✕</button>
-          </div>
-        `;
-
-        item.addEventListener('click', async (e) => {
-          if (e.target.closest('.btn-deck-remove')) return;
-          await selectActiveDeck(deck.id);
-        });
-
-        launcherPlaylistCards.appendChild(item);
-      });
-
-      launcherPlaylistCards.querySelectorAll('.btn-deck-set-active').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          await selectActiveDeck(btn.dataset.id);
-        });
-      });
-
-      launcherPlaylistCards.querySelectorAll('.btn-deck-remove').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          launcherPlaylistEngine.removeDeck(btn.dataset.id);
-          const remaining = launcherPlaylistEngine.getPlaylist();
-          if (remaining.length === 0) {
-            await resetToDemoFallback();
-          } else {
-            const active = launcherPlaylistEngine.getActiveDeck() || remaining[0];
-            if (active) await selectActiveDeck(active.id);
-          }
-          renderLauncherPlaylist();
-        });
-      });
-    }
-
-    function renderLauncherPlaylist() {
-      renderHomeScreenPlaylist();
-      if (!playlistQueueList || !launcherPlaylistEngine) return;
-      playlistQueueList.innerHTML = '';
-      const playlist = launcherPlaylistEngine.getPlaylist();
-
-      if (playlist.length === 0) {
-        playlistQueueList.innerHTML = `
-          <div style="text-align: center; padding: 24px; color: #94a3b8; font-size: 13px;">
-            No presentations queued. Click "+ Add PDF Deck" to queue speaker decks in advance.
-          </div>
-        `;
-        return;
-      }
-
-      playlist.forEach((deck, idx) => {
-        const card = document.createElement('div');
-        card.className = `playlist-item-card ${deck.active ? 'active' : ''}`;
-        card.dataset.id = deck.id;
-        card.style.cursor = 'pointer';
-        card.setAttribute('title', `Click to make "${deck.title}" the active presentation`);
-        card.innerHTML = `
-          <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
-            <span style="font-size: 20px;">${deck.active ? '▶️' : '📄'}</span>
-            <div style="min-width: 0; flex: 1;">
-              <div style="font-weight: 700; font-size: 13.5px; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                ${deck.title}
-              </div>
-              <div style="display: flex; gap: 8px; align-items: center; margin-top: 3px;">
-                <span class="playlist-speaker-pill">${deck.speaker || `Speaker ${idx + 1}`}</span>
-                <span style="font-size: 11.5px; color: #94a3b8;">${deck.slideCount} slides</span>
-                ${deck.active ? '<span style="font-size: 11px; color: #38bdf8; font-weight: 700;">● Active Deck</span>' : ''}
-              </div>
-            </div>
-          </div>
-          <div style="display: flex; gap: 6px;">
-            <button type="button" class="btn btn-icon btn-remove-deck" data-id="${deck.id}" title="Remove Deck" style="padding: 4px 8px; font-size: 12px; color: #ef4444;">✕</button>
-          </div>
-        `;
-
-        card.addEventListener('click', async (e) => {
-          if (e.target.closest('.btn-remove-deck')) return;
-          await selectActiveDeck(deck.id);
-        });
-
-        playlistQueueList.appendChild(card);
-      });
-
-      playlistQueueList.querySelectorAll('.btn-remove-deck').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          launcherPlaylistEngine.removeDeck(btn.dataset.id);
-          const remaining = launcherPlaylistEngine.getPlaylist();
-          if (remaining.length === 0) {
-            await resetToDemoFallback();
-          } else {
-            const active = launcherPlaylistEngine.getActiveDeck() || remaining[0];
-            if (active) await selectActiveDeck(active.id);
-          }
-          renderLauncherPlaylist();
-        });
       });
     }
 

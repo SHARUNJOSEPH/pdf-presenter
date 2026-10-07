@@ -63,7 +63,8 @@
     "next": "Suiv",
     "slideCounter": "Diapositive {current} sur {total}",
     "timerToggle": "Démarrer/Suspendre chronomètre",
-    "timerReset": "Réinitialiser chronomètre"
+    "timerReset": "Réinitialiser chronomètre",
+    "toolsMenu": "Outils"
   },
   "companion": {
     "modalTitle": "Configuration Bitfocus Companion & Stream Deck",

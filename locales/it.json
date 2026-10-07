@@ -63,7 +63,8 @@
     "next": "Succ",
     "slideCounter": "Diapositiva {current} di {total}",
     "timerToggle": "Avvia/Pausa timer",
-    "timerReset": "Reimposta timer"
+    "timerReset": "Reimposta timer",
+    "toolsMenu": "Strumenti"
   },
   "companion": {
     "modalTitle": "Configurazione Bitfocus Companion & Stream Deck",

@@ -63,7 +63,8 @@
     "next": "Next",
     "slideCounter": "Slide {current} of {total}",
     "timerToggle": "Start/Pause Timer",
-    "timerReset": "Reset Timer"
+    "timerReset": "Reset Timer",
+    "toolsMenu": "Tools"
   },
   "companion": {
     "modalTitle": "Bitfocus Companion & Stream Deck Setup",

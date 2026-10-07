@@ -63,7 +63,8 @@
     "next": "次へ",
     "slideCounter": "スライド {current} / {total}",
     "timerToggle": "タイマースタート／一時停止",
-    "timerReset": "タイマーリセット"
+    "timerReset": "タイマーリセット",
+    "toolsMenu": "ツール"
   },
   "companion": {
     "modalTitle": "Bitfocus Companion & Stream Deck 設定",

@@ -5,13 +5,13 @@
 ### Professional Dual-Screen Presentation Software for Keynotes, Conferences & AV Teams
 
 <p>
-  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.5/PDF.Presenter.Suite.Setup.1.2.5.exe">
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite.Setup.1.2.6-beta.exe">
     <img src="https://img.shields.io/badge/⬇️%20Direct%20Download-Windows%20Setup%20(.exe)-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Direct Download Windows Installer" />
   </a>
-  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.5/PDF.Presenter.Suite-1.2.5-arm64.dmg">
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite-1.2.6-beta-arm64.dmg">
     <img src="https://img.shields.io/badge/🍎%20macOS%20(Apple%20Silicon)-.dmg-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS Apple Silicon" />
   </a>
-  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.5/PDF.Presenter.Suite-1.2.5.dmg">
+  <a href="https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite-1.2.6-beta.dmg">
     <img src="https://img.shields.io/badge/🍎%20macOS%20(Intel)-.dmg-333333?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS Intel" />
   </a>
   <a href="https://apps.microsoft.com/detail/9NS3LKFXHBXW">
@@ -56,12 +56,12 @@ Choose your operating system to begin an immediate 1-click download:
 
 | Operating System | Package Type | Direct 1-Click Download Link | Notes |
 | :--- | :--- | :--- | :--- |
-| **Windows 10 / 11** | Setup Installer | [**⬇️ Download Windows Setup (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.5/PDF.Presenter.Suite.Setup.1.2.5.exe) | **Recommended for Windows.** Multi-language installer, auto desktop shortcut, in-app updates. |
-| **Windows 10 / 11** | Standalone Portable | [**💾 Download Portable (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.5/PDF.Presenter.Suite.1.2.5.exe) | Zero installation required—run directly from an AV flash drive or external SSD. |
+| **Windows 10 / 11** | Setup Installer | [**⬇️ Download Windows Setup (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite.Setup.1.2.6-beta.exe) | **Recommended for Windows.** Multi-language installer, auto desktop shortcut, in-app updates. |
+| **Windows 10 / 11** | Standalone Portable | [**💾 Download Portable (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite.1.2.6-beta.exe) | Zero installation required—run directly from an AV flash drive or external SSD. |
 | **Microsoft Store** | Certified Store App | [**🛍️ Install from Microsoft Store**](https://apps.microsoft.com/detail/9NS3LKFXHBXW) | Verified and signed by Microsoft Corporation with automatic silent updates. |
-| **macOS (Apple Silicon)** | M1 / M2 / M3 / M4 | [**🍎 Download Apple Silicon (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.5/PDF.Presenter.Suite-1.2.5-arm64.dmg) | Native ARM64 disk image for modern MacBooks, Mac mini, and Mac Studio. |
-| **macOS (Intel x64)** | Intel Core Macs | [**🍏 Download Intel Mac (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.5/PDF.Presenter.Suite-1.2.5.dmg) | Optimized for Intel-based Macs. |
-| **macOS Portable** | Universal Zip | [**📦 Download macOS (.zip)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.5/PDF.Presenter.Suite-1.2.5-arm64-mac.zip) | Standalone portable macOS application bundle. |
+| **macOS (Apple Silicon)** | M1 / M2 / M3 / M4 | [**🍎 Download Apple Silicon (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite-1.2.6-beta-arm64.dmg) | Native ARM64 disk image for modern MacBooks, Mac mini, and Mac Studio. |
+| **macOS (Intel x64)** | Intel Core Macs | [**🍏 Download Intel Mac (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite-1.2.6-beta.dmg) | Optimized for Intel-based Macs. |
+| **macOS Portable** | Universal Zip | [**📦 Download macOS (.zip)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite-1.2.6-beta-arm64-mac.zip) | Standalone portable macOS application bundle. |
 | **All Releases & Assets** | GitHub Release Hub | [**🌐 Browse All Releases & Source Code**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) | View checksums, blockmaps, and previous versions. |
 
 > 💡 **Tip:** In-app updates are now built-in with Resolume Arena-style background downloads. Once installed, future updates download and install automatically within the app with zero browser redirects.
@@ -100,6 +100,11 @@ Choose your operating system to begin an immediate 1-click download:
 - **Recent Presentations History**:
   - Quick-launch list on the setup screen remembers your last 5 opened slide decks.
   - 1-Click to reopen frequently used PDF presentations without searching folders.
+- **🎯 PowerPoint-Style Direct Slide Number Jump (`[N] + Enter`)**:
+  - Jump directly to any slide without opening any menu: type slide numbers on the keyboard (e.g. `7` + `Enter` or `14` + `Enter`).
+  - Sleek glassmorphic HUD toast displays real-time key buffer and auto-dismisses smoothly.
+- **🖥️ Stage Confidence Monitor Output Control**:
+  - Independent Enable / Disable feed toggle across toolbar, settings modal, and Companion API (`POST /api/confidence/toggle`) to start or stop the floor monitor feed at will.
 - **Slide Sorter & Quick Jump Grid (`G`)**:
   - Instant visual grid modal displays high-resolution thumbnails for every slide in your deck.
   - Jump directly to any slide (e.g., Slide 15 during audience Q&A) without scrolling through intermediate slides in front of the audience.
@@ -161,6 +166,7 @@ npm start
 | --- | --- |
 | `→` / `Space` / `PageDown` / `Enter` | Next Slide |
 | `←` / `Backspace` / `PageUp` | Previous Slide |
+| `[Number]` + `Enter` | Jump Directly to Slide Number (e.g. `7` + `Enter`) |
 | `Home` / `End` | First / Last Slide |
 | `B` | Toggle Blackout Screen |
 | `W` | Toggle Whiteout Screen |
@@ -191,6 +197,7 @@ npm start
 | `POST /api/timer/set` | POST | Set keynote countdown duration (seconds) |
 | `POST /api/message` | POST | Send silent cue to speaker monitor (`target=stage`) or cockpit |
 | `POST /api/banner` | POST | Display lower-third ticker banner on audience display |
+| `POST /api/confidence/toggle` | POST | Enable or disable confidence stage monitor video feed |
 | `GET /api/status` | GET | Retrieve live JSON presentation state & telemetry |
 
 ---
