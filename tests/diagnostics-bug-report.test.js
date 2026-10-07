@@ -46,15 +46,28 @@ describe('Diagnostic Bug Report Generator & Flicker Analysis Suite', () => {
     assert.ok(analysis.recommendations.some(r => r.includes('Windows Display Settings')), 'Must provide DPI resolution recommendation');
   });
 
-  it('analyzeFlickerPotential detects Refresh Rate mismatch disparities', () => {
+  it('analyzeFlickerPotential detects Refresh Rate mismatch disparities for non-broadcast rates', () => {
     const displays = [
       { id: 1, scaleFactor: 1.0, displayFrequency: 144, isPrimary: true },
-      { id: 2, scaleFactor: 1.0, displayFrequency: 60, isPrimary: false }
+      { id: 2, scaleFactor: 1.0, displayFrequency: 75, isPrimary: false }
     ];
 
     const analysis = diagnosticsEngine.analyzeFlickerPotential(displays, { gpu_compositing: 'enabled' });
     assert.strictEqual(analysis.flickerRisk, 'MODERATE');
     assert.ok(analysis.warnings.some(w => w.includes('Refresh Rate Mismatch')), 'Must flag refresh rate mismatch');
+  });
+
+  it('analyzeFlickerPotential recognizes professional broadcast standards (50Hz PAL/EBU, 25Hz, 59.94Hz)', () => {
+    const displays = [
+      { id: 1, scaleFactor: 1.0, displayFrequency: 144, isPrimary: true },
+      { id: 2, scaleFactor: 1.0, displayFrequency: 50, isPrimary: false }
+    ];
+
+    const analysis = diagnosticsEngine.analyzeFlickerPotential(displays, { gpu_compositing: 'enabled' });
+    // Healthy GPU with 50Hz broadcast output should be classified as LOW risk with specialized broadcast guidance
+    assert.strictEqual(analysis.flickerRisk, 'LOW');
+    assert.ok(analysis.warnings.some(w => w.includes('Broadcast Standard Output Detected')), 'Must detect broadcast standard');
+    assert.ok(analysis.recommendations.some(r => r.includes('Make this my main display')), 'Must recommend broadcast display lock options');
   });
 
   it('analyzeFlickerPotential detects disabled GPU compositing and elevates risk to HIGH when combined', () => {

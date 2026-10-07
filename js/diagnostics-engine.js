@@ -62,12 +62,31 @@ function analyzeFlickerPotential(displays, gpuFeatures = {}, gpuInfo = {}) {
       recommendations.push(`Set both your primary display and external projector/monitor to 100% or 125% DPI in Windows Display Settings for seamless presentation transitions.`);
     }
 
-    // 2. Refresh Rate Disparity Analysis
+    // 2. Refresh Rate Disparity & Broadcast Standard Analysis
     const refreshRates = displays.map(d => Number(d.displayFrequency || 60)).filter(f => f > 0);
     const uniqueRates = [...new Set(refreshRates)];
+    
+    // Check if any audience / non-primary or external display is running at broadcast standard frequencies
+    const broadcastRates = [24, 25, 29, 30, 50, 59]; // 24p, 25p/PAL, 29.97/30p, 50p/50Hz EBU/PAL, 59.94/60p NTSC
+    const audienceDisplays = displays.filter(d => !d.isPrimary);
+    const isAudienceBroadcast = audienceDisplays.some(d => {
+      const f = Math.round(Number(d.displayFrequency || 60));
+      return broadcastRates.includes(f);
+    });
+
     if (uniqueRates.length > 1) {
-      warnings.push(`Refresh Rate Mismatch: Displays have different refresh rates (${uniqueRates.map(r => r + 'Hz').join(' vs ')}). If an external screen or 4K TV/projector is running at 29Hz/30Hz, Windows DWM struggles to synchronize VSync with a 60Hz screen, resulting in noticeable stutter or flicker during slide changes.`);
-      recommendations.push(`Set your external display (LG HDR 4K) to 60Hz in Windows Display Settings > Advanced Display (or lower resolution from 4K to 1440p/1080p if HDMI cable bandwidth is capping it at 30Hz/29Hz).`);
+      if (isAudienceBroadcast) {
+        // Professional AV & Broadcast environments deliberately output 50Hz (PAL/EBU), 59.94Hz, or 25Hz.
+        // This is normal and intentional for SDI switchers (e.g. ATEM, Barco, Decimator, Roland).
+        const audienceHz = audienceDisplays.map(d => Math.round(Number(d.displayFrequency || 60)) + 'Hz').join(', ');
+        const primaryHz = displays.filter(d => d.isPrimary).map(d => Math.round(Number(d.displayFrequency || 60)) + 'Hz').join(', ');
+        
+        warnings.push(`Broadcast Standard Output Detected: External audience output is operating at ${audienceHz} (Live Event / Broadcast standard), while primary operator screen is running at ${primaryHz}. Windows DWM synchronizes VSync to the primary display.`);
+        recommendations.push(`For broadcast-grade tear-free output at 50Hz/59.94Hz: Match your laptop screen's refresh rate to ${audienceHz} in Windows Display Settings > Advanced display, or toggle "Make this my main display" on the external screen during the show so Windows locks DWM VSync directly to the audience feed.`);
+      } else {
+        warnings.push(`Refresh Rate Mismatch: Displays have different refresh rates (${uniqueRates.map(r => r + 'Hz').join(' vs ')}). If an external screen or 4K TV/projector is running at 29Hz/30Hz, Windows DWM struggles to synchronize VSync with a 60Hz screen, resulting in noticeable stutter or flicker during slide changes.`);
+        recommendations.push(`Set your external display to 60Hz in Windows Display Settings > Advanced Display (or lower resolution from 4K to 1440p/1080p if HDMI cable bandwidth is capping it at 30Hz/29Hz).`);
+      }
     }
   }
 
@@ -89,7 +108,19 @@ function analyzeFlickerPotential(displays, gpuFeatures = {}, gpuInfo = {}) {
     recommendations.push(`Close unused background applications before presenting large slide decks.`);
   }
 
-  const flickerRisk = warnings.length >= 2 ? 'HIGH' : (warnings.length === 1 ? 'MODERATE' : 'LOW');
+  // Calculate Flicker Risk:
+  // If the only warning is a legitimate Broadcast Standard Output, keep risk level at LOW / OPTIMAL or MODERATE (not HIGH)
+  // when hardware GPU compositing is fully enabled.
+  const criticalWarnings = warnings.filter(w => !w.startsWith('Broadcast Standard Output Detected:'));
+  let flickerRisk = 'LOW';
+  if (criticalWarnings.length >= 2) {
+    flickerRisk = 'HIGH';
+  } else if (criticalWarnings.length === 1) {
+    flickerRisk = 'MODERATE';
+  } else if (warnings.length > 0) {
+    // Only broadcast standard detected with GPU acceleration healthy
+    flickerRisk = 'LOW';
+  }
 
   return {
     flickerRisk,
