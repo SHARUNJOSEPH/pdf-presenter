@@ -57,7 +57,6 @@ Choose your operating system to begin an immediate 1-click download:
 | Operating System | Package Type | Direct 1-Click Download Link | Notes |
 | :--- | :--- | :--- | :--- |
 | **Windows 10 / 11** | Setup Installer | [**⬇️ Download Windows Setup (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite.Setup.1.2.6-beta.exe) | **Recommended for Windows.** Multi-language installer, auto desktop shortcut, in-app updates. |
-| **Windows 10 / 11** | Standalone Portable | [**💾 Download Portable (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite.1.2.6-beta.exe) | Zero installation required—run directly from an AV flash drive or external SSD. |
 | **Microsoft Store** | Certified Store App | [**🛍️ Install from Microsoft Store**](https://apps.microsoft.com/detail/9NS3LKFXHBXW) | Verified and signed by Microsoft Corporation with automatic silent updates. |
 | **macOS (Apple Silicon)** | M1 / M2 / M3 / M4 | [**🍎 Download Apple Silicon (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite-1.2.6-beta-arm64.dmg) | Native ARM64 disk image for modern MacBooks, Mac mini, and Mac Studio. |
 | **macOS (Intel x64)** | Intel Core Macs | [**🍏 Download Intel Mac (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.6-beta/PDF.Presenter.Suite-1.2.6-beta.dmg) | Optimized for Intel-based Macs. |
