@@ -89,12 +89,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (res.pdfData && !activeDeck.pdfBuffer) {
               activeDeck.pdfBuffer = res.pdfData;
             }
-            await handleSelectedPdf(res.filePath, res.fileName, res.streamUrl, res.pdfData);
+            await handleSelectedPdf(res.filePath, res.fileName, res.streamUrl, res.pdfData, { fromPlaylist: true });
           } else {
-            await handleSelectedPdf(activeDeck.path, activeDeck.title, null, activeDeck.pdfBuffer || null);
+            await handleSelectedPdf(activeDeck.path, activeDeck.title, null, activeDeck.pdfBuffer || null, { fromPlaylist: true });
           }
         } catch (e) {
-          await handleSelectedPdf(activeDeck.path, activeDeck.title, null, activeDeck.pdfBuffer || null);
+          await handleSelectedPdf(activeDeck.path, activeDeck.title, null, activeDeck.pdfBuffer || null, { fromPlaylist: true });
         }
       } else if (activeDeck.pdfBuffer) {
         if (window.electronAPI && window.electronAPI.setActivePdfBuffer) {
@@ -105,9 +105,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }
         const bufCopy = activeDeck.pdfBuffer.slice ? activeDeck.pdfBuffer.slice(0) : new Uint8Array(activeDeck.pdfBuffer);
-        await handleSelectedPdf(activeDeck.path || null, activeDeck.title, null, bufCopy);
+        await handleSelectedPdf(activeDeck.path || null, activeDeck.title, null, bufCopy, { fromPlaylist: true });
       } else if (activeDeck.path) {
-        await handleSelectedPdf(activeDeck.path, activeDeck.title);
+        await handleSelectedPdf(activeDeck.path, activeDeck.title, null, null, { fromPlaylist: true });
       } else {
         currentDocConfig = { isDemo: false, title: activeDeck.title, filePath: null, totalPages: activeDeck.slideCount || 1, pdfBuffer: null };
         updateDocPreviewUI();
@@ -603,7 +603,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  async function handleSelectedPdf(filePath, fileName, streamUrl = null, pdfData = null) {
+  async function handleSelectedPdf(filePath, fileName, streamUrl = null, pdfData = null, options = {}) {
     try {
       docMetaTitle.textContent = `Loading ${fileName}...`;
       docMetaPages.textContent = 'Parsing presentation...';
@@ -631,6 +631,42 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
       updateDocPreviewUI();
       saveRecentDeck({ title: fileName, filePath: filePath, totalPages: docInfo.totalPages });
+
+      // Synchronize with launcherPlaylistEngine so dragging or loading a PDF
+      // is immediately added/activated in the queue and becomes the starting presentation
+      if (!options.fromPlaylist && launcherPlaylistEngine) {
+        const existingPlaylist = launcherPlaylistEngine.getPlaylist ? launcherPlaylistEngine.getPlaylist() : [];
+        const existingDeck = existingPlaylist.find(d => {
+          if (filePath && d.path && filePath === d.path) return true;
+          return d.title === fileName;
+        });
+
+        if (existingDeck) {
+          launcherPlaylistEngine.switchDeck(existingDeck.id);
+          if (safeBuffer && !existingDeck.pdfBuffer) {
+            existingDeck.pdfBuffer = safeBuffer;
+          }
+          if (docInfo.totalPages && !existingDeck.slideCount) {
+            existingDeck.slideCount = docInfo.totalPages;
+          }
+        } else {
+          // If free tier and already has 1 deck, replace it or add new deck
+          if (!isPro() && existingPlaylist.length >= 1) {
+            launcherPlaylistEngine.playlist = [];
+            launcherPlaylistEngine.activeDeckId = null;
+          }
+
+          launcherPlaylistEngine.addDeck({
+            title: fileName,
+            path: filePath || '',
+            pdfBuffer: safeBuffer || pdfData || null,
+            slideCount: docInfo.totalPages || 1,
+            active: true,
+            speaker: `Speaker ${(existingPlaylist.length + 1)}`
+          });
+        }
+        renderLauncherPlaylist();
+      }
     } catch (err) {
       alert('Error loading PDF: ' + err.message);
       loadInitialDemoDeck();
