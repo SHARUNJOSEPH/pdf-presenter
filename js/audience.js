@@ -349,7 +349,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     backCanvas.style.zIndex = '1';
     activeCanvas.className = 'slide-canvas active';
     backCanvas.className = 'slide-canvas';
-    void activeCanvas.offsetWidth;
   }
 
   async function renderSlide() {
@@ -437,6 +436,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         height: targetH,
         scale: 2.0
       });
+
+      // Lock both canvases to matching dimensions before dissolve to eliminate 1px size drift line
+      if (backCanvas.style.width && activeCanvas.style.width !== backCanvas.style.width) {
+        activeCanvas.style.width = backCanvas.style.width;
+      }
+      if (backCanvas.style.height && activeCanvas.style.height !== backCanvas.style.height) {
+        activeCanvas.style.height = backCanvas.style.height;
+      }
 
       // Force layout flush so browser applies opacity 0 before transition begins
       void backCanvas.offsetWidth;

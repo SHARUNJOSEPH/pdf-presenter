@@ -41,6 +41,7 @@
       "output": "dist",
       "buildResources": "build"
     },
+    "afterPack": "scripts/inject-exe-icon.js",
     "files": [
       "main.js",
       "preload.js",
@@ -61,15 +62,9 @@
           "arch": [
             "x64"
           ]
-        },
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
         }
       ],
-      "icon": "build/icon.png"
+      "icon": "build/icon.ico"
     },
     "appx": {
       "applicationId": "PDFPresenterSuite",

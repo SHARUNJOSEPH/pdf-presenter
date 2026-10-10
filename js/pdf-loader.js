@@ -192,12 +192,17 @@ class PDFDocumentEngine {
       }
 
       const cssScale = scale / dpr;
-      const targetCssW = `${Math.round(baseViewport.width * cssScale)}px`;
-      const targetCssH = `${Math.round(baseViewport.height * cssScale)}px`;
+      // Round to even integer pixels to guarantee symmetrical centering and eliminate subpixel 1px seams
+      const wPx = Math.round(Math.round(baseViewport.width * cssScale) / 2) * 2;
+      const hPx = Math.round(Math.round(baseViewport.height * cssScale) / 2) * 2;
+      const targetCssW = `${wPx}px`;
+      const targetCssH = `${hPx}px`;
       if (targetCanvas.style.width !== targetCssW) targetCanvas.style.width = targetCssW;
       if (targetCanvas.style.height !== targetCssH) targetCanvas.style.height = targetCssH;
 
       const ctx = targetCanvas.getContext('2d');
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
       ctx.drawImage(offscreen, 0, 0);
     } catch (e) {
       if (e.name !== 'RenderingCancelledException') {

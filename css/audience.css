@@ -53,17 +53,16 @@ body.audience-view.cursor-hidden {
 
 .slide-canvas {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) translateZ(0);
-  will-change: opacity, transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  inset: 0;
+  margin: auto;
   max-width: 100vw;
   max-height: 100vh;
-  aspect-ratio: 16 / 9;
   object-fit: contain;
-  background-color: transparent;
+  background-color: #000000;
+  will-change: opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
   opacity: 0;
   pointer-events: none;
   z-index: 1;
