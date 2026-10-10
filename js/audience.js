@@ -341,14 +341,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       transitionTimer = null;
     }
     isTransitioning = false;
-    activeCanvas.style.transition = 'none';
+
+    // The incoming slide was being dissolved in on backCanvas (z-index 2).
+    // Promote it to activeCanvas immediately so rapid scrubbing advances cleanly
+    // without flickering back to the outgoing slide.
     backCanvas.style.transition = 'none';
-    activeCanvas.style.opacity = '1';
-    activeCanvas.style.zIndex = '1';
-    backCanvas.style.opacity = '0';
+    backCanvas.style.opacity = '1';
     backCanvas.style.zIndex = '1';
-    activeCanvas.className = 'slide-canvas active';
-    backCanvas.className = 'slide-canvas';
+    backCanvas.className = 'slide-canvas active';
+
+    activeCanvas.style.transition = 'none';
+    activeCanvas.style.opacity = '0';
+    activeCanvas.style.zIndex = '1';
+    activeCanvas.className = 'slide-canvas';
+
+    const prevActive = activeCanvas;
+    activeCanvas = backCanvas;
+    backCanvas = prevActive;
   }
 
   async function renderSlide() {
@@ -496,11 +505,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         incoming.style.opacity = '1';
         incoming.className = 'slide-canvas dissolve-in';
 
-        // Swap buffer references
-        activeCanvas = incoming;
-        backCanvas = outgoing;
-
-        // 5. When transition completes, cleanly silence the now-hidden background canvas
+        // 5. When transition completes, swap references and cleanly silence the background canvas
         transitionTimer = setTimeout(() => {
           isTransitioning = false;
           outgoing.style.transition = 'none';
@@ -512,6 +517,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           incoming.style.opacity = '1';
           incoming.style.zIndex = '1';
           incoming.className = 'slide-canvas active';
+
+          // Atomically swap active reference only when incoming is 100% opaque
+          activeCanvas = incoming;
+          backCanvas = outgoing;
 
           transitionTimer = null;
           resizeDrawCanvas();

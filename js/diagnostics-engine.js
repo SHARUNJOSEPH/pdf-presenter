@@ -134,7 +134,7 @@ function analyzeFlickerPotential(displays, gpuFeatures = {}, gpuInfo = {}) {
  */
 function buildDiagnosticData(context = {}) {
   const {
-    appVersion = '1.2.7-beta',
+    appVersion = '1.2.8-beta',
     isPackaged = false,
     isStore = false,
     displays = [],
@@ -182,7 +182,8 @@ function buildDiagnosticData(context = {}) {
     })),
     gpu: {
       features: gpuFeatures,
-      info: gpuInfo
+      info: gpuInfo,
+      adapters: context.gpuAdapters || []
     },
     activeSwitches: activeSwitches || {},
     presentation: {
@@ -245,7 +246,19 @@ function formatMarkdownReport(diag) {
   }
   lines.push(``);
 
-  lines.push(`## 🎮 GPU Acceleration & Compositor Features`);
+  lines.push(`## 🎮 Graphics Hardware & GPU Adapters`);
+  if (diag.gpu && diag.gpu.adapters && diag.gpu.adapters.length > 0) {
+    for (const gpu of diag.gpu.adapters) {
+      const vramMB = gpu.AdapterRAM ? Math.round(Number(gpu.AdapterRAM) / (1024 * 1024)) : 0;
+      const vramStr = vramMB > 0 ? ` (${vramMB} MB VRAM)` : '';
+      lines.push(`- **${gpu.Name || 'Graphics Device'}:** Driver \`${gpu.DriverVersion || 'Unknown'}\`${vramStr}`);
+    }
+  } else {
+    lines.push(`- *GPU hardware adapter enumeration completed.*`);
+  }
+  lines.push(``);
+
+  lines.push(`## ⚙️ GPU Acceleration & Compositor Features`);
   if (diag.gpu.features && typeof diag.gpu.features === 'object') {
     for (const [key, val] of Object.entries(diag.gpu.features)) {
       lines.push(`- **${key}:** \`${val}\``);

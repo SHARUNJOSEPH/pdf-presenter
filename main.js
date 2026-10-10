@@ -2079,6 +2079,20 @@ ipcMain.handle('generate-bug-report', async () => {
     gpuInfo = { error: e.message };
   }
 
+  let gpuAdapters = [];
+  try {
+    if (process.platform === 'win32') {
+      const psCmd = 'Get-CimInstance Win32_VideoController | Select-Object Name, DriverVersion, VideoProcessor, AdapterRAM | ConvertTo-Json -Compress';
+      const psOut = child_process.execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', psCmd], { encoding: 'utf8', timeout: 3000 }).trim();
+      if (psOut) {
+        const parsed = JSON.parse(psOut);
+        gpuAdapters = Array.isArray(parsed) ? parsed : [parsed];
+      }
+    }
+  } catch (e) {
+    gpuAdapters = [];
+  }
+
   let displays = [];
   try {
     displays = screen.getAllDisplays().map((d) => {
@@ -2117,6 +2131,7 @@ ipcMain.handle('generate-bug-report', async () => {
     displays,
     gpuFeatures,
     gpuInfo,
+    gpuAdapters,
     activeSwitches,
     presentation
   });
