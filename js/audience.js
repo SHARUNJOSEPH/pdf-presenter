@@ -147,7 +147,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           const targetPage = Number(data.page);
           if (targetPage === currentPage && !isFirstRender) return;
           currentPage = targetPage;
-          clearDrawings();
           hideLaser();
           await renderSlide();
           break;
@@ -420,6 +419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         backCanvas = outgoing;
 
         resizeDrawCanvas();
+        clearDrawings();
         if (placeholder) placeholder.style.display = 'none';
         return;
       }
@@ -446,45 +446,72 @@ document.addEventListener('DOMContentLoaded', async () => {
       // The incoming slide is placed ON TOP (zIndex 2) and smoothly fades from 0 to 1.
       // This prevents ANY black dip, background gap, or transparency hole.
       isTransitioning = true;
+      activeCanvas.style.transition = 'none';
       activeCanvas.style.zIndex = '1';
       activeCanvas.style.opacity = '1';
 
-      if (transitionStyle === 'slide') {
-        activeCanvas.className = 'slide-canvas outgoing';
-        backCanvas.style.zIndex = '2';
-        backCanvas.className = 'slide-canvas incoming active';
-      } else {
-        activeCanvas.style.transition = 'none';
-        activeCanvas.className = 'slide-canvas active';
+      const incoming = backCanvas;
+      const outgoing = activeCanvas;
 
-        backCanvas.style.zIndex = '2';
-        backCanvas.style.transition = `opacity ${transitionDuration}s ease-in-out`;
-        backCanvas.style.opacity = '1';
-        backCanvas.className = 'slide-canvas dissolve-in';
+      if (transitionStyle === 'slide') {
+        outgoing.className = 'slide-canvas outgoing';
+        incoming.style.zIndex = '2';
+        incoming.className = 'slide-canvas incoming active';
+
+        // Swap buffer references
+        activeCanvas = incoming;
+        backCanvas = outgoing;
+
+        transitionTimer = setTimeout(() => {
+          isTransitioning = false;
+          outgoing.style.transition = 'none';
+          outgoing.style.opacity = '0';
+          outgoing.style.zIndex = '1';
+          outgoing.className = 'slide-canvas';
+
+          incoming.style.transition = 'none';
+          incoming.style.opacity = '1';
+          incoming.style.zIndex = '1';
+          incoming.className = 'slide-canvas active';
+
+          transitionTimer = null;
+          resizeDrawCanvas();
+          clearDrawings();
+        }, (transitionDuration * 1000) + 50);
+      } else {
+        outgoing.className = 'slide-canvas active';
+        incoming.style.zIndex = '2';
+
+        // Ensure browser compositor has registered incoming canvas at opacity 0 before transition kicks in
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+        incoming.style.transition = `opacity ${transitionDuration}s ease-in-out`;
+        incoming.style.opacity = '1';
+        incoming.className = 'slide-canvas dissolve-in';
+
+        // Swap buffer references
+        activeCanvas = incoming;
+        backCanvas = outgoing;
+
+        // 5. When transition completes, cleanly silence the now-hidden background canvas
+        transitionTimer = setTimeout(() => {
+          isTransitioning = false;
+          outgoing.style.transition = 'none';
+          outgoing.style.opacity = '0';
+          outgoing.style.zIndex = '1';
+          outgoing.className = 'slide-canvas';
+
+          incoming.style.transition = 'none';
+          incoming.style.opacity = '1';
+          incoming.style.zIndex = '1';
+          incoming.className = 'slide-canvas active';
+
+          transitionTimer = null;
+          resizeDrawCanvas();
+          clearDrawings();
+        }, (transitionDuration * 1000) + 50);
       }
 
-      // Swap buffer references
-      const outgoing = activeCanvas;
-      activeCanvas = backCanvas;
-      backCanvas = outgoing;
-
-      // 5. When transition completes, cleanly silence the now-hidden background canvas
-      transitionTimer = setTimeout(() => {
-        isTransitioning = false;
-        backCanvas.style.transition = 'none';
-        backCanvas.style.opacity = '0';
-        backCanvas.style.zIndex = '1';
-        backCanvas.className = 'slide-canvas';
-
-        activeCanvas.style.transition = 'none';
-        activeCanvas.style.opacity = '1';
-        activeCanvas.style.zIndex = '1';
-        activeCanvas.className = 'slide-canvas active';
-
-        transitionTimer = null;
-      }, (transitionDuration * 1000) + 50);
-
-      resizeDrawCanvas();
       if (placeholder) placeholder.style.display = 'none';
     } finally {
       isRendering = false;

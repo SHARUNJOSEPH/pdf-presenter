@@ -439,32 +439,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       activeSlideCanvas.style.zIndex = '1';
       activeSlideCanvas.className = 'presenter-slide-canvas active';
 
-      backSlideCanvas.style.zIndex = '2';
-      backSlideCanvas.style.transition = `opacity ${transitionDuration}s ease-in-out`;
-      backSlideCanvas.style.opacity = '1';
-      backSlideCanvas.className = 'presenter-slide-canvas dissolve-in';
-
+      const incoming = backSlideCanvas;
       const outgoing = activeSlideCanvas;
-      activeSlideCanvas = backSlideCanvas;
+      incoming.style.zIndex = '2';
+
+      // Ensure browser compositor has registered incoming canvas at opacity 0 before transition kicks in
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      incoming.style.transition = `opacity ${transitionDuration}s ease-in-out`;
+      incoming.style.opacity = '1';
+      incoming.className = 'presenter-slide-canvas dissolve-in';
+
+      activeSlideCanvas = incoming;
       backSlideCanvas = outgoing;
 
       presenterTransitionTimer = setTimeout(() => {
         isSlideTransitioning = false;
-        backSlideCanvas.style.transition = 'none';
-        backSlideCanvas.style.opacity = '0';
-        backSlideCanvas.style.zIndex = '1';
-        backSlideCanvas.className = 'presenter-slide-canvas';
+        outgoing.style.transition = 'none';
+        outgoing.style.opacity = '0';
+        outgoing.style.zIndex = '1';
+        outgoing.className = 'presenter-slide-canvas';
 
-        activeSlideCanvas.style.transition = 'none';
-        activeSlideCanvas.style.opacity = '1';
-        activeSlideCanvas.style.zIndex = '1';
-        activeSlideCanvas.className = 'presenter-slide-canvas active';
+        incoming.style.transition = 'none';
+        incoming.style.opacity = '1';
+        incoming.style.zIndex = '1';
+        incoming.className = 'presenter-slide-canvas active';
 
         presenterTransitionTimer = null;
+        resizeDrawingCanvas();
+        redrawPenStrokes();
       }, (transitionDuration * 1000) + 50);
-
-      resizeDrawingCanvas();
-      redrawPenStrokes();
     } finally {
       isRenderingSlide = false;
       if (pendingSlidePage !== null && pendingSlidePage !== currentPage) {

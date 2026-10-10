@@ -198,6 +198,30 @@ function resetServerTimer() {
   broadcastState('TIMER_RESET');
 }
 
+// NDI / IP Video Streaming State (MJPEG hub for OBS Studio, vMix, TriCaster)
+const streamState = {
+  latestProgramBuffer: null,
+  latestAlphaBuffer: null,
+  programSubscribers: new Set(),
+  alphaSubscribers: new Set(),
+  framesReceived: 0,
+  lastFrameTime: 0
+};
+
+function pushFrameToSubscribers(subscribers, buffer, mimeType = 'image/jpeg') {
+  if (!buffer || subscribers.size === 0) return;
+  const header = `--frame\r\nContent-Type: ${mimeType}\r\nContent-Length: ${buffer.length}\r\n\r\n`;
+  for (const client of subscribers) {
+    try {
+      client.write(header);
+      client.write(buffer);
+      client.write('\r\n');
+    } catch (e) {
+      subscribers.delete(client);
+    }
+  }
+}
+
 function getLocalIPs() {
   const interfaces = os.networkInterfaces();
   const addresses = [];
@@ -847,6 +871,113 @@ function handleCompanionApi(req, res, pathname, query) {
         companionApiUrl: getActiveApiUrl(),
         confidenceUrl: isApiServerRunning ? `http://${apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host}:${apiSettings.port}/views/confidence.html` : null
       });
+
+    // --- NDI / IP VIDEO STREAMING ---
+    // POST /api/stream/frame — receives a JPEG/PNG data-URL from ndi-engine.js,
+    // buffers it, and fans it out to all MJPEG subscribers (OBS, vMix, TriCaster).
+    case 'stream/frame': {
+      let frameData = '';
+      req.on('data', c => { frameData += c; });
+      req.on('end', () => {
+        let parsed = {};
+        try { parsed = JSON.parse(frameData); } catch (e) {}
+        const channel = parsed.channel || 'program';
+        const dataUrl = parsed.dataUrl || '';
+        if (dataUrl && typeof dataUrl === 'string') {
+          const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          streamState.framesReceived++;
+          streamState.lastFrameTime = Date.now();
+          if (channel === 'alpha') {
+            streamState.latestAlphaBuffer = buffer;
+            pushFrameToSubscribers(streamState.alphaSubscribers, buffer, 'image/png');
+          } else {
+            streamState.latestProgramBuffer = buffer;
+            pushFrameToSubscribers(streamState.programSubscribers, buffer, 'image/jpeg');
+          }
+          return jsonResponse({ success: true, channel, frames: streamState.framesReceived });
+        }
+        return jsonResponse({ success: false, error: 'No frame dataUrl provided' }, 400);
+      });
+      return; // Response sent async inside req.on('end')
+    }
+
+    // GET /api/stream/program.mjpg — MJPEG stream endpoint for OBS / vMix
+    case 'stream/program':
+    case 'stream/program.mjpg':
+      res.writeHead(200, {
+        'Content-Type': 'multipart/x-mixed-replace; boundary=--frame',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Connection': 'close',
+        'Pragma': 'no-cache'
+      });
+      streamState.programSubscribers.add(res);
+      if (streamState.latestProgramBuffer) {
+        res.write(`--frame\r\nContent-Type: image/jpeg\r\nContent-Length: ${streamState.latestProgramBuffer.length}\r\n\r\n`);
+        res.write(streamState.latestProgramBuffer);
+        res.write('\r\n');
+      }
+      req.on('close', () => streamState.programSubscribers.delete(res));
+      return; // Keep connection open — response is long-lived
+
+    // GET /api/stream/alpha.mjpg — Alpha channel MJPEG stream for keying
+    case 'stream/alpha':
+    case 'stream/alpha.mjpg':
+      res.writeHead(200, {
+        'Content-Type': 'multipart/x-mixed-replace; boundary=--frame',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Connection': 'close',
+        'Pragma': 'no-cache'
+      });
+      streamState.alphaSubscribers.add(res);
+      if (streamState.latestAlphaBuffer) {
+        res.write(`--frame\r\nContent-Type: image/png\r\nContent-Length: ${streamState.latestAlphaBuffer.length}\r\n\r\n`);
+        res.write(streamState.latestAlphaBuffer);
+        res.write('\r\n');
+      }
+      req.on('close', () => streamState.alphaSubscribers.delete(res));
+      return;
+
+    // GET /api/stream/program/snapshot — Single JPEG snapshot (for preview thumbnails)
+    case 'stream/program/snapshot':
+      if (streamState.latestProgramBuffer) {
+        res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache' });
+        res.end(streamState.latestProgramBuffer);
+      } else {
+        res.writeHead(204); res.end();
+      }
+      return;
+
+    // GET /api/stream/alpha/snapshot — Single PNG alpha snapshot
+    case 'stream/alpha/snapshot':
+      if (streamState.latestAlphaBuffer) {
+        res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-cache' });
+        res.end(streamState.latestAlphaBuffer);
+      } else {
+        res.writeHead(204); res.end();
+      }
+      return;
+
+    // GET /api/ndi/status — Stream health telemetry for diagnostics UI
+    case 'ndi/status': {
+      const port = apiSettings.port;
+      const host = apiSettings.host === '0.0.0.0' ? 'localhost' : apiSettings.host;
+      return jsonResponse({
+        success: true,
+        programSubscribers: streamState.programSubscribers.size,
+        alphaSubscribers: streamState.alphaSubscribers.size,
+        framesReceived: streamState.framesReceived,
+        lastFrameTime: streamState.lastFrameTime,
+        hasProgramFrame: Boolean(streamState.latestProgramBuffer),
+        hasAlphaFrame: Boolean(streamState.latestAlphaBuffer),
+        streamEndpoints: {
+          program: `http://${host}:${port}/api/stream/program.mjpg`,
+          alpha: `http://${host}:${port}/api/stream/alpha.mjpg`,
+          programSnapshot: `http://${host}:${port}/api/stream/program/snapshot`,
+          alphaSnapshot: `http://${host}:${port}/api/stream/alpha/snapshot`
+        }
+      });
+    }
 
     default:
       return jsonResponse({ error: 'Unknown endpoint' }, 404);
@@ -1895,9 +2026,22 @@ function createDesktopShortcut() {
   }
 }
 
-// Automatically ensure desktop shortcut exists on first run (Store & Git)
+// Automatically ensure desktop shortcut exists on first run.
+// Only runs for:
+//   - Microsoft Store (AppX) installs — the Store does NOT create a desktop shortcut.
+//   - Dev / git installs (unpackaged) — no installer, so no shortcut was made.
+// SKIPPED for NSIS / portable packaged exe: electron-builder's createDesktopShortcut:true
+// already writes the .lnk during installation, so creating another one here would produce
+// two identical shortcuts on the user's desktop.
 function ensureDesktopShortcutOnFirstRun() {
   if (process.platform !== 'win32') return;
+
+  const isStore = Boolean(process.windowsStore);
+  const isPackaged = app.isPackaged;
+
+  // NSIS/portable packaged exe already has a shortcut from the installer — skip.
+  if (isPackaged && !isStore) return;
+
   try {
     const cfg = loadApiSettings();
     if (!cfg.desktopShortcutCreated) {
