@@ -41,9 +41,11 @@ if (app.isPackaged) {
   }
 }
 
-// Hardware GPU & Compositor Optimization: Prevents dual-screen VSync tearing and canvas texture flickering on Intel/integrated GPUs
+// Hardware GPU & Compositor Optimization: Prevents dual-screen VSync tearing and canvas texture flickering on Intel/integrated GPUs & hybrid discrete GPUs (NVIDIA RTX / AMD Radeon)
 app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('force_high_performance_gpu');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 // Verify core filesystem module integrity
