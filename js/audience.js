@@ -454,9 +454,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         activeCanvas.style.height = backCanvas.style.height;
       }
 
-      // Force layout flush so browser applies opacity 0 before transition begins
-      void backCanvas.offsetWidth;
-
       // 4. Solid Underlay Dissolve or Slide Animation:
       // The outgoing slide stays solid underneath (opacity 1, zIndex 1).
       // The incoming slide is placed ON TOP (zIndex 2) and smoothly fades from 0 to 1.
@@ -570,20 +567,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function resizeDrawCanvas() {
     const rect = activeCanvas.getBoundingClientRect();
-    drawCanvas.width = rect.width || window.innerWidth;
-    drawCanvas.height = rect.height || window.innerHeight;
-    drawCanvas.style.width = `${rect.width}px`;
-    drawCanvas.style.height = `${rect.height}px`;
-    drawCanvas.style.left = `${rect.left}px`;
-    drawCanvas.style.top = `${rect.top}px`;
+    const w = Math.round(rect.width) || window.innerWidth;
+    const h = Math.round(rect.height) || window.innerHeight;
+    const left = Math.round(rect.left);
+    const top = Math.round(rect.top);
+
+    drawCanvas.width = w;
+    drawCanvas.height = h;
+    drawCanvas.style.width = `${w}px`;
+    drawCanvas.style.height = `${h}px`;
+    drawCanvas.style.left = `${left}px`;
+    drawCanvas.style.top = `${top}px`;
 
     if (audienceSpotlightCanvas) {
-      audienceSpotlightCanvas.width = drawCanvas.width;
-      audienceSpotlightCanvas.height = drawCanvas.height;
-      audienceSpotlightCanvas.style.width = drawCanvas.style.width;
-      audienceSpotlightCanvas.style.height = drawCanvas.style.height;
-      audienceSpotlightCanvas.style.left = drawCanvas.style.left;
-      audienceSpotlightCanvas.style.top = drawCanvas.style.top;
+      audienceSpotlightCanvas.width = w;
+      audienceSpotlightCanvas.height = h;
+      audienceSpotlightCanvas.style.width = `${w}px`;
+      audienceSpotlightCanvas.style.height = `${h}px`;
+      audienceSpotlightCanvas.style.left = `${left}px`;
+      audienceSpotlightCanvas.style.top = `${top}px`;
       renderAudienceSpotlight();
     }
 

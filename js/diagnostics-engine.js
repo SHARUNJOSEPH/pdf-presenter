@@ -49,7 +49,7 @@ function getRecentLogs(limit = 50) {
 /**
  * Automated flicker and latency heuristic analysis.
  */
-function analyzeFlickerPotential(displays, gpuFeatures = {}, gpuInfo = {}) {
+function analyzeFlickerPotential(displays, gpuFeatures = {}, gpuInfo = {}, presentation = {}) {
   const warnings = [];
   const recommendations = [];
 
@@ -101,7 +101,18 @@ function analyzeFlickerPotential(displays, gpuFeatures = {}, gpuInfo = {}) {
     }
   }
 
-  // 4. Memory Headroom
+  // 4. Slide Transition Cadence & Duration Analysis
+  if (presentation && presentation.transition) {
+    const transitionStr = String(presentation.transition).toLowerCase();
+    const isDissolve = transitionStr.includes('dissolve');
+    const matchSec = transitionStr.match(/([0-9.]+)\s*s/);
+    const durationSec = matchSec ? parseFloat(matchSec[1]) : (isDissolve ? 1.0 : 0);
+    if (isDissolve && durationSec >= 1.0) {
+      recommendations.push(`Dissolve Transition (${durationSec}s): When rapidly scrubbing through slides (e.g. holding arrow keys or fast clicker clicks faster than 500ms), intermediate transitions are seamlessly committed to prevent compositor backlog.`);
+    }
+  }
+
+  // 5. Memory Headroom
   const freeMemMB = Math.round(os.freemem() / 1024 / 1024);
   if (freeMemMB < 800) {
     warnings.push(`Low System Memory: Only ${freeMemMB} MB of RAM is free. High-resolution PDF textures may encounter memory pressure.`);
@@ -134,7 +145,7 @@ function analyzeFlickerPotential(displays, gpuFeatures = {}, gpuInfo = {}) {
  */
 function buildDiagnosticData(context = {}) {
   const {
-    appVersion = '1.2.8-beta',
+    appVersion = '1.2.9-beta',
     isPackaged = false,
     isStore = false,
     displays = [],
@@ -144,7 +155,7 @@ function buildDiagnosticData(context = {}) {
     presentation = {}
   } = context;
 
-  const flickerAnalysis = analyzeFlickerPotential(displays, gpuFeatures, gpuInfo);
+  const flickerAnalysis = analyzeFlickerPotential(displays, gpuFeatures, gpuInfo, presentation);
 
   return {
     reportId: `PPR-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`,

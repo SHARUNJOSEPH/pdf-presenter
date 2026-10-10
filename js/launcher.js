@@ -1437,8 +1437,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let downloadedInstallerPath = null;
     let isDownloadingUpdate = false;
     let availableDirectDownloadUrl = '';
-    let currentAppVersion = '1.2.8-beta';
-    let detectedLatestVersion = '1.2.8-beta';
+    let currentAppVersion = '1.2.9-beta';
+    let detectedLatestVersion = '1.2.9-beta';
 
     // Helper: Open Resolume-Style Update Modal
     const openSoftwareUpdateModal = (autoStart = false) => {
