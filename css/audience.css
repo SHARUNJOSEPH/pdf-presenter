@@ -59,6 +59,7 @@ body.audience-view.cursor-hidden {
   max-height: 100vh;
   object-fit: contain;
   background-color: #000000;
+  contain: paint;
   will-change: opacity;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;

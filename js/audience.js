@@ -342,9 +342,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     isTransitioning = false;
 
-    // The incoming slide was being dissolved in on backCanvas (z-index 2).
-    // Promote it to activeCanvas immediately so rapid scrubbing advances cleanly
-    // without flickering back to the outgoing slide.
+    // Immediately settle the incoming and outgoing buffers without dropping frames or flashing lines
     backCanvas.style.transition = 'none';
     backCanvas.style.opacity = '1';
     backCanvas.style.zIndex = '1';
@@ -368,7 +366,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     isRendering = true;
 
     try {
-      // If a transition was mid-flight, settle it immediately so backCanvas is 100% hidden
+      // If a transition was in progress, settle it cleanly before starting next render
       if (isTransitioning) {
         finishTransitionImmediately();
       }
@@ -446,7 +444,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         scale: 2.0
       });
 
-      // Lock both canvases to matching dimensions before dissolve to eliminate 1px size drift line
+      // Synchronize both canvases to identical pixel-aligned dimensions & bounding boxes
+      // This eliminates the 1px hairline mismatch on 4K audience screens during the dissolve crossfade
       if (backCanvas.style.width && activeCanvas.style.width !== backCanvas.style.width) {
         activeCanvas.style.width = backCanvas.style.width;
       }
@@ -457,7 +456,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 4. Solid Underlay Dissolve or Slide Animation:
       // The outgoing slide stays solid underneath (opacity 1, zIndex 1).
       // The incoming slide is placed ON TOP (zIndex 2) and smoothly fades from 0 to 1.
-      // This prevents ANY black dip, background gap, or transparency hole.
       isTransitioning = true;
       activeCanvas.style.transition = 'none';
       activeCanvas.style.zIndex = '1';
@@ -495,8 +493,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         outgoing.className = 'slide-canvas active';
         incoming.style.zIndex = '2';
 
-        // Ensure browser compositor has registered incoming canvas at opacity 0 before transition kicks in
+        // Wait two full animation frames to guarantee Chromium compositor has committed
+        // incoming canvas at opacity: 0 before the opacity CSS transition begins
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+        // If another transition or scrub interrupted during the rAF wait, abort cleanly
+        if (!isTransitioning) return;
 
         incoming.style.transition = `opacity ${transitionDuration}s ease-in-out`;
         incoming.style.opacity = '1';
