@@ -67,13 +67,36 @@ Choose your operating system to begin an immediate 1-click download:
 
 ---
 
+## ✨ What's New in v1.2.9
+
+- **🖥️ 4K Subpixel-Free Dissolve Compositor & Rapid-Scrub Engine**:
+  - Eliminated the 1px subpixel edge seam and mid-scrub flicker line on 4K displays via integer-aligned flex centering (`inset: 0; margin: auto; contain: paint`), synchronized outgoing/incoming canvas bounds prior to opacity blending, and instant mid-scrub transition commit when rapidly advancing slides.
+- **📑 Multi-Deck Conference Playlist & In-Flight Queue Sync**:
+  - Dragged and freshly loaded PDFs on the Launcher hub automatically synchronize with the multi-deck playlist queue, and new decks can be queued and switched mid-show (`LOAD_DOCUMENT`) without closing or interrupting the audience screen.
+- **📡 NDI / Live MJPEG IP Broadcast Streaming**:
+  - Full server-side MJPEG streaming pipeline (`GET /api/stream/program.mjpg`, `GET /api/stream/alpha.mjpg`, `GET /api/ndi/status`) enabling **OBS Studio**, **vMix**, and **TriCaster** to ingest live program and alpha-key feeds over LAN.
+- **🎮 GPU Hardware Adapter Telemetry & Cadence Diagnostics**:
+  - Expanded the 1-click Diagnostic Bug Report Generator with hardware GPU adapter enumeration (device name, driver version, dedicated VRAM) and slide transition cadence analysis.
+- **📱 Responsive Presenter Cockpit Top Bar**:
+  - Graduated responsive layout (`1366px`, `1200px`, `1050px`) and localized Tools dropdown menu preventing toolbar overflow on compact laptop screens and high-DPI displays.
+
+---
+
 ## 🌟 Key Features
 
+- **📡 NDI / IP Broadcast Video Streaming (OBS, vMix & TriCaster)**:
+  - **Live Program & Alpha Key Feeds**: Stream clean slide output (`program.mjpg`) and transparency mattes (`alpha.mjpg`) directly over HTTP/LAN into broadcast switchers without capture cards.
+  - **Zero-Latency Snapshot Endpoints**: Instant frame snapshots (`/api/stream/program/snapshot`, `/api/stream/alpha/snapshot`) and live stream telemetry (`/api/ndi/status`).
+- **📑 Multi-Deck Conference Playlist & Rehearsal Metrics**:
+  - **Seamless In-Flight Deck Switching**: Queue multiple speaker presentations in order and switch decks live on stage while keeping the audience display window locked and active.
+  - **Per-Slide Timing & Speaker Notes Export**: Track rehearsal pacing per slide and export complete speaker notes.
+- **🏷️ Event Watermark & Live Audience Lower-Third Banner**:
+  - **Custom Event Branding Overlay**: Position custom text or PNG event watermarks with adjustable opacity and scale on the audience stage.
+  - **Broadcast Lower-Third Ticker**: Trigger live lower-third banners (`POST /api/banner`) routed to the Audience Stage, Presenter Cockpit, Stage Confidence Monitor, or all displays simultaneously.
 - **🐞 Native Diagnostic Bug Report Generator & Flicker Troubleshooting**:
-  - **1-Click Hardware & Display Compatibility Audit**: Generate a comprehensive system report from the Launcher header or Presenter Cockpit toolbar to troubleshoot hardware acceleration, mixed DPI scaling, and refresh rate disparities.
-  - **Slide Flicker Heuristic Analysis**: Automatically checks for mismatched display scale factors (e.g. 1.5x vs 1.0x) or refresh rate disparities (144Hz vs 60Hz) that trigger Chromium backbuffer surface re-allocations during slide transitions.
+  - **1-Click Hardware, GPU & Display Compatibility Audit**: Enumerates connected displays, GPU hardware adapters (driver version & VRAM), Chromium compositor flags, mixed DPI scaling, and refresh rate disparities (including 50Hz PAL/EBU broadcast standards).
+  - **Slide Flicker & Cadence Heuristic Analysis**: Automatically checks for mismatched display scale factors (e.g. 1.5x vs 1.0x), refresh rate disparities (144Hz vs 60Hz), and dissolve transition cadence.
   - **Instant Export & Privacy Sanitization**: Copy formatted GitHub Markdown or save directly to a `.md` file with all personal file paths automatically sanitized.
-
 - **🎬 Pro Studio Stage Confidence Display**:
   - **4 Instant Broadcast Templates**: Switch seamlessly between 🎬 **Dual Cinema** (balanced live/next split), 📝 **Prompter Focus** (expanded teleprompter), ⏱️ **Timekeeper Focus** (giant stage timer), and 🖥️ **Single Live Mirror** (full-width audience mirror).
   - **Optimized for Stage Distance**: High-contrast, glare-resistant typography and responsive multiviewer layout readable from 20 to 40+ feet away.
@@ -118,15 +141,16 @@ Choose your operating system to begin an immediate 1-click download:
   - **Next-Slide Glance Preview** for seamless speaking flow.
   - **Visual Slide Strip** with jump-to-slide thumbnails.
   - **Per-Slide Speaker Notes** with instant local auto-saving.
-- **Silky 1.0s True Dissolve Transitions**:
-  - Double-buffered canvas architecture eliminates all white flashes and flickering.
+- **Silky 1.0s True Dissolve Transitions (4K Subpixel-Hardened)**:
+  - Double-buffered, integer-snapped canvas architecture eliminates all white flashes, 1px subpixel edge lines, and rapid-scrub flickering on 4K projectors and LED walls.
   - Smooth dissolve animation ensures a cinematic keynote experience.
 - **Production Hardened & Developer Tools Lock-down**:
   - Standard Chromium menus and development tools are cleanly stripped from production builds.
   - Inspection shortcuts (`F12`, `Ctrl+Shift+I`) are blocked in release packages for a polished native desktop feel.
 - **Interactive Tools & Keyboard Control**:
   - 🔴 **Virtual Laser Pointer**: Centered and synced live to the audience screen (`L`).
-  - ✏️ **Digital Annotation Pen**: Draw and annotate slides in real-time (`P`).
+  - ✏️ **Digital Annotation Pen & Highlighter**: Multi-color annotation palette and 24px highlighter (`P`).
+  - 🔦 **Stage Spotlight (`S`)**: Focus audience attention on key slide regions.
   - ⬛ **Instant Blackout & Whiteout (`B` / `W`)**: Direct stage attention to the speaker.
   - 🗂️ **Slide Sorter Grid (`G`)**: Open bird's-eye slide grid to jump instantly to any slide.
   - 🛑 **Quick Exit (`Esc`)**: Press Esc anytime to close modals or exit presenter view cleanly.
@@ -135,10 +159,10 @@ Choose your operating system to begin an immediate 1-click download:
   - Built-in lightweight HTTP REST & WebSocket API on port `3000`.
   - **1-Click Companion Preset Export**: Generates ready-to-import `.companionconfig` files with 15 pre-styled colored keys (Next, Prev, Blackout, Timers, Laser).
   - 1-Click **"📋 Copy"** buttons for all API endpoints and network IP addresses.
-  - Control slides, blackout, and timers directly from hardware production switchers or Stream Deck panels.
+  - Control slides, blackout, banners, NDI streams, and timers directly from hardware production switchers or Stream Deck panels.
 - **In-App Software Update Checker**:
   - Built-in GitHub Releases update engine checks for new builds automatically.
-  - One-click update checking in the About dialog with direct download support.
+  - One-click update checking in the About dialog with Resolume-style in-app background download & install.
 
 ---
 
@@ -170,7 +194,8 @@ npm start
 | `B` | Toggle Blackout Screen |
 | `W` | Toggle Whiteout Screen |
 | `L` | Toggle Virtual Laser Pointer |
-| `P` | Toggle Digital Drawing Pen |
+| `P` | Toggle Digital Drawing Pen & Highlighter |
+| `S` | Toggle Audience Spotlight Overlay |
 | `G` | Toggle Slide Grid Modal |
 | `?` | Show Shortcuts Cheat Sheet |
 | `F11` | Toggle Fullscreen Cockpit |
@@ -195,8 +220,13 @@ npm start
 | `POST /api/timer/reset` | POST | Reset presentation timer |
 | `POST /api/timer/set` | POST | Set keynote countdown duration (seconds) |
 | `POST /api/message` | POST | Send silent cue to speaker monitor (`target=stage`) or cockpit |
-| `POST /api/banner` | POST | Display lower-third ticker banner on audience display |
+| `POST /api/banner` | POST | Display lower-third ticker banner (`target=audience\|presenter\|stage\|all`) |
+| `DELETE /api/banner` | DELETE | Hide active lower-third ticker banner |
 | `POST /api/confidence/toggle` | POST | Enable or disable confidence stage monitor video feed |
+| `GET /api/stream/program.mjpg` | GET | Live MJPEG broadcast program stream for OBS / vMix / TriCaster |
+| `GET /api/stream/alpha.mjpg` | GET | Live MJPEG alpha-key matte stream for broadcast switchers |
+| `GET /api/stream/program/snapshot` | GET | Capture single JPEG frame of current program output |
+| `GET /api/ndi/status` | GET | Retrieve live NDI / MJPEG broadcast streaming telemetry |
 | `GET /api/status` | GET | Retrieve live JSON presentation state & telemetry |
 
 ---

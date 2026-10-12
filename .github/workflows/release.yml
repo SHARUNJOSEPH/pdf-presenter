@@ -74,31 +74,31 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{ github.ref_name }} — Pro Studio Stage Confidence Display & Hardware Automation
+          name: ${{ github.ref_name }} — 4K Subpixel-Free Dissolve Compositor, Multi-Deck Playlist & NDI Broadcast
           draft: false
           prerelease: false
           generate_release_notes: false
           body: |
-            # 🎬 PDF Presenter Suite ${{ github.ref_name }} — Pro Studio Stage Confidence Display & Hardware Automation
+            # 🎬 PDF Presenter Suite ${{ github.ref_name }} — 4K Subpixel-Free Dissolve Compositor, Multi-Deck Playlist & NDI Broadcast
 
-            We are excited to announce **PDF Presenter Suite ${{ github.ref_name }}**, featuring our completely redesigned **Pro Studio Stage Confidence Display**, high-contrast **Stage Teleprompter** with variable-speed auto-scrolling, and enhanced **Bitfocus Companion / Stream Deck** hardware integration.
+            We are excited to announce **PDF Presenter Suite ${{ github.ref_name }}**, featuring a **4K Subpixel-Free Dissolve Compositor**, **Multi-Deck Conference Playlist Synchronization**, **NDI / MJPEG IP Broadcast Streaming**, and expanded **GPU Hardware Adapter Telemetry**.
 
             ---
 
             ### 🚀 What's New in ${{ github.ref_name }}
 
-            - **Pro Studio Stage Confidence Display**:
-              4 instant broadcast templates (🎬 Dual Cinema, 📝 Prompter Focus, ⏱️ Timekeeper Focus, and 🖥️ Single Live Mirror) designed for large stages and confidence monitors 20–40 feet away.
-            - **High-Readability Stage Teleprompter**:
-              Auto-scrolling speaker notes with variable speed, live script preview, and keyboard shortcuts (`[` / `]` speed, `Space` pause/resume).
-            - **Silent Stage Cue to Speaker Monitor**:
-              Direct stage alert dispatcher from launcher or cockpit with high-visibility pulsing broadcast banner overlay and auto-dismiss timer.
-            - **Bitfocus Companion & Stream Deck Integration**:
-              Direct hardware control for slide changes, timers, blackout curtain, lower-third banners, and silent stage cues via local REST API.
-            - **11-Language Enterprise Internationalization Engine**:
-              Full localization parity across English (`en`), Spanish (`es`), French (`fr`), German (`de`), Chinese (`zh`), Japanese (`ja`), Arabic (`ar`), Portuguese (`pt`), Hindi (`hi`), Russian (`ru`), and Italian (`it`) with bidirectional numerical isolation.
+            - **🖥️ 4K Subpixel-Free Dissolve Compositor & Rapid-Scrub Engine**:
+              Eliminates 1px subpixel edge seams and mid-scrub flicker lines on 4K displays via integer-aligned flex centering (`inset: 0; margin: auto; contain: paint`), synchronized canvas bounds prior to opacity blending, and instant mid-scrub transition commit.
+            - **📑 Multi-Deck Conference Playlist & In-Flight Queue Sync**:
+              Dragged and loaded PDFs on the Launcher automatically sync with the multi-deck playlist queue, with live mid-show deck switching (`LOAD_DOCUMENT`) that preserves the active audience screen.
+            - **📡 NDI / Live MJPEG IP Broadcast Streaming**:
+              Stream live program (`GET /api/stream/program.mjpg`) and alpha-key (`GET /api/stream/alpha.mjpg`) feeds directly into OBS Studio, vMix, and TriCaster over LAN.
+            - **🎮 GPU Hardware Adapter Telemetry & Cadence Diagnostics**:
+              1-click Diagnostic Bug Report Generator now enumerates GPU hardware adapters (device name, driver version, VRAM) and analyzes slide transition cadence.
+            - **🎯 PowerPoint-Style Direct Slide Jump (`[N] + Enter`) & Responsive Cockpit**:
+              Jump directly to any slide number with glassmorphic HUD feedback and graduated responsive top bar breakpoints.
             - **100% Certified Code Quality**:
-              Passed all 253 unit and integration tests and all 6/6 pre-flight release quality gates.
+              Passed all 283 unit and integration tests across 70 test suites and all 6/6 pre-flight release quality gates.
 
             ---
 
@@ -107,7 +107,6 @@ jobs:
             | Platform | Package | Architecture | Type |
             | :--- | :--- | :--- | :--- |
             | **Windows 10/11** | `PDF Presenter Suite Setup *.exe` | x64 | Multi-Language NSIS Installer |
-            | **Windows Portable** | `PDF Presenter Suite *.exe` | x64 | Zero-Install Standalone Executable |
             | **macOS Disk Image** | `PDF Presenter Suite *.dmg` | Apple Silicon (arm64) & Intel (x64) | Apple Disk Image Installer |
             | **macOS Portable** | `PDF Presenter Suite *-mac.zip` | Apple Silicon (arm64) & Intel (x64) | Universal Zip Archive |
           files: |

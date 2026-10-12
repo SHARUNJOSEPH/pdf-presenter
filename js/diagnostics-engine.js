@@ -113,23 +113,30 @@ function analyzeFlickerPotential(displays, gpuFeatures = {}, gpuInfo = {}, prese
   }
 
   // 5. Memory Headroom
-  const freeMemMB = Math.round(os.freemem() / 1024 / 1024);
+  // Note: On macOS (darwin), os.freemem() only counts unallocated pages (excluding reclaimable file cache),
+  // which routinely reads < 800 MB even on 16GB+ systems.
+  const rawFreeMemMB = Math.round(os.freemem() / 1024 / 1024);
+  const freeMemMB = typeof presentation.freeMemoryMB === 'number'
+    ? presentation.freeMemoryMB
+    : (process.platform === 'darwin' ? Math.max(rawFreeMemMB, 2048) : rawFreeMemMB);
   if (freeMemMB < 800) {
     warnings.push(`Low System Memory: Only ${freeMemMB} MB of RAM is free. High-resolution PDF textures may encounter memory pressure.`);
     recommendations.push(`Close unused background applications before presenting large slide decks.`);
   }
 
   // Calculate Flicker Risk:
-  // If the only warning is a legitimate Broadcast Standard Output, keep risk level at LOW / OPTIMAL or MODERATE (not HIGH)
-  // when hardware GPU compositing is fully enabled.
-  const criticalWarnings = warnings.filter(w => !w.startsWith('Broadcast Standard Output Detected:'));
+  // If the only warning is a legitimate Broadcast Standard Output or general memory headroom,
+  // keep display/GPU composition risk level accurate when hardware GPU compositing is enabled.
+  const criticalWarnings = warnings.filter(
+    w => !w.startsWith('Broadcast Standard Output Detected:') && !w.startsWith('Low System Memory:')
+  );
   let flickerRisk = 'LOW';
   if (criticalWarnings.length >= 2) {
     flickerRisk = 'HIGH';
   } else if (criticalWarnings.length === 1) {
     flickerRisk = 'MODERATE';
   } else if (warnings.length > 0) {
-    // Only broadcast standard detected with GPU acceleration healthy
+    // Only broadcast standard or general system info detected with GPU acceleration healthy
     flickerRisk = 'LOW';
   }
 
