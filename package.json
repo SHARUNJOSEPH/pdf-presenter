@@ -118,35 +118,35 @@
     "dmg": {
       "title": "${productName}",
       "background": "build/background.png",
-      "iconSize": 90,
+      "iconSize": 72,
       "contents": [
         {
-          "x": 140,
-          "y": 145,
+          "x": 160,
+          "y": 140,
           "type": "file"
         },
         {
           "x": 500,
-          "y": 145,
+          "y": 140,
           "type": "link",
           "path": "/Applications"
         },
         {
-          "x": 200,
-          "y": 250,
+          "x": 220,
+          "y": 265,
           "type": "file",
-          "path": "build/READ_ME_FIRST.txt"
+          "path": "build/README.txt"
         },
         {
           "x": 440,
-          "y": 250,
+          "y": 265,
           "type": "file",
-          "path": "build/Install-and-Launch.command"
+          "path": "build/Install.command"
         }
       ],
       "window": {
-        "width": 640,
-        "height": 450
+        "width": 660,
+        "height": 480
       }
     }
   },
