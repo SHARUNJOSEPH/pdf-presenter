@@ -118,24 +118,30 @@
     "dmg": {
       "title": "${productName}",
       "background": "build/background.png",
-      "iconSize": 100,
+      "iconSize": 90,
       "contents": [
         {
           "x": 140,
-          "y": 160,
+          "y": 145,
           "type": "file"
         },
         {
           "x": 500,
-          "y": 160,
+          "y": 145,
           "type": "link",
           "path": "/Applications"
         },
         {
-          "x": 320,
-          "y": 260,
+          "x": 200,
+          "y": 250,
           "type": "file",
           "path": "build/READ_ME_FIRST.txt"
+        },
+        {
+          "x": 440,
+          "y": 250,
+          "type": "file",
+          "path": "build/Install-and-Launch.command"
         }
       ],
       "window": {

@@ -193,17 +193,11 @@ brew install --cask https://raw.githubusercontent.com/SHARUNJOSEPH/pdf-presenter
 
 ##### Method B: Drag-and-Drop DMG Installer
 1. Download the [**Apple Silicon (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) (for M1/M2/M3/M4) or [**Intel (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest).
-2. Open the `.dmg` — you will see **PDF Presenter Suite**, the **/Applications** folder shortcut, and a **`READ_ME_FIRST.txt`** guide right in the window.
-3. Drag **PDF Presenter Suite** into your **Applications** folder.
-4. **First-Launch on macOS (Gatekeeper Open-Source Notice):**
-   Because PDF Presenter Suite is 100% free and open-source (un-notarized community software), macOS Gatekeeper flags browser downloads with *"App is damaged and can't be opened. You should move it to the Trash"*.
-   - **2-Click Native Fix (No Terminal required):** In Finder, go to your **Applications** folder, **Right-Click (Control-Click)** `PDF Presenter Suite.app`, and choose **Open**. In the confirmation dialog, click **Open**. Once opened this way, macOS permanently trusts the app!
-   - **Terminal 1-Line Fix:**
-     ```bash
-     xattr -cr "/Applications/PDF Presenter Suite.app"
-     ```
-   - **System Settings:** You can also go to **System Settings** ➔ **Privacy & Security** ➔ scroll down to **Security** and click **Open Anyway**.
-   *(These instructions are also bundled inside the `READ_ME_FIRST.txt` document directly in the `.dmg` installer)*
+2. Open the `.dmg` — you will see **PDF Presenter Suite**, the **/Applications** folder shortcut, **`READ_ME_FIRST.txt`**, and the automated **`Install-and-Launch.command`** script right in the window.
+3. **Choose your launch method:**
+   - **⚡ 1-Click Automated Setup (Easiest):** Double-click (or Right-Click ➔ **Open**) **`Install-and-Launch.command`** directly inside the mounted disk image. The script automatically installs the app to `/Applications`, clears the Gatekeeper quarantine attribute, and launches the app immediately!
+   - **Manual Drag-and-Drop:** Drag **PDF Presenter Suite** into `/Applications`. On your first launch, go to `/Applications`, **Right-Click (Control-Click)** `PDF Presenter Suite.app`, and choose **Open** ➔ click **Open** in the prompt (or run `xattr -cr "/Applications/PDF Presenter Suite.app"` in Terminal).
+   *(Both methods permanently whitelist the application so you can open it normally anytime in the future)*
 
 ### Option 2: Running from Source
 ```bash

@@ -5,56 +5,56 @@
 Thank you for choosing PDF Presenter Suite!
 
 --------------------------------------------------------------------------------
-1. HOW TO INSTALL (DRAG & DROP)
+METHOD 1: AUTOMATED 1-CLICK SCRIPT (EASIEST)
+--------------------------------------------------------------------------------
+1. In this installer window, double-click:
+   --> "Install-and-Launch.command"
+2. (If macOS asks for permission, Right-Click "Install-and-Launch.command" 
+   and click "Open").
+3. The script will automatically copy the application to your Applications 
+   folder, clear the Gatekeeper quarantine flag, and launch the app immediately!
+
+
+--------------------------------------------------------------------------------
+METHOD 2: MANUAL DRAG & DROP INSTALLATION
 --------------------------------------------------------------------------------
 1. Drag the "PDF Presenter Suite" application icon into the "Applications" 
    folder shortcut in this window.
-2. Wait a few seconds for the file copy to complete.
+2. In Finder, open your "Applications" folder.
+3. DO NOT regular double-click. Instead:
+   --> RIGHT-CLICK (or hold Control and click) "PDF Presenter Suite.app"
+   --> Click "Open" from the context menu.
+4. When the confirmation prompt appears, click "Open".
+
+Once opened this way, macOS permanently whitelists PDF Presenter Suite. You can 
+launch it normally with a standard double-click anytime in the future!
 
 
 --------------------------------------------------------------------------------
-2. FIRST-LAUNCH ON MACOS (GATEKEEPER OPEN-SOURCE NOTICE)
+WHY DOES MACOS SHOW "APP IS DAMAGED"?
 --------------------------------------------------------------------------------
-Because PDF Presenter Suite is 100% free, community-funded, and open-source 
-(distributed outside Apple's paid Mac App Store), macOS Gatekeeper attaches a
-quarantine security attribute to downloads from Safari / Chrome.
-
-When double-clicking for the first time, macOS may display:
+Because PDF Presenter Suite is 100% free and open-source (un-notarized 
+community software), macOS Gatekeeper flags web browser downloads with:
   "PDF Presenter Suite is damaged and can't be opened. 
    You should move it to the Trash."
 
-THE APP IS NOT DAMAGED! This is simply Apple's default message for un-notarized 
-community software.
+THE APP IS NOT DAMAGED! This is simply Apple's default message for software
+distributed outside their paid developer program. Running either Method 1 or
+Method 2 above bypasses this completely.
 
 
 --------------------------------------------------------------------------------
-3. HOW TO LAUNCH IN 2 CLICKS (NO TERMINAL REQUIRED)
+ALTERNATIVE: TERMINAL ONE-LINER
 --------------------------------------------------------------------------------
-1. Open your "Applications" folder in Finder.
-2. DO NOT regular double-click. Instead:
-   --> RIGHT-CLICK (or hold Control and click) "PDF Presenter Suite.app"
-   --> Click "Open" from the context menu.
-3. A macOS confirmation prompt will appear asking to confirm. Click "Open".
-
-Once opened this way, macOS permanently whitelists PDF Presenter Suite on your Mac.
-You can open it normally with a regular double-click or via Spotlight anytime!
-
-
---------------------------------------------------------------------------------
-4. ALTERNATIVE: ONE-LINE TERMINAL FIX
---------------------------------------------------------------------------------
-If you prefer using Terminal, open Terminal (Cmd + Space, type "Terminal") and run:
+If you prefer Terminal, simply run:
 
   xattr -cr "/Applications/PDF Presenter Suite.app"
 
-Then press Enter. PDF Presenter Suite will launch immediately.
-
 
 --------------------------------------------------------------------------------
-5. PREFER PACKAGE MANAGERS? USE HOMEBREW CASK
+PREFER PACKAGE MANAGERS? USE HOMEBREW CASK
 --------------------------------------------------------------------------------
-If you have Homebrew installed, you can install and update PDF Presenter Suite 
-without ever seeing Gatekeeper warnings:
+If you have Homebrew installed, you can install without any browser flags:
 
   brew tap SHARUNJOSEPH/pdf-presenter https://github.com/SHARUNJOSEPH/pdf-presenter
   brew install --cask pdf-presenter
