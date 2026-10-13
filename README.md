@@ -176,14 +176,29 @@ Choose your operating system to begin an immediate 1-click download:
 3. Select your PDF presentation (or click **Use Demo Deck**) and click **"Start Dual-Screen Presentation"**.
 
 #### 🍎 macOS (Apple Silicon & Intel)
+
+##### Method A: Homebrew Cask (Recommended — Bypasses Browser Quarantine)
+Install directly via [Homebrew](https://brew.sh) without browser quarantine prompts:
+```bash
+brew tap SHARUNJOSEPH/pdf-presenter https://github.com/SHARUNJOSEPH/pdf-presenter
+brew install --cask pdf-presenter
+```
+*Or single-line install directly from the formula:*
+```bash
+brew install --cask https://raw.githubusercontent.com/SHARUNJOSEPH/pdf-presenter/main/Casks/pdf-presenter.rb
+```
+
+##### Method B: Drag-and-Drop DMG Installer
 1. Download the [**Apple Silicon (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) (for M1/M2/M3/M4) or [**Intel (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest).
 2. Open the `.dmg` and drag **PDF Presenter Suite** into your **Applications** folder.
-3. **If macOS shows *"App is damaged and can't be opened. You should move it to the Trash"***:
-   This is macOS Gatekeeper's quarantine flag on open-source community apps downloaded via Safari. Run this one-line command in **Terminal** to clear the flag:
-   ```bash
-   xattr -cr "/Applications/PDF Presenter Suite.app"
-   ```
-   *Alternative without Terminal:* Go to **System Settings** ➔ **Privacy & Security** ➔ scroll down to **Security** and click **Open Anyway**, or **Right-Click (Control-Click)** the app in Applications and choose **Open**.
+3. **First-Launch on macOS (Gatekeeper Open-Source Notice):**
+   Because PDF Presenter Suite is 100% free and open-source (un-notarized community software), macOS Gatekeeper flags browser downloads with *"App is damaged and can't be opened. You should move it to the Trash"*.
+   - **2-Click Native Fix (No Terminal required):** In Finder, go to your **Applications** folder, **Right-Click (Control-Click)** `PDF Presenter Suite.app`, and choose **Open**. In the confirmation dialog, click **Open**. Once opened this way, macOS permanently trusts the app!
+   - **Terminal 1-Line Fix:**
+     ```bash
+     xattr -cr "/Applications/PDF Presenter Suite.app"
+     ```
+   - **System Settings:** You can also go to **System Settings** ➔ **Privacy & Security** ➔ scroll down to **Security** and click **Open Anyway**.
 
 ### Option 2: Running from Source
 ```bash

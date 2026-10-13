@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--suppress XmlUnusedNamespaceDeclaration -->
+<Package
+   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <!-- use single quotes to avoid double quotes escaping in the publisher value  -->
+  <Identity Name="JOSEPHSHARUN.PDFPresenterSuite"
+    ProcessorArchitecture="x64"
+    Publisher='CN=551A075B-7286-4B87-A119-02586E46BABD'
+    Version="1.2.9.0" />
+  <Properties>
+    <DisplayName>PDF Presenter Suite</DisplayName>
+    <PublisherDisplayName>JOSEPH SHARUN</PublisherDisplayName>
+    <Description>Professional Dual-Screen Presentation Software for Keynotes, Conferences and AV Teams with Bitfocus Companion API</Description>
+    <Logo>assets\StoreLogo.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14316.0" MaxVersionTested="10.0.14316.0" />
+  </Dependencies>
+  <Capabilities>
+  <rescap:Capability Name="runFullTrust"/>
+</Capabilities>
+  <Applications>
+    <Application Id="PDFPresenterSuite" Executable="app\PDF Presenter Suite.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+       BackgroundColor="#0b0f19"
+       DisplayName="PDF Presenter Suite"
+       Square150x150Logo="assets\Square150x150Logo.png"
+       Square44x44Logo="assets\Square44x44Logo.png"
+       Description="Professional Dual-Screen Presentation Software for Keynotes, Conferences and AV Teams with Bitfocus Companion API">
+        
+        <uap:DefaultTile Wide310x150Logo="assets\Wide310x150Logo.png" />
+        <uap:SplashScreen Image="assets\SplashScreen.png" />
+      </uap:VisualElements>
+      
+    </Application>
+  </Applications>
+</Package>
