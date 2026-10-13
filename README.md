@@ -61,6 +61,7 @@ Choose your operating system to begin an immediate 1-click download:
 | **macOS (Apple Silicon)** | M1 / M2 / M3 / M4 | [**🍎 Download Apple Silicon (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.9/PDF.Presenter.Suite-1.2.9-arm64.dmg) | Native ARM64 disk image for modern MacBooks, Mac mini, and Mac Studio. |
 | **macOS (Intel x64)** | Intel Core Macs | [**🍏 Download Intel Mac (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.9/PDF.Presenter.Suite-1.2.9.dmg) | Optimized for Intel-based Macs. |
 | **macOS Portable** | Universal Zip | [**📦 Download macOS (.zip)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.9/PDF.Presenter.Suite-1.2.9-arm64-mac.zip) | Standalone portable macOS application bundle. |
+| **Homebrew Cask** | macOS (M-Series & Intel) | `brew install --cask pdf-presenter` | [**🍺 Cask Formula**](Casks/pdf-presenter.rb) — Tap `SHARUNJOSEPH/pdf-presenter`. Automatic quarantine-free install. |
 | **All Releases & Assets** | GitHub Release Hub | [**🌐 Browse All Releases & Source Code**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) | View checksums, blockmaps, and previous versions. |
 
 > 💡 **Tip:** In-app updates are now built-in with Resolume Arena-style background downloads. Once installed, future updates download and install automatically within the app with zero browser redirects.
