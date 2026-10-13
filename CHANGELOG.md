@@ -3,6 +3,15 @@
 All notable changes to **PDF Presenter Suite** are documented here.  
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.2.10] — 2026-10-13
+
+### Added
+- **macOS Friction-Free Distribution & Gatekeeper Guidance**:
+  - Bundled **`READ_ME_FIRST.txt`** guide directly on the root volume of the macOS DMG installer (`build/READ_ME_FIRST.txt`) so users can double-click and read setup instructions and Gatekeeper unblock steps directly in TextEdit without warnings.
+  - Custom 640×450 dark-themed DMG installer background (`build/background.png`, `scripts/generate-dmg-background.ps1`) with high-resolution drag-to-install arrow, README callout, and permanent 2-click (Right-Click ➔ Open) first-launch guidance card.
+  - Official **Homebrew Cask Formula** (`Casks/pdf-presenter.rb`) providing 1-line installation (`brew install --cask pdf-presenter`) that automatically bypasses macOS browser quarantine attributes.
+- **Direct Downloads Table Expansion**: Added dedicated Homebrew Cask row to the main download table in `README.md`.
+
 ---
 
 ## [1.2.9] — 2026-10-12

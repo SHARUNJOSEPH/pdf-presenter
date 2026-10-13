@@ -74,19 +74,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{ github.ref_name }} — 4K Subpixel-Free Dissolve Compositor, Multi-Deck Playlist & NDI Broadcast
+          name: ${{ github.ref_name }} — macOS Friction-Free Distribution, DMG Guide & 4K Dissolve Engine
           draft: false
           prerelease: false
           generate_release_notes: false
           body: |
-            # 🎬 PDF Presenter Suite ${{ github.ref_name }} — 4K Subpixel-Free Dissolve Compositor, Multi-Deck Playlist & NDI Broadcast
+            # 🎬 PDF Presenter Suite ${{ github.ref_name }} — macOS Friction-Free Distribution, DMG Guide & 4K Dissolve Engine
 
-            We are excited to announce **PDF Presenter Suite ${{ github.ref_name }}**, featuring a **4K Subpixel-Free Dissolve Compositor**, **Multi-Deck Conference Playlist Synchronization**, **NDI / MJPEG IP Broadcast Streaming**, and expanded **GPU Hardware Adapter Telemetry**.
+            We are excited to announce **PDF Presenter Suite ${{ github.ref_name }}**, featuring **Friction-Free macOS Distribution** (bundled `READ_ME_FIRST.txt` guide, custom 640×450 dark-themed DMG layout, and official Homebrew Cask formula), alongside our **4K Subpixel-Free Dissolve Compositor**, **Multi-Deck Conference Playlist**, **NDI / MJPEG IP Broadcast Streaming**, and **GPU Hardware Adapter Telemetry**.
 
             ---
 
             ### 🚀 What's New in ${{ github.ref_name }}
 
+            - **🍎 macOS Friction-Free Open-Source Distribution & Gatekeeper Guidance**:
+              - **Bundled `READ_ME_FIRST.txt`**: Directly included on the DMG root volume so users can double-click and read setup instructions and Gatekeeper unblock steps in TextEdit without warnings.
+              - **Custom 640×450 Dark-Themed DMG Installer**: Branded drag-to-install layout (`PDF Presenter Suite` ➔ `/Applications`), ReadMe double-click callout, and permanent 2-click (Right-Click ➔ Open) first-launch guidance card.
+              - **Official Homebrew Cask Formula (`Casks/pdf-presenter.rb`)**: Community-first 1-line installation (`brew install --cask pdf-presenter`) that automatically bypasses browser quarantine attributes.
             - **🖥️ 4K Subpixel-Free Dissolve Compositor & Rapid-Scrub Engine**:
               Eliminates 1px subpixel edge seams and mid-scrub flicker lines on 4K displays via integer-aligned flex centering (`inset: 0; margin: auto; contain: paint`), synchronized canvas bounds prior to opacity blending, and instant mid-scrub transition commit.
             - **📑 Multi-Deck Conference Playlist & In-Flight Queue Sync**:
@@ -95,8 +99,6 @@ jobs:
               Stream live program (`GET /api/stream/program.mjpg`) and alpha-key (`GET /api/stream/alpha.mjpg`) feeds directly into OBS Studio, vMix, and TriCaster over LAN.
             - **🎮 GPU Hardware Adapter Telemetry & Cadence Diagnostics**:
               1-click Diagnostic Bug Report Generator now enumerates GPU hardware adapters (device name, driver version, VRAM) and analyzes slide transition cadence.
-            - **🎯 PowerPoint-Style Direct Slide Jump (`[N] + Enter`) & Responsive Cockpit**:
-              Jump directly to any slide number with glassmorphic HUD feedback and graduated responsive top bar breakpoints.
             - **100% Certified Code Quality**:
               Passed all 283 unit and integration tests across 70 test suites and all 6/6 pre-flight release quality gates.
 

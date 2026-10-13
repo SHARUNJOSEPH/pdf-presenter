@@ -56,11 +56,11 @@ Choose your operating system to begin an immediate 1-click download:
 
 | Operating System | Package Type | Direct 1-Click Download Link | Notes |
 | :--- | :--- | :--- | :--- |
-| **Windows 10 / 11** | Setup Installer | [**⬇️ Download Windows Setup (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.9/PDF.Presenter.Suite.Setup.1.2.9.exe) | **Recommended for Windows.** Multi-language installer, auto desktop shortcut, in-app updates. |
+| **Windows 10 / 11** | Setup Installer | [**⬇️ Download Windows Setup (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.10/PDF.Presenter.Suite.Setup.1.2.10.exe) | **Recommended for Windows.** Multi-language installer, auto desktop shortcut, in-app updates. |
 | **Microsoft Store** | Certified Store App | [**🛍️ Install from Microsoft Store**](https://apps.microsoft.com/detail/9NS3LKFXHBXW) | Verified and signed by Microsoft Corporation with automatic silent updates. |
-| **macOS (Apple Silicon)** | M1 / M2 / M3 / M4 | [**🍎 Download Apple Silicon (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.9/PDF.Presenter.Suite-1.2.9-arm64.dmg) | Native ARM64 disk image for modern MacBooks, Mac mini, and Mac Studio. |
-| **macOS (Intel x64)** | Intel Core Macs | [**🍏 Download Intel Mac (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.9/PDF.Presenter.Suite-1.2.9.dmg) | Optimized for Intel-based Macs. |
-| **macOS Portable** | Universal Zip | [**📦 Download macOS (.zip)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.9/PDF.Presenter.Suite-1.2.9-arm64-mac.zip) | Standalone portable macOS application bundle. |
+| **macOS (Apple Silicon)** | M1 / M2 / M3 / M4 | [**🍎 Download Apple Silicon (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.10/PDF.Presenter.Suite-1.2.10-arm64.dmg) | Native ARM64 disk image with bundled `READ_ME_FIRST.txt` & visual drag layout. |
+| **macOS (Intel x64)** | Intel Core Macs | [**🍏 Download Intel Mac (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.10/PDF.Presenter.Suite-1.2.10.dmg) | Optimized for Intel-based Macs with bundled `READ_ME_FIRST.txt`. |
+| **macOS Portable** | Universal Zip | [**📦 Download macOS (.zip)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v1.2.10/PDF.Presenter.Suite-1.2.10-arm64-mac.zip) | Standalone portable macOS application bundle. |
 | **Homebrew Cask** | macOS (M-Series & Intel) | `brew install --cask pdf-presenter` | [**🍺 Cask Formula**](Casks/pdf-presenter.rb) — Tap `SHARUNJOSEPH/pdf-presenter`. Automatic quarantine-free install. |
 | **All Releases & Assets** | GitHub Release Hub | [**🌐 Browse All Releases & Source Code**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) | View checksums, blockmaps, and previous versions. |
 
@@ -68,8 +68,12 @@ Choose your operating system to begin an immediate 1-click download:
 
 ---
 
-## ✨ What's New in v1.2.9
+## ✨ What's New in v1.2.10
 
+- **🍎 macOS Friction-Free Open-Source Distribution & Gatekeeper Guidance**:
+  - **Bundled `READ_ME_FIRST.txt`**: Directly included on the DMG root volume so users can double-click and read setup instructions and Gatekeeper unblock steps in TextEdit without warnings.
+  - **Custom 640×450 Dark-Themed DMG Installer**: Branded drag-to-install layout (`PDF Presenter Suite` ➔ `/Applications`), ReadMe double-click callout, and permanent 2-click (Right-Click ➔ Open) first-launch guidance card.
+  - **Official Homebrew Cask Formula (`Casks/pdf-presenter.rb`)**: Community-first 1-line installation (`brew install --cask pdf-presenter`) that automatically bypasses browser quarantine attributes.
 - **🖥️ 4K Subpixel-Free Dissolve Compositor & Rapid-Scrub Engine**:
   - Eliminated the 1px subpixel edge seam and mid-scrub flicker line on 4K displays via integer-aligned flex centering (`inset: 0; margin: auto; contain: paint`), synchronized outgoing/incoming canvas bounds prior to opacity blending, and instant mid-scrub transition commit when rapidly advancing slides.
 - **📑 Multi-Deck Conference Playlist & In-Flight Queue Sync**:
@@ -78,8 +82,6 @@ Choose your operating system to begin an immediate 1-click download:
   - Full server-side MJPEG streaming pipeline (`GET /api/stream/program.mjpg`, `GET /api/stream/alpha.mjpg`, `GET /api/ndi/status`) enabling **OBS Studio**, **vMix**, and **TriCaster** to ingest live program and alpha-key feeds over LAN.
 - **🎮 GPU Hardware Adapter Telemetry & Cadence Diagnostics**:
   - Expanded the 1-click Diagnostic Bug Report Generator with hardware GPU adapter enumeration (device name, driver version, dedicated VRAM) and slide transition cadence analysis.
-- **📱 Responsive Presenter Cockpit Top Bar**:
-  - Graduated responsive layout (`1366px`, `1200px`, `1050px`) and localized Tools dropdown menu preventing toolbar overflow on compact laptop screens and high-DPI displays.
 
 ---
 

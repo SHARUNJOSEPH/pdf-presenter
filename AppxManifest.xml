@@ -9,7 +9,7 @@
   <Identity Name="JOSEPHSHARUN.PDFPresenterSuite"
     ProcessorArchitecture="x64"
     Publisher='CN=551A075B-7286-4B87-A119-02586E46BABD'
-    Version="1.2.9.0" />
+    Version="1.2.10.0" />
   <Properties>
     <DisplayName>PDF Presenter Suite</DisplayName>
     <PublisherDisplayName>JOSEPH SHARUN</PublisherDisplayName>
