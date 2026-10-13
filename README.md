@@ -169,9 +169,21 @@ Choose your operating system to begin an immediate 1-click download:
 ## 🚀 Getting Started
 
 ### Option 1: Standalone Installers (No Node.js Required)
+
+#### 🪟 Windows
 1. Download the [**Latest Windows Installer (.exe)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) or install directly from the [**Microsoft Store**](https://apps.microsoft.com/detail/9NS3LKFXHBXW).
 2. Run the installer or open the application.
 3. Select your PDF presentation (or click **Use Demo Deck**) and click **"Start Dual-Screen Presentation"**.
+
+#### 🍎 macOS (Apple Silicon & Intel)
+1. Download the [**Apple Silicon (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) (for M1/M2/M3/M4) or [**Intel (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest).
+2. Open the `.dmg` and drag **PDF Presenter Suite** into your **Applications** folder.
+3. **If macOS shows *"App is damaged and can't be opened. You should move it to the Trash"***:
+   This is macOS Gatekeeper's quarantine flag on open-source community apps downloaded via Safari. Run this one-line command in **Terminal** to clear the flag:
+   ```bash
+   xattr -cr "/Applications/PDF Presenter Suite.app"
+   ```
+   *Alternative without Terminal:* Go to **System Settings** ➔ **Privacy & Security** ➔ scroll down to **Security** and click **Open Anyway**, or **Right-Click (Control-Click)** the app in Applications and choose **Open**.
 
 ### Option 2: Running from Source
 ```bash
