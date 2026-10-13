@@ -190,8 +190,9 @@ brew install --cask https://raw.githubusercontent.com/SHARUNJOSEPH/pdf-presenter
 
 ##### Method B: Drag-and-Drop DMG Installer
 1. Download the [**Apple Silicon (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest) (for M1/M2/M3/M4) or [**Intel (.dmg)**](https://github.com/SHARUNJOSEPH/pdf-presenter/releases/latest).
-2. Open the `.dmg` and drag **PDF Presenter Suite** into your **Applications** folder.
-3. **First-Launch on macOS (Gatekeeper Open-Source Notice):**
+2. Open the `.dmg` — you will see **PDF Presenter Suite**, the **/Applications** folder shortcut, and a **`READ_ME_FIRST.txt`** guide right in the window.
+3. Drag **PDF Presenter Suite** into your **Applications** folder.
+4. **First-Launch on macOS (Gatekeeper Open-Source Notice):**
    Because PDF Presenter Suite is 100% free and open-source (un-notarized community software), macOS Gatekeeper flags browser downloads with *"App is damaged and can't be opened. You should move it to the Trash"*.
    - **2-Click Native Fix (No Terminal required):** In Finder, go to your **Applications** folder, **Right-Click (Control-Click)** `PDF Presenter Suite.app`, and choose **Open**. In the confirmation dialog, click **Open**. Once opened this way, macOS permanently trusts the app!
    - **Terminal 1-Line Fix:**
@@ -199,6 +200,7 @@ brew install --cask https://raw.githubusercontent.com/SHARUNJOSEPH/pdf-presenter
      xattr -cr "/Applications/PDF Presenter Suite.app"
      ```
    - **System Settings:** You can also go to **System Settings** ➔ **Privacy & Security** ➔ scroll down to **Security** and click **Open Anyway**.
+   *(These instructions are also bundled inside the `READ_ME_FIRST.txt` document directly in the `.dmg` installer)*
 
 ### Option 2: Running from Source
 ```bash
