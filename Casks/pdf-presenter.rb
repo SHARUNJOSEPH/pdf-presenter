@@ -2,8 +2,8 @@ cask "pdf-presenter" do
   arch arm: "-arm64", intel: ""
 
   version "1.2.10"
-  sha256 arm:   "69723e48779e19ea6be3bc06afa89a9d5afdffb18db71935e9a3bfa202d826f3",
-         intel: "18290bd4803abcdde497c15c3d0161c4dee47461a0d2b87e54ab329173375e9c"
+  sha256 arm:   "07ceeb321caf48d782adb468e4417073419b27ef2fd589554c898d018dab2e28",
+         intel: "8f85d7d2885ede65d2fb35c6032ad1a3d8d12749939146811524dc5c509cc09b"
 
   url "https://github.com/SHARUNJOSEPH/pdf-presenter/releases/download/v#{version}/PDF.Presenter.Suite-#{version}#{arch}.dmg"
   name "PDF Presenter Suite"
